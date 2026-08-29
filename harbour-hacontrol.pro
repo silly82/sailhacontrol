@@ -22,6 +22,7 @@ DISTFILES += qml/harbour-hacontrol.qml \
     qml/lib/HaApi.js \
     qml/pages/FirstPage.qml \
     qml/pages/SettingsPage.qml \
+    qml/pages/LightDetailPage.qml \
     qml/views/RoomsView.qml \
     qml/views/SensorsView.qml \
     rpm/harbour-hacontrol.spec \

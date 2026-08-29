@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.3
+Version:    0.4
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -20,9 +20,10 @@ BuildRequires:  desktop-file-utils
 %description
 Native SailfishOS-App zur Steuerung einer lokalen Home-Assistant-Instanz.
 Entity-Liste (Lights/Switches) mit Toggle, nach Raum gruppiert und ein-/
-ausklappbar, inkl. Temperatur-/Feuchte-/Luftdruck-Sensoren. Periodischer
-Background-Poll (BackgroundJob) mit lokaler Benachrichtigung bei
-Zustandsänderung beobachteter Entities.
+ausklappbar, inkl. Temperatur-/Feuchte-/Luftdruck-Sensoren. Live-Updates
+per WebSocket, erweiterte Lichtsteuerung (Helligkeit/Farbe/Farbtemperatur)
+per Tap auf den Namen. Periodischer Background-Poll (BackgroundJob) mit
+lokaler Benachrichtigung bei Zustandsänderung beobachteter Entities.
 
 
 %prep

@@ -298,3 +298,40 @@ auf Emulator und echtem Gerät zurück nach `master` gemerged.
   externes Schalten eines Lichts (z.B. über die HA-Weboberfläche oder
   physischen Schalter) erscheint sofort in der App, ohne manuelles
   Pull-to-refresh.
+
+## 9. Update 2026-08-29 (Teil 4): Erweiterte Lichtsteuerung, v0.4-Release
+
+In eigenem Branch (`feature/light-detail-controls`) entwickelt.
+
+- **Submenu statt Ausbau des Toggles**: Tap auf den Namen einer
+  `light`-Entity (nur Lichter, nicht Switches) öffnet
+  `qml/pages/LightDetailPage.qml` mit Helligkeit-/Farbtemperatur-Slidern
+  und einem Button zum Farbe-Wählen -- der Toggle-Switch bleibt unverändert.
+  `ListItem.onClicked` + `menu:` (Kontextmenü) koexistieren ohne
+  zusätzliche `MouseArea`, da `ListItem` beides gleichzeitig unterstützt;
+  `onClicked` feuert für Taps ausserhalb des Switch-Bereichs (der Switch
+  konsumiert seinen eigenen Tap zuerst).
+- **Capability-Erkennung** über `attributes.supported_color_modes`
+  (Helligkeit: irgendein Modus ausser `onoff`; Farbtemperatur:
+  `color_temp`; Farbe: `hs`/`rgb`/`xy`/`rgbw`/`rgbww`) -- nur tatsächlich
+  unterstützte Regler werden angezeigt.
+- **Kelvin statt Mired verifiziert**: vor dem Schreiben von Code echte
+  Light-Entity-Attribute der HA-Instanz abgefragt (`curl .../api/states`).
+  Diese HA-Version nutzt durchgehend `min_color_temp_kelvin`/
+  `max_color_temp_kelvin`/`color_temp_kelvin` (kein `mireds` mehr) --
+  `light.turn_on` entsprechend mit `color_temp_kelvin` statt `color_temp`
+  aufgerufen.
+- **Farbauswahl über stock Silica-Komponente** `ColorPickerPage`
+  (`import Sailfish.Silica 1.0`, kein eigener Farbwähler gebaut) -- API
+  vorher via `sfdk tools exec ... cat ColorPickerPage.qml` verifiziert
+  (`signal colorClicked(color color)`, gepusht als inline `Component`).
+- **Bug gefunden+gefixt** (Nutzer-Feedback: "state scheint erst nach
+  licht ein zu stimmen"): HA meldet `brightness`/`color_temp_kelvin`/
+  `rgb_color` als `null`, solange die Entity `state: off` ist -- keine
+  Einschränkung unserer App, sondern HAs Datenmodell (viele Integrationen
+  "vergessen" den letzten Wert visuell, auch wenn intern noch vorhanden).
+  Fix: Hinweistext auf der Detail-Seite, sichtbar nur wenn `!entityIsOn`,
+  erklärt dass der Regler dann einen Startwert statt eines gespeicherten
+  Zustands zeigt, und dass Verstellen das Licht mit einschaltet.
+- **v0.4-Release**: Version hochgezählt, Branch nach `master` gemerged,
+  alle drei RPMs neu gebaut und veröffentlicht.
