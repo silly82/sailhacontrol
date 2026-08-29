@@ -117,7 +117,11 @@ Item {
                 isOn: s.state === "on",
                 notify: watched.indexOf(s.entity_id) >= 0,
                 value: s.state,
-                unit: s.attributes.unit_of_measurement || ""
+                unit: s.attributes.unit_of_measurement || "",
+                // Für Lichter: Rohattribute (supported_color_modes,
+                // brightness, color_temp_kelvin, ...) fürs Submenu
+                // in LightDetailPage.qml -- s.u. openLightDetail().
+                attributes: domain === "light" ? s.attributes : ({})
             })
         }
 
@@ -137,7 +141,7 @@ Item {
                 }
                 return x.friendlyName.localeCompare(y.friendlyName)
             })
-            entriesModel.append({ rowType: "header", room: roomName, count: entities.length, entityId: "", domain: "", kind: "", friendlyName: "", isOn: false, notify: false, value: "", unit: "" })
+            entriesModel.append({ rowType: "header", room: roomName, count: entities.length, entityId: "", domain: "", kind: "", friendlyName: "", isOn: false, notify: false, value: "", unit: "", attributes: ({}) })
             for (var m = 0; m < entities.length; m++) {
                 var e = entities[m]
                 e.rowType = "entity"
@@ -146,6 +150,16 @@ Item {
                 entriesModel.append(e)
             }
         }
+    }
+
+    function openLightDetail(index) {
+        var entry = entriesModel.get(index)
+        pageStack.push(Qt.resolvedUrl("../pages/LightDetailPage.qml"), {
+            entityId: entry.entityId,
+            entityName: entry.friendlyName,
+            entityIsOn: entry.isOn,
+            attributes: entry.attributes
+        })
     }
 
     function refresh() {
@@ -334,6 +348,17 @@ Item {
             clip: true
 
             menu: (!isHeader && model.kind === "toggle") ? notifyMenuComponent : null
+
+            // Bei Lichtern: Tap auf den Namen öffnet das Submenu mit
+            // Helligkeit/Farbe/Farbtemperatur. Der Switch hat sein eigenes
+            // onClicked und "gewinnt" für Taps auf seinem eigenen Bereich;
+            // koexistiert mit dem Long-Press-Kontextmenü oben (ListItem
+            // unterstützt onClicked + menu: gleichzeitig).
+            onClicked: {
+                if (!isHeader && model.kind === "toggle" && model.domain === "light") {
+                    openLightDetail(index)
+                }
+            }
 
             Component {
                 id: notifyMenuComponent
