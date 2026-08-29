@@ -1,6 +1,6 @@
 # HA Control
 
-A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home Assistant](https://www.home-assistant.io/) instance from a SailfishOS phone — no cloud dependency, no Companion App, REST-API only.
+A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home Assistant](https://www.home-assistant.io/) instance from a SailfishOS phone — no cloud dependency, no Companion App.
 
 See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated development log.
 
@@ -9,10 +9,11 @@ See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated de
 - Entity list (lights/switches) with toggle, grouped by Home Assistant Area/Room, collapsible per room.
 - Cross-room sensor overview (temperature, humidity, atmospheric pressure), rounded to one decimal, only sensors currently reporting a value.
 - Swipe left/right between the room view and the sensor overview — no menu navigation needed.
+- **Live updates via WebSocket**: an external change (HA web UI, physical switch, automation) shows up in the app immediately, no manual refresh needed.
 - Local background poll (every 10 min) with a notification when a watched entity's state changes.
 - Confirmed working end-to-end against a real, large (1500+ entity) Home Assistant instance, on both the SailfishOS SDK emulator and a real aarch64 device.
 
-Not yet implemented: WebSocket live updates, lockscreen widget, remote (non-local-network) access.
+Not yet implemented: lockscreen widget, remote (non-local-network) access.
 
 ## Installing
 
@@ -39,6 +40,7 @@ Local network only — no Nabu Casa / reverse-proxy support yet.
 - Token is stored in plain text via `org.nemomobile.configuration` (dconf) — fine for a single-user device, not a shared one.
 - The `armv7hl` build is untested (see table above).
 - Background notifications rely on `Nemo.KeepAlive`'s `BackgroundJob`, which only keeps the app process alive while it's already resident (foreground or recently backgrounded) — a fully terminated app is not woken up by it.
+- The WebSocket subscription receives every entity's `state_changed` event (Home Assistant doesn't support server-side domain filtering here) — on a very large instance this is a lot of client-side filtering; not a problem in testing, but a possible future optimization.
 
 ## License
 
@@ -48,7 +50,7 @@ Local network only — no Nabu Casa / reverse-proxy support yet.
 
 # HA Control (Deutsch – Schweizer Hochdeutsch)
 
-Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer lokalen [Home-Assistant](https://www.home-assistant.io/)-Instanz von einem SailfishOS-Telefon aus — ohne Cloud-Abhängigkeit, ohne Companion-App, nur über die REST-API.
+Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer lokalen [Home-Assistant](https://www.home-assistant.io/)-Instanz von einem SailfishOS-Telefon aus — ohne Cloud-Abhängigkeit, ohne Companion-App.
 
 Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md).
 
@@ -57,10 +59,11 @@ Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in
 - Entity-Liste (Lights/Switches) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar.
 - Raumübergreifende Sensor-Übersicht (Temperatur, Feuchtigkeit, Luftdruck), auf eine Nachkommastelle gerundet, nur Sensoren mit aktuell gültigem Wert.
 - Wischen nach links/rechts zwischen Raumansicht und Sensor-Übersicht — keine Menü-Navigation nötig.
+- **Live-Updates per WebSocket**: eine externe Änderung (HA-Weboberfläche, physischer Schalter, Automatisierung) erscheint sofort in der App, kein manuelles Refresh nötig.
 - Lokaler Hintergrund-Poll (alle 10 Minuten) mit Benachrichtigung bei Zustandsänderung einer beobachteten Entity.
 - Bestätigt funktionierend, Ende-zu-Ende, gegen eine echte, grosse (1500+ Entities) Home-Assistant-Instanz — sowohl im SailfishOS-SDK-Emulator als auch auf einem echten aarch64-Gerät.
 
-Noch nicht umgesetzt: WebSocket-Live-Updates, Lockscreen-Widget, Remote-Zugriff (ausserhalb des lokalen Netzes).
+Noch nicht umgesetzt: Lockscreen-Widget, Remote-Zugriff (ausserhalb des lokalen Netzes).
 
 ## Installation
 
@@ -87,6 +90,7 @@ Nur lokales Netz — Nabu Casa / Reverse-Proxy wird noch nicht unterstützt.
 - Der Token wird im Klartext über `org.nemomobile.configuration` (dconf) gespeichert — für ein Einzelbenutzer-Gerät akzeptabel, nicht für ein geteiltes Gerät gedacht.
 - Der `armv7hl`-Build ist ungetestet (siehe Tabelle oben).
 - Hintergrund-Benachrichtigungen basieren auf `Nemo.KeepAlive`s `BackgroundJob`, welcher den App-Prozess nur wach hält, solange dieser ohnehin bereits resident ist (im Vordergrund oder kürzlich in den Hintergrund geschickt) — eine vollständig beendete App wird dadurch nicht wieder gestartet.
+- Das WebSocket-Abo erhält jedes `state_changed`-Event aller Entities (Home Assistant kennt hier keine serverseitige Domain-Filterung) — bei einer sehr grossen Instanz entsprechend viel Client-seitiges Filtern; im Test kein Problem, aber ein möglicher Kandidat für spätere Optimierung.
 
 ## Lizenz
 

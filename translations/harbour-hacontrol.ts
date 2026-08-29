@@ -12,48 +12,53 @@
 <context>
     <name>RoomsView</name>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="32"/>
+        <location filename="../qml/views/RoomsView.qml" line="37"/>
         <source>Ohne Raum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="170"/>
-        <location filename="../qml/views/RoomsView.qml" line="190"/>
+        <location filename="../qml/views/RoomsView.qml" line="175"/>
+        <location filename="../qml/views/RoomsView.qml" line="195"/>
         <source>Unbekannter Fehler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="205"/>
+        <location filename="../qml/views/RoomsView.qml" line="295"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="209"/>
+        <location filename="../qml/views/RoomsView.qml" line="299"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="215"/>
+        <location filename="../qml/views/RoomsView.qml" line="305"/>
         <source>HA Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="223"/>
+        <location filename="../qml/views/RoomsView.qml" line="306"/>
+        <source>Live</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/RoomsView.qml" line="314"/>
         <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="251"/>
+        <location filename="../qml/views/RoomsView.qml" line="342"/>
         <source>Benachrichtigung deaktivieren</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="251"/>
+        <location filename="../qml/views/RoomsView.qml" line="342"/>
         <source>Bei Änderung benachrichtigen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="296"/>
+        <location filename="../qml/views/RoomsView.qml" line="387"/>
         <source>benachrichtigt</source>
         <translation type="unfinished"></translation>
     </message>

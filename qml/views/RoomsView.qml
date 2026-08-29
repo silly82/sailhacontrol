@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import QtWebSockets 1.0
 import org.nemomobile.configuration 1.0
 import "../lib/HaApi.js" as HaApi
 import "../components"
@@ -29,6 +30,10 @@ Item {
 
     property bool configured: baseUrlSetting.value.length > 0 && tokenSetting.value.length > 0
     property string errorText: ""
+    // true once HA has confirmed our WS auth + subscribe_events -- drives
+    // the "Live"-Hinweis im PageHeader.
+    property bool wsSubscribed: false
+    property int wsMessageId: 1
     readonly property string noRoomLabel: qsTr("Ohne Raum")
     // room name -> bool. Missing key == collapsed (rooms start folded).
     property var expandedRooms: ({})
@@ -190,6 +195,91 @@ Item {
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
     }
 
+    // Ausbaustufe 2: WebSocket-Live-Updates statt reinem REST-Poll. Die
+    // REST-Calls in refresh() bleiben die Quelle für Struktur (Räume,
+    // Sortierung, initialer Zustand) -- der Socket liefert danach nur noch
+    // Deltas (state_changed), die per-Zeile in entriesModel gepatcht
+    // werden, ohne komplettes Neu-Aufbauen der Liste.
+    //
+    // Bekannte Einschränkung: HAs subscribe_events(state_changed) kennt
+    // keine serverseitige Domain-Filterung -- bei grossen Instanzen (hier:
+    // 1499 Entities) kommen laufend Events für Entities, die gar nicht in
+    // unserem Model sind (z.B. Energie-Sensoren im Sekundentakt). Wird pro
+    // Event mit einem linearen Scan über entriesModel verworfen -- für die
+    // hier relevanten Listengrössen (wenige hundert Zeilen) unkritisch,
+    // könnte bei Bedarf später per entityId->index-Map optimiert werden.
+    function wsUrlFor(url) {
+        return url.replace(/\/+$/, "").replace(/^http/, "ws") + "/api/websocket"
+    }
+
+    function applyStateChange(entityId, newState) {
+        for (var i = 0; i < entriesModel.count; i++) {
+            var row = entriesModel.get(i)
+            if (row.rowType !== "entity" || row.entityId !== entityId) {
+                continue
+            }
+            if (row.kind === "toggle") {
+                entriesModel.setProperty(i, "isOn", newState.state === "on")
+            } else if (row.kind === "sensor") {
+                entriesModel.setProperty(i, "value", newState.state)
+                entriesModel.setProperty(i, "unit", (newState.attributes && newState.attributes.unit_of_measurement) || "")
+            }
+            return
+        }
+    }
+
+    WebSocket {
+        id: liveSocket
+        url: baseUrlSetting.value.length > 0 ? wsUrlFor(baseUrlSetting.value) : ""
+        active: configured
+
+        onStatusChanged: {
+            if (status === WebSocket.Closed || status === WebSocket.Error) {
+                wsSubscribed = false
+                wsReconnectTimer.restart()
+            }
+        }
+
+        onTextMessageReceived: {
+            var msg
+            try {
+                msg = JSON.parse(message)
+            } catch (e) {
+                return
+            }
+            if (msg.type === "auth_required") {
+                sendTextMessage(JSON.stringify({ type: "auth", access_token: tokenSetting.value }))
+            } else if (msg.type === "auth_ok") {
+                wsMessageId = 1
+                sendTextMessage(JSON.stringify({ id: wsMessageId, type: "subscribe_events", event_type: "state_changed" }))
+                wsMessageId += 1
+                wsSubscribed = true
+            } else if (msg.type === "auth_invalid") {
+                wsSubscribed = false
+            } else if (msg.type === "event" && msg.event && msg.event.event_type === "state_changed") {
+                var data = msg.event.data
+                if (data && data.new_state) {
+                    applyStateChange(data.entity_id, data.new_state)
+                }
+            }
+        }
+    }
+
+    // Kein automatisches Reconnect im WebSocket-Typ selbst -- bei
+    // Closed/Error nach 5s erneut versuchen, solange noch konfiguriert.
+    // active wird per Qt.binding() wiederhergestellt, damit spätere
+    // Änderungen an "configured" (z.B. Token in Settings gelöscht) den
+    // Socket weiterhin korrekt reaktiv deaktivieren.
+    Timer {
+        id: wsReconnectTimer
+        interval: 5000
+        repeat: false
+        onTriggered: {
+            liveSocket.active = false
+            liveSocket.active = Qt.binding(function () { return configured })
+        }
+    }
+
     Component.onCompleted: refresh()
 
     SilicaListView {
@@ -213,6 +303,7 @@ Item {
 
             PageHeader {
                 title: qsTr("HA Control")
+                description: wsSubscribed ? qsTr("Live") : ""
             }
 
             Label {
