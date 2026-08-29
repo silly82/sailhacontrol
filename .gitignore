@@ -1,0 +1,14 @@
+*.o
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+Makefile
+harbour-hacontrol
+RPMS/
+build-*/
+.qmake.stash
+*.pro.user
+*.pro.user.*
+.sfdk/
+translations/*.qm
+documentation.list

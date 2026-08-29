@@ -1,0 +1,21 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=harbour-hacontrol
+Exec=harbour-hacontrol
+Name=HA Control
+# translation example:
+# your app name in German locale (de)
+#
+# Remember to comment out the following line, if you do not want to use
+# a different app name in German locale (de).
+Name[de]=HA Control
+
+[X-Sailjail]
+# Replace with your organization as a reverse domain name
+OrganizationName=org.example
+# ApplicationName does not have to be identical to Name
+ApplicationName=hacontrol
+# Only local-network HTTP(S) to the Home Assistant instance is needed --
+# no Camera/Location/etc. permissions for Ausbaustufe 1.
+Permissions=Internet;
