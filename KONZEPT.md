@@ -260,3 +260,41 @@ statt `org.nemomobile.keepalive`, `BackgroundJob` statt `BackgroundActivity`
   (vorher `http://example.org/`-Platzhalter). Alle drei RPMs (i486/
   aarch64/armv7hl) neu gebaut und über `gh release create` mit Notes
   veröffentlicht.
+
+## 8. Update 2026-08-29 (Teil 3): WebSocket-Live-Updates (Rest von Stufe 2)
+
+In eigenem Branch (`feature/websocket-live-updates`) entwickelt, nach Test
+auf Emulator und echtem Gerät zurück nach `master` gemerged.
+
+- **Vorab-Verifikation statt Rätselraten**: anders als bei `BackgroundJob`
+  zuvor wurde die exakte QML-API diesmal *vor* dem Schreiben von Code aus
+  dem `plugins.qmltypes` des SDK-Build-Targets ausgelesen (`sfdk tools exec
+  ... cat .../QtWebSockets/plugins.qmltypes`). Typ heisst `WebSocket`
+  (`import QtWebSockets 1.0`), Properties `url`/`status`/`active`, Signals
+  `textMessageReceived`/`statusChanged`, Methode `sendTextMessage()`.
+  **Falle dabei**: das Modul war zwar laut `zypper` im Build-Target
+  installiert, die eigentliche `.so` fehlte trotzdem -- `zypper install
+  --force` hat sie nachgezogen. Pakete: `qt5-qtdeclarative-import-websockets`
+  (QML-Plugin) + `qt5-qtwebsockets` (C++-Lib), beide als `Requires:` im
+  Spec ergänzt -- auf dem echten Gerät hat `pkcon` das QML-Plugin-Paket
+  beim Install korrekt automatisch nachgezogen.
+- **Architektur**: REST (`refresh()`) bleibt die Quelle für Struktur
+  (Räume, Sortierung, initialer Zustand); der WebSocket liefert danach nur
+  noch Deltas (`state_changed`-Events), die per-Zeile in `entriesModel`
+  gepatcht werden (`applyStateChange()`), ohne die Liste neu aufzubauen.
+  Auth-Handshake (`auth_required` → `auth`-Antwort mit Token →
+  `auth_ok` → `subscribe_events`) läuft komplett in
+  `qml/views/RoomsView.qml`. Reconnect nach 5s bei `Closed`/`Error` über
+  `Qt.binding()`-Wiederherstellung von `active`, statt die Bindung an
+  `configured` durch eine reine Wertzuweisung dauerhaft zu brechen.
+- **Bekannte Einschränkung**: HAs `subscribe_events(state_changed)` kennt
+  keine serverseitige Domain-Filterung -- bei der 1499-Entity-Instanz des
+  Nutzers kommen laufend Events für Entities ausserhalb unseres Models
+  (z.B. Energie-Sensoren im Sekundentakt), die per linearem Scan verworfen
+  werden. Für die hier relevanten Listengrössen unkritisch, aber ein
+  möglicher Kandidat für spätere Optimierung (`entityId`→Index-Map), falls
+  Akku-/CPU-Last bei sehr grossen Instanzen auffällt.
+- **Verifiziert**: vom Nutzer auf Emulator UND echtem Gerät bestätigt --
+  externes Schalten eines Lichts (z.B. über die HA-Weboberfläche oder
+  physischen Schalter) erscheint sofort in der App, ohne manuelles
+  Pull-to-refresh.
