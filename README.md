@@ -4,10 +4,11 @@ A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home
 
 See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated development log.
 
-## Status: v0.2, working prototype
+## Status: v0.3, working prototype
 
 - Entity list (lights/switches) with toggle, grouped by Home Assistant Area/Room, collapsible per room.
-- Read-only sensor display (temperature, humidity, atmospheric pressure), rounded to one decimal.
+- Cross-room sensor overview (temperature, humidity, atmospheric pressure), rounded to one decimal, only sensors currently reporting a value.
+- Swipe left/right between the room view and the sensor overview — no menu navigation needed.
 - Local background poll (every 10 min) with a notification when a watched entity's state changes.
 - Confirmed working end-to-end against a real, large (1500+ entity) Home Assistant instance, on both the SailfishOS SDK emulator and a real aarch64 device.
 
@@ -39,6 +40,10 @@ Local network only — no Nabu Casa / reverse-proxy support yet.
 - The `armv7hl` build is untested (see table above).
 - Background notifications rely on `Nemo.KeepAlive`'s `BackgroundJob`, which only keeps the app process alive while it's already resident (foreground or recently backgrounded) — a fully terminated app is not woken up by it.
 
+## License
+
+[MIT](LICENSE)
+
 ---
 
 # HA Control (Deutsch – Schweizer Hochdeutsch)
@@ -47,10 +52,11 @@ Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer l
 
 Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md).
 
-## Status: v0.2, funktionierender Prototyp
+## Status: v0.3, funktionierender Prototyp
 
 - Entity-Liste (Lights/Switches) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar.
-- Read-only-Anzeige von Sensoren (Temperatur, Feuchtigkeit, Luftdruck), auf eine Nachkommastelle gerundet.
+- Raumübergreifende Sensor-Übersicht (Temperatur, Feuchtigkeit, Luftdruck), auf eine Nachkommastelle gerundet, nur Sensoren mit aktuell gültigem Wert.
+- Wischen nach links/rechts zwischen Raumansicht und Sensor-Übersicht — keine Menü-Navigation nötig.
 - Lokaler Hintergrund-Poll (alle 10 Minuten) mit Benachrichtigung bei Zustandsänderung einer beobachteten Entity.
 - Bestätigt funktionierend, Ende-zu-Ende, gegen eine echte, grosse (1500+ Entities) Home-Assistant-Instanz — sowohl im SailfishOS-SDK-Emulator als auch auf einem echten aarch64-Gerät.
 
@@ -81,3 +87,7 @@ Nur lokales Netz — Nabu Casa / Reverse-Proxy wird noch nicht unterstützt.
 - Der Token wird im Klartext über `org.nemomobile.configuration` (dconf) gespeichert — für ein Einzelbenutzer-Gerät akzeptabel, nicht für ein geteiltes Gerät gedacht.
 - Der `armv7hl`-Build ist ungetestet (siehe Tabelle oben).
 - Hintergrund-Benachrichtigungen basieren auf `Nemo.KeepAlive`s `BackgroundJob`, welcher den App-Prozess nur wach hält, solange dieser ohnehin bereits resident ist (im Vordergrund oder kürzlich in den Hintergrund geschickt) — eine vollständig beendete App wird dadurch nicht wieder gestartet.
+
+## Lizenz
+
+[MIT](LICENSE)

@@ -1,10 +1,10 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.2
+Version:    0.3
 Release:    1
-License:    LICENSE
-URL:        http://example.org/
+License:    MIT
+URL:        https://github.com/silly82/sailhacontrol
 Source0:    %{name}-%{version}.tar.bz2
 Requires:   sailfishsilica-qt5 >= 0.10.9
 Requires:   nemo-qml-plugin-notifications-qt5

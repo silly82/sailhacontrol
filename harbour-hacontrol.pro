@@ -22,11 +22,11 @@ DISTFILES += qml/harbour-hacontrol.qml \
     qml/lib/HaApi.js \
     qml/pages/FirstPage.qml \
     qml/pages/SettingsPage.qml \
+    qml/views/RoomsView.qml \
+    qml/views/SensorsView.qml \
     rpm/harbour-hacontrol.spec \
     harbour-hacontrol.desktop
 
-# TODO: no app icon yet -- add icons/<size>/harbour-hacontrol.png for each
-# size below before packaging (see KONZEPT.md).
 SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 
 # to disable building translations every time, comment out the

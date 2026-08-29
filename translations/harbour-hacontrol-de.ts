@@ -10,51 +10,99 @@
     </message>
 </context>
 <context>
-    <name>FirstPage</name>
+    <name>RoomsView</name>
     <message>
-        <location filename="../qml/pages/FirstPage.qml" line="32"/>
+        <location filename="../qml/views/RoomsView.qml" line="32"/>
         <source>Ohne Raum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/FirstPage.qml" line="170"/>
-        <location filename="../qml/pages/FirstPage.qml" line="190"/>
+        <location filename="../qml/views/RoomsView.qml" line="170"/>
+        <location filename="../qml/views/RoomsView.qml" line="190"/>
         <source>Unbekannter Fehler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/FirstPage.qml" line="205"/>
+        <location filename="../qml/views/RoomsView.qml" line="205"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/FirstPage.qml" line="209"/>
+        <location filename="../qml/views/RoomsView.qml" line="209"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/FirstPage.qml" line="215"/>
+        <location filename="../qml/views/RoomsView.qml" line="215"/>
         <source>HA Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/FirstPage.qml" line="223"/>
+        <location filename="../qml/views/RoomsView.qml" line="223"/>
         <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/FirstPage.qml" line="251"/>
+        <location filename="../qml/views/RoomsView.qml" line="251"/>
         <source>Benachrichtigung deaktivieren</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/FirstPage.qml" line="251"/>
+        <location filename="../qml/views/RoomsView.qml" line="251"/>
         <source>Bei Änderung benachrichtigen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/FirstPage.qml" line="296"/>
+        <location filename="../qml/views/RoomsView.qml" line="296"/>
         <source>benachrichtigt</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SensorsView</name>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="29"/>
+        <source>Temperatur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="30"/>
+        <source>Luftfeuchtigkeit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="31"/>
+        <source>Luftdruck</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="83"/>
+        <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="95"/>
+        <source>Unbekannter Fehler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="111"/>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="115"/>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="121"/>
+        <source>Sensor-Übersicht</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="130"/>
+        <source>Noch nicht konfiguriert</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

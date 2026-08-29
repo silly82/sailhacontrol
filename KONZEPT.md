@@ -242,4 +242,21 @@ statt `org.nemomobile.keepalive`, `BackgroundJob` statt `BackgroundActivity`
   da keine armv7hl-Hardware zur Verfügung stand). Doku (`README.md`) auf
   Englisch verfasst, mit Schweizer-Hochdeutsch-Abschnitt danach (kein
   „ß", `ss` statt).
-- Kein Git-Repo -- weiterhin offen (s. Abschnitt 3).
+
+## 7. Update 2026-08-29 (Teil 2): Swipe-Navigation, v0.3-Release
+
+- **Swipe statt Pull-down-Menüpunkt**: Die Sensor-Übersicht war zunächst
+  eine eigene, per Pull-down-Menü gepushte `SensorsPage.qml`. Umgebaut zu
+  zwei nebeneinander liegenden Sub-Views (`qml/views/RoomsView.qml`,
+  `qml/views/SensorsView.qml`), gewechselt per horizontalem Swipe in einer
+  gemeinsamen `SilicaFlickable` (`flickableDirection: HorizontalFlick`,
+  manuelles Snapping auf `contentX` via `NumberAnimation`) innerhalb der
+  jetzt sehr dünnen `FirstPage.qml`. Settings bleibt in beiden Sub-Views
+  über das jeweils eigene Pull-down-Menü erreichbar. Vom Nutzer nach Test
+  auf Emulator UND echtem Gerät bestätigt: "funktioniert gut".
+- **v0.3-Release**: Version in `rpm/harbour-hacontrol.spec` hochgezählt,
+  `License:` von Platzhalter auf `MIT` korrigiert (dazugehörige
+  `LICENSE`-Datei ergänzt), `URL:` auf die echte GitHub-Repo-URL gesetzt
+  (vorher `http://example.org/`-Platzhalter). Alle drei RPMs (i486/
+  aarch64/armv7hl) neu gebaut und über `gh release create` mit Notes
+  veröffentlicht.
