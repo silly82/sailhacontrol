@@ -335,3 +335,50 @@ In eigenem Branch (`feature/light-detail-controls`) entwickelt.
   Zustands zeigt, und dass Verstellen das Licht mit einschaltet.
 - **v0.4-Release**: Version hochgezählt, Branch nach `master` gemerged,
   alle drei RPMs neu gebaut und veröffentlicht.
+
+## 10. Update 2026-08-31: Lockscreen-Widget geprüft -- nicht möglich, Notification-Action stattdessen
+
+**Rechercheergebnis vor dem Bauen**: ein echtes Lockscreen-Widget wie unter
+Android existiert für Sailjail-sandboxte Drittanbieter-Apps nicht. Der
+gesamte Lockscreen-QML-Code (`LockScreen.qml`,
+`LockscreenBackground.qml`, ...) liegt unter `lipstick-jolla-home-qt5`,
+also im System selbst -- keine `Loader`/Plugin-Erweiterungsstelle für
+Drittanbieter-Inhalte gefunden (`grep` nach `loader|plugin|thirdparty` in
+`LockScreen.qml` ergab nichts). Damit war die ursprüngliche
+Konzept-Formulierung "Lockscreen-Widget" nicht wörtlich umsetzbar --
+mit dem Nutzer abgestimmt: stattdessen **Notification mit
+Action-Button**, der direkt vom Sperrbildschirm aus (aufgeklappte
+Benachrichtigung) eine beobachtete Entity umschaltet, ohne die App zu
+öffnen.
+
+- **Technischer Weg**: `Nemo.Notifications`' `Notification.remoteActions`
+  (Property, Array von `remoteAction(name, displayName, service, path,
+  iface, method, arguments)`-Deskriptoren) plus `Nemo.DBus`'
+  `DBusAdaptor` -- Letzteres erlaubt, einen D-Bus-Dienst **komplett aus
+  QML heraus** anzubieten (keine C++-Erweiterung nötig). Muster
+  (Funktionsnamen im `DBusAdaptor`-Block werden automatisch zu
+  D-Bus-Methoden) verifiziert anhand von `jolla-settings/settings.qml`
+  im SDK-Target, nicht geraten.
+- **Umsetzung** in `qml/harbour-hacontrol.qml`: `DBusAdaptor` mit
+  `service/path/iface = org.example.hacontrol` (ergibt sich aus dem
+  bereits von Sailjail vergebenen eigenen Bus-Namen, s.
+  `[X-Sailjail]` in der `.desktop`-Datei) und einer `toggleEntity(entityId)`-
+  Funktion, die den bestehenden `HaApi.callService(...toggle...)`-Call
+  aufruft. `notifyStateChange()` hängt jetzt `remoteActions` mit einer
+  "Umschalten"-Aktion an jede Benachrichtigung.
+- **Gleiche Einschränkung wie der Background-Poll selbst**: funktioniert
+  nur, während der App-Prozess resident ist (kein D-Bus-Activation-
+  `.service`-File vorhanden) -- keine neue Einschränkung, sondern
+  dieselbe wie bei Ausbaustufe 3/Variante B insgesamt.
+- **Verifiziert in zwei Schritten**: (1) `toggleEntity` manuell per
+  `dbus-send` gegen eine echte Entity (`light.wohnen`) aufgerufen --
+  Licht ging real an, per REST-API-Abfrage bestätigt, danach zurück
+  ausgeschaltet. (2) Kompletter Weg End-to-End über einen echten
+  Background-Poll-Zyklus: `watchedEntities`/`lastKnownStates` in dconf
+  vorbereitet, Nutzer hat die Entity extern umgeschaltet, nach dem
+  nächsten Poll zeigte `lastKnownStates` den neuen Wert und
+  `NotificationActionRow.qml` (die Lipstick-Komponente fürs Rendern von
+  Action-Buttons auf Benachrichtigungen) tauchte exakt zum Poll-Zeitpunkt
+  im Journal auf -- Nachweis, dass die Benachrichtigung mit sichtbarem
+  Button tatsächlich publiziert wurde.
+- **Neues `Requires:`**: `nemo-qml-plugin-dbus-qt5` im Spec ergänzt.

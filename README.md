@@ -4,17 +4,17 @@ A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home
 
 See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated development log.
 
-## Status: v0.4, working prototype
+## Status: v0.5, working prototype
 
 - Entity list (lights/switches) with toggle, grouped by Home Assistant Area/Room, collapsible per room.
 - Tap a light's name to open brightness / color / color-temperature controls — only the controls that light actually supports are shown. The toggle switch itself is unchanged.
 - Cross-room sensor overview (temperature, humidity, atmospheric pressure), rounded to one decimal, only sensors currently reporting a value.
 - Swipe left/right between the room view and the sensor overview — no menu navigation needed.
 - **Live updates via WebSocket**: an external change (HA web UI, physical switch, automation) shows up in the app immediately, no manual refresh needed.
-- Local background poll (every 10 min) with a notification when a watched entity's state changes.
+- Local background poll (every 10 min) with a notification when a watched entity's state changes — the notification itself has a toggle button, actionable right from the lock screen without opening the app. (There's no public lockscreen-widget API on SailfishOS for third-party apps; this is the closest equivalent.)
 - Confirmed working end-to-end against a real, large (1500+ entity) Home Assistant instance, on both the SailfishOS SDK emulator and a real aarch64 device.
 
-Not yet implemented: lockscreen widget, remote (non-local-network) access.
+Not yet implemented: remote (non-local-network) access.
 
 ## Installing
 
@@ -43,6 +43,7 @@ Local network only — no Nabu Casa / reverse-proxy support yet.
 - Background notifications rely on `Nemo.KeepAlive`'s `BackgroundJob`, which only keeps the app process alive while it's already resident (foreground or recently backgrounded) — a fully terminated app is not woken up by it.
 - The WebSocket subscription receives every entity's `state_changed` event (Home Assistant doesn't support server-side domain filtering here) — on a very large instance this is a lot of client-side filtering; not a problem in testing, but a possible future optimization.
 - While a light is off, Home Assistant reports `brightness`/`color_temp_kelvin`/`rgb_color` as `null` — the detail page's sliders then show a starting value, not the light's remembered setting. This is a Home Assistant data-model characteristic, not something the app can work around.
+- The notification's toggle button only works while the app process is resident (same constraint as the background poll itself) — there's no D-Bus activation `.service` file, so a fully terminated app won't handle the action.
 
 ## License
 
@@ -56,17 +57,17 @@ Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer l
 
 Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md).
 
-## Status: v0.4, funktionierender Prototyp
+## Status: v0.5, funktionierender Prototyp
 
 - Entity-Liste (Lights/Switches) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar.
 - Tap auf den Namen eines Lichts öffnet Helligkeit-/Farb-/Farbtemperatur-Regler — nur was das jeweilige Licht tatsächlich unterstützt wird angezeigt. Der Toggle-Switch selbst bleibt unverändert.
 - Raumübergreifende Sensor-Übersicht (Temperatur, Feuchtigkeit, Luftdruck), auf eine Nachkommastelle gerundet, nur Sensoren mit aktuell gültigem Wert.
 - Wischen nach links/rechts zwischen Raumansicht und Sensor-Übersicht — keine Menü-Navigation nötig.
 - **Live-Updates per WebSocket**: eine externe Änderung (HA-Weboberfläche, physischer Schalter, Automatisierung) erscheint sofort in der App, kein manuelles Refresh nötig.
-- Lokaler Hintergrund-Poll (alle 10 Minuten) mit Benachrichtigung bei Zustandsänderung einer beobachteten Entity.
+- Lokaler Hintergrund-Poll (alle 10 Minuten) mit Benachrichtigung bei Zustandsänderung einer beobachteten Entity — die Benachrichtigung selbst hat einen Umschalten-Button, direkt vom Sperrbildschirm aus bedienbar, ohne die App zu öffnen. (Es gibt keine öffentliche Lockscreen-Widget-API für Drittanbieter-Apps auf SailfishOS -- das ist das nächstliegende Äquivalent.)
 - Bestätigt funktionierend, Ende-zu-Ende, gegen eine echte, grosse (1500+ Entities) Home-Assistant-Instanz — sowohl im SailfishOS-SDK-Emulator als auch auf einem echten aarch64-Gerät.
 
-Noch nicht umgesetzt: Lockscreen-Widget, Remote-Zugriff (ausserhalb des lokalen Netzes).
+Noch nicht umgesetzt: Remote-Zugriff (ausserhalb des lokalen Netzes).
 
 ## Installation
 
@@ -95,6 +96,7 @@ Nur lokales Netz — Nabu Casa / Reverse-Proxy wird noch nicht unterstützt.
 - Hintergrund-Benachrichtigungen basieren auf `Nemo.KeepAlive`s `BackgroundJob`, welcher den App-Prozess nur wach hält, solange dieser ohnehin bereits resident ist (im Vordergrund oder kürzlich in den Hintergrund geschickt) — eine vollständig beendete App wird dadurch nicht wieder gestartet.
 - Das WebSocket-Abo erhält jedes `state_changed`-Event aller Entities (Home Assistant kennt hier keine serverseitige Domain-Filterung) — bei einer sehr grossen Instanz entsprechend viel Client-seitiges Filtern; im Test kein Problem, aber ein möglicher Kandidat für spätere Optimierung.
 - Solange ein Licht aus ist, meldet Home Assistant `brightness`/`color_temp_kelvin`/`rgb_color` als `null` — die Regler auf der Detail-Seite zeigen dann einen Startwert, nicht die gespeicherte Einstellung des Lichts. Das liegt am Datenmodell von Home Assistant, nicht an der App.
+- Der Umschalten-Button auf der Benachrichtigung funktioniert nur, solange der App-Prozess resident ist (gleiche Einschränkung wie der Hintergrund-Poll selbst) — es gibt kein D-Bus-Activation-`.service`-File, eine vollständig beendete App reagiert also nicht auf den Button.
 
 ## Lizenz
 
