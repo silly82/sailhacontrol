@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.5
+Version:    0.6
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol

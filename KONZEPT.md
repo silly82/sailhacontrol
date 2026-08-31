@@ -392,3 +392,35 @@ Damit sind alle Konzept-Punkte aus Ausbaustufe 1-3 umgesetzt bis auf einen:
   Future-TODO ohne Priorität zurückgestellt** -- explizit auf Wunsch des
   Nutzers nicht jetzt angegangen. Kein technischer Blocker bekannt, nur
   bewusst nicht priorisiert.
+
+## 12. Update 2026-08-31 (Teil 3): Echtes App-Icon statt Platzhalter, v0.6
+
+Bisher nur ein ImageMagick-Platzhalter (blaues Quadrat + "HA"-Schriftzug,
+s. Abschnitt 5). Nutzer hat die offiziellen Sailfish-Icon-Design-Ressourcen
+verlinkt (`Sailfish-Apps-icon-template.zip`,
+sailfishos.org/design/icons/, "App icon story"-PDF) mit dem Hinweis, dass
+die Icon-Silhouette bewusst **keine einfache Rounded-Rect/Squircle** ist,
+sondern eine Familie organischer Formen, definiert im offiziellen Template
+-- nicht selbst schätzen.
+
+- **Exakten Pfad aus dem Template übernommen**: `icon-launcher-template.svg`
+  (86x86-Space) heruntergeladen und den Silhouette-Pfad 1:1 extrahiert --
+  zwei gegenüberliegende Ecken mit grossem organischem Viertelkreis-Radius
+  (~42.7px), die anderen beiden mit normalem kleinem Rundungsradius
+  (~1.4px).
+- **Rendering-Stolperstein**: ImageMagicks eingebauter SVG-Parser (MSVG)
+  unterstützt `<linearGradient>` nicht zuverlässig -- Hintergrund kam
+  einfarbig schwarz statt als Verlauf heraus. `rsvg-convert` (CLI) war
+  nicht installiert, nur die Library. Kein `pip`/`cairosvg` verfügbar.
+  Lösung: `python3-cairo` (pycairo) war als System-Paket bereits
+  vorhanden -- Pfad, Gradient und Motiv direkt per pycairo-API gezeichnet
+  statt über einen SVG-Parser, umgeht das Problem komplett.
+- **Design**: Navy-zu-HA-Blau-Diagonalverlauf (`#1B3A57` → `#41BDF5`),
+  weisses Haus-Silhouetten-Motiv, zentriert. Bei 86px (kleinste
+  Launcher-Grösse) noch klar lesbar getestet.
+- **Reproduzierbar**: Generator-Skript unter `icons/source/generate-icon.py`
+  committed (`python3 icons/source/generate-icon.py` regeneriert alle vier
+  Grössen direkt in `icons/<size>x<size>/`), statt nur die fertigen PNGs
+  ohne Herkunft abzulegen.
+- Vorschlag dem Nutzer per Artifact-losem Bildvergleich (Read-Tool-Vorschau)
+  gezeigt und direkt bestätigt bekommen, dann übernommen.
