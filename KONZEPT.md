@@ -424,3 +424,63 @@ sondern eine Familie organischer Formen, definiert im offiziellen Template
   ohne Herkunft abzulegen.
 - Vorschlag dem Nutzer per Artifact-losem Bildvergleich (Read-Tool-Vorschau)
   gezeigt und direkt bestätigt bekommen, dann übernommen.
+- **Nachtrag**: Datei auf der Platte/im Paket war sofort korrekt (auch via
+  `raw.githubusercontent.com` verifiziert), trotzdem zeigte der
+  Launcher auf beiden Geräten weiter das alte "HA"-Quadrat -- Ursache war
+  ein In-Memory-Pixmap-Cache im lange laufenden `lipstick`-Prozess (auf
+  dem Emulator seit dem allerersten Install vor Tagen aktiv), der beim
+  Überschreiben derselben Datei nie invalidiert wurde. Fix:
+  `systemctl --user restart lipstick` auf beiden Geräten (auf dem
+  Emulator ohne `devel-su`, auf dem Handy ebenfalls ohne -- User-Session-
+  systemd braucht dafür keine Root-Rechte).
+
+## 13. Update 2026-08-31 (Teil 4): Vorbereitung für Jolla-Store/Harbour-Einreichung
+
+Nutzer hat auf die offiziellen Harbour-Richtlinien verwiesen. Recherchiert
+via `docs.sailfishos.org/Develop/Apps/Harbour/` (Allowed APIs, Allowed
+Permissions) -- und, entscheidend, den **offiziellen Validator lokal
+laufen lassen** statt nur die Doku zu lesen:
+```
+sfdk check -s harbour <rpm-datei>
+sfdk check -s rpmlint <rpm-datei>
+```
+Das deckte konkrete, vorher unbekannte Probleme auf:
+
+- **Blockierender Fehler**: `Nemo.KeepAlive 1.1` ist laut Harbours
+  Allowed-APIs-Liste **nicht erlaubt** -- nur `Nemo.KeepAlive 1.2`. Import
+  in `harbour-hacontrol.qml` entsprechend gehoben.
+- **Deprecation-Warnungen bereinigt**: `org.nemomobile.configuration` →
+  `Nemo.Configuration` (5 Dateien), `org.nemomobile.notifications` →
+  `Nemo.Notifications` -- das waren bisher nur kosmetische Log-Zeilen,
+  jetzt als echte Harbour-Warnungen bestätigt und behoben. Nach dem Fix
+  auf dem Emulator verifiziert: keine Deprecation-Zeilen mehr im Journal.
+- **rpmlint-Fehler behoben**: `no-changelogname-tag` (fehlender
+  `%changelog`-Abschnitt -- ergänzt) und `explicit-lib-dependency
+  libkeepalive` (rpmlint will soname-Form `Requires: libkeepalive.so.1`
+  statt Paketname). **Soname-Form wieder zurückgedreht**: bestand lokale
+  Checks genauso gut, brach aber die echte Installation auf dem Handy
+  ("nothing provides libkeepalive.so.1" -- zypper dort wollte die
+  `()(64bit)`-qualifizierte Form). Paketname-`Requires: libkeepalive`
+  bleibt, rpmlint-Warnung bewusst in Kauf genommen (ohnehin nur
+  `TreatErrorsAsWarnings`, kein harter Blocker).
+- **`%license`-Versuch verworfen**: `%license LICENSE` (Fedora-Konvention,
+  installiert nach `/usr/share/licenses/...`) wurde vom Harbour-Validator
+  mit "Installation not allowed in this location" abgelehnt -- Harbours
+  Pfad-Whitelist ist enger als allgemeine Fedora-Regeln. `License:`-Tag im
+  Spec-Header reicht, keine separate Datei installiert.
+- **Unstripped-Binary-Warning behoben**: `sfdk build` (Dev-Workflow) setzt
+  beim qmake-Aufruf `QMAKE_STRIP=:` (No-op) für schnellere Iteration --
+  explizites `%{__strip}` im `%install`-Abschnitt ergänzt statt sich auf
+  automatisches Stripping zu verlassen.
+- **Ergebnis**: `sfdk check -s harbour` UND `-s rpmlint` laufen für alle
+  drei Architekturen (i486/aarch64/armv7hl) sauber durch (0 Fehler,
+  0 Warnungen bei rpmlint bis auf die bewusst akzeptierte
+  `explicit-lib-dependency`). Auf Emulator und echtem Gerät installiert
+  und gestartet, keine neuen Laufzeitfehler.
+- **Noch offen für eine tatsächliche Einreichung** (nicht Teil dieser
+  Vorbereitung): Jolla-Account + Harbour-Zugang einrichten, App-Store-
+  Metadaten (Screenshots, Beschreibungstext fürs Store-Listing, Kategorie)
+  vorbereiten, und die Store-typischen Fragen klären (z. B. ob eine App,
+  die primär eine private/lokale HA-Instanz steuert, für den Store
+  überhaupt sinnvoll ist, oder ob GitHub-Releases das bessere
+  Vertriebsmodell bleiben -- diese Entscheidung liegt beim Nutzer).

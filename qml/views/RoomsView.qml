@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import QtWebSockets 1.0
-import org.nemomobile.configuration 1.0
+import Nemo.Configuration 1.0
 import "../lib/HaApi.js" as HaApi
 import "../components"
 
