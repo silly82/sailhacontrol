@@ -478,9 +478,26 @@ Das deckte konkrete, vorher unbekannte Probleme auf:
   `explicit-lib-dependency`). Auf Emulator und echtem Gerät installiert
   und gestartet, keine neuen Laufzeitfehler.
 - **Noch offen für eine tatsächliche Einreichung** (nicht Teil dieser
-  Vorbereitung): Jolla-Account + Harbour-Zugang einrichten, App-Store-
-  Metadaten (Screenshots, Beschreibungstext fürs Store-Listing, Kategorie)
-  vorbereiten, und die Store-typischen Fragen klären (z. B. ob eine App,
-  die primär eine private/lokale HA-Instanz steuert, für den Store
-  überhaupt sinnvoll ist, oder ob GitHub-Releases das bessere
-  Vertriebsmodell bleiben -- diese Entscheidung liegt beim Nutzer).
+  Vorbereitung): Jolla-Account + Harbour-Zugang einrichten, und die
+  Store-typische Frage klären (z. B. ob eine App, die primär eine
+  private/lokale HA-Instanz steuert, für den Store überhaupt sinnvoll
+  ist, oder ob GitHub-Releases das bessere Vertriebsmodell bleiben --
+  diese Entscheidung liegt beim Nutzer).
+
+## 14. Update 2026-08-31 (Teil 5): Store-Listing-Assets vorbereitet
+
+Neuer Ordner `store/` (kein Code, nicht Teil des RPM-Pakets): drei
+Screenshots vom SDK-Emulator (Raumliste, Sensor-Übersicht,
+Licht-Detail-Regler -- letztere zwei erforderten manuelle Navigation
+durch den Nutzer, da kein Touch-Input simuliert werden kann),
+Beschreibungstext für die Store-Auflistung auf Englisch und Deutsch.
+
+- **Datenschutz-Rückfrage vorab**: die Screenshots zeigen die echten
+  Raum-/Gerätenamen der HA-Instanz des Nutzers (u. a. ein Personenname
+  als Zimmerbezeichnung). Vor dem Committen explizit nachgefragt statt
+  einfach zu veröffentlichen -- vom Nutzer bestätigt: "so wie es ist,
+  passt schon".
+- Harbours FAQ dokumentiert keine festen Screenshot-Masse/-Formate oder
+  eine Kategorie-Liste (anders als die RPM/API-Regeln gibt es dafür
+  keinen automatisierten Validator) -- `store/README.md` hält das
+  explizit als unverifiziert fest, statt Zahlen zu erfinden.

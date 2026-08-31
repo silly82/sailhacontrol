@@ -1,0 +1,21 @@
+HA Control
+
+Steuere deine lokale Home-Assistant-Instanz von SailfishOS aus -- ohne Cloud-Abhängigkeit, ohne Companion-App.
+
+FUNKTIONEN
+
+- Entity-Liste (Lichter, Schalter), gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar.
+- Tap auf den Namen eines Lichts öffnet Helligkeit-, Farb- und Farbtemperatur-Regler -- nur was das jeweilige Licht tatsächlich unterstützt wird angezeigt.
+- Raumübergreifende Sensor-Übersicht: Temperatur, Feuchtigkeit, Luftdruck auf einen Blick.
+- Wischen zwischen Raumansicht und Sensor-Übersicht -- keine Menü-Navigation nötig.
+- Live-Updates per WebSocket: Änderungen von anderswo (HA-Weboberfläche, physischer Schalter, Automatisierung) erscheinen sofort, kein manuelles Refresh.
+- Hintergrund-Benachrichtigungen bei Zustandsänderung einer beobachteten Entity, mit einem Umschalten-Button direkt vom Sperrbildschirm aus bedienbar.
+
+VORAUSSETZUNGEN
+
+- Eine im lokalen Netz erreichbare Home-Assistant-Instanz.
+- Ein Home-Assistant-Long-Lived-Access-Token (erstellt unter Profil -> Sicherheit in Home Assistant).
+
+Diese App spricht direkt mit deiner eigenen Home-Assistant-Instanz über dein lokales Netz. Sie nutzt und benötigt keinen Cloud-Dienst, und deine Zugangsdaten verlassen dein Gerät nur, um die von dir konfigurierte Home-Assistant-Instanz zu erreichen.
+
+Quellcode: https://github.com/silly82/sailhacontrol

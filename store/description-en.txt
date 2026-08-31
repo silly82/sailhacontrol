@@ -1,0 +1,21 @@
+HA Control
+
+Control your local Home Assistant instance from SailfishOS -- no cloud dependency, no Companion App required.
+
+FEATURES
+
+- Entity list (lights, switches) grouped by Home Assistant Area/Room, collapsible per room.
+- Tap a light's name to open brightness, color and color-temperature controls -- only the controls that light actually supports are shown.
+- Cross-room sensor overview: temperature, humidity, atmospheric pressure at a glance.
+- Swipe between the room view and the sensor overview -- no menu navigation needed.
+- Live updates via WebSocket: changes made elsewhere (Home Assistant web UI, a physical switch, an automation) show up immediately, no manual refresh.
+- Background notifications when a watched entity changes state, with a toggle button usable directly from the lock screen.
+
+REQUIREMENTS
+
+- A Home Assistant instance reachable on your local network.
+- A Home Assistant Long-Lived Access Token (created under your Home Assistant profile -> Security).
+
+This app talks directly to your own Home Assistant instance over your local network. It does not use or require any cloud service, and your credentials never leave your device except to reach the Home Assistant instance you configure.
+
+Source code: https://github.com/silly82/sailhacontrol
