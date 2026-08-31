@@ -180,13 +180,18 @@
 <context>
     <name>harbour-hacontrol</name>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="59"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="82"/>
         <source>eingeschaltet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="59"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="82"/>
         <source>ausgeschaltet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/harbour-hacontrol.qml" line="84"/>
+        <source>Umschalten</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

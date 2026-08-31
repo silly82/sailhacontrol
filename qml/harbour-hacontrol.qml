@@ -3,6 +3,7 @@ import Sailfish.Silica 1.0
 import org.nemomobile.configuration 1.0
 import Nemo.KeepAlive 1.1
 import org.nemomobile.notifications 1.0
+import Nemo.DBus 2.0
 import "pages"
 import "lib/HaApi.js" as HaApi
 
@@ -52,11 +53,38 @@ ApplicationWindow {
         defaultValue: "{}"
     }
 
-    function notifyStateChange(friendlyName, isOn) {
+    // D-Bus-Endpunkt für den "Umschalten"-Button auf der Benachrichtigung
+    // (s. notifyStateChange() unten) -- rein in QML über Nemo.DBus'
+    // DBusAdaptor, kein C++ nötig. service/path/iface ergeben sich aus dem
+    // in .desktop/[X-Sailjail] konfigurierten OrganizationName+ApplicationName
+    // (org.example.hacontrol), das Sailjail dem Prozess ohnehin schon als
+    // eigenen D-Bus-Namen zuteilt. Gleiche Restriktion wie der Background-
+    // Poll: funktioniert nur, während dieser App-Prozess resident ist -- bei
+    // vollständig beendeter App läuft der Aufruf ins Leere (kein D-Bus-
+    // Activation-.service-File vorhanden).
+    DBusAdaptor {
+        service: "org.example.hacontrol"
+        path: "/org/example/hacontrol"
+        iface: "org.example.hacontrol"
+
+        function toggleEntity(entityId) {
+            var domain = entityId.split(".")[0]
+            HaApi.callService(baseUrlSetting.value, tokenSetting.value, domain, "toggle", { entity_id: entityId },
+                function () {},
+                function (error) {})
+        }
+    }
+
+    function notifyStateChange(entityId, friendlyName, isOn) {
         var component = 'import QtQuick 2.0\nimport org.nemomobile.notifications 1.0\nNotification { appName: "HA Control"; category: "x-nemo.example" }'
         var notification = Qt.createQmlObject(component, appWindow, "HaControlNotification")
         notification.summary = friendlyName
         notification.body = isOn ? qsTr("eingeschaltet") : qsTr("ausgeschaltet")
+        notification.remoteActions = [
+            notification.remoteAction("toggle", qsTr("Umschalten"),
+                "org.example.hacontrol", "/org/example/hacontrol", "org.example.hacontrol",
+                "toggleEntity", [entityId])
+        ]
         notification.publish()
     }
 
@@ -91,7 +119,7 @@ ApplicationWindow {
                         }
                         var previous = lastKnown[s.entity_id]
                         if (previous !== undefined && previous !== s.state) {
-                            notifyStateChange(s.attributes.friendly_name || s.entity_id, s.state === "on")
+                            notifyStateChange(s.entity_id, s.attributes.friendly_name || s.entity_id, s.state === "on")
                         }
                         lastKnown[s.entity_id] = s.state
                     }

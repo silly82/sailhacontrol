@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.4
+Version:    0.5
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -11,6 +11,7 @@ Requires:   nemo-qml-plugin-notifications-qt5
 Requires:   libkeepalive
 Requires:   qt5-qtdeclarative-import-websockets
 Requires:   qt5-qtwebsockets
+Requires:   nemo-qml-plugin-dbus-qt5
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
@@ -23,7 +24,9 @@ Entity-Liste (Lights/Switches) mit Toggle, nach Raum gruppiert und ein-/
 ausklappbar, inkl. Temperatur-/Feuchte-/Luftdruck-Sensoren. Live-Updates
 per WebSocket, erweiterte Lichtsteuerung (Helligkeit/Farbe/Farbtemperatur)
 per Tap auf den Namen. Periodischer Background-Poll (BackgroundJob) mit
-lokaler Benachrichtigung bei Zustandsänderung beobachteter Entities.
+lokaler Benachrichtigung bei Zustandsänderung beobachteter Entities --
+die Benachrichtigung hat einen Umschalten-Button, direkt vom
+Sperrbildschirm aus bedienbar.
 
 
 %prep
