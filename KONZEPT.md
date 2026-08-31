@@ -382,3 +382,13 @@ Benachrichtigung) eine beobachtete Entity umschaltet, ohne die App zu
   im Journal auf -- Nachweis, dass die Benachrichtigung mit sichtbarem
   Button tatsächlich publiziert wurde.
 - **Neues `Requires:`**: `nemo-qml-plugin-dbus-qt5` im Spec ergänzt.
+
+## 11. Update 2026-08-31 (Teil 2): Verbleibender Konzept-Punkt zurückgestellt
+
+Damit sind alle Konzept-Punkte aus Ausbaustufe 1-3 umgesetzt bis auf einen:
+
+- **Remote-Zugriff** (Zugriff ausserhalb des lokalen Netzes, z. B. via
+  Nabu Casa oder eigener Reverse-Proxy, s. Abschnitt 1/2). **Als
+  Future-TODO ohne Priorität zurückgestellt** -- explizit auf Wunsch des
+  Nutzers nicht jetzt angegangen. Kein technischer Blocker bekannt, nur
+  bewusst nicht priorisiert.
