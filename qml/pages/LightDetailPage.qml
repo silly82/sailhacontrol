@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import org.nemomobile.configuration 1.0
+import Nemo.Configuration 1.0
 import "../lib/HaApi.js" as HaApi
 
 // Submenu für Lichter, geöffnet per Tap auf den Namen in RoomsView.qml.

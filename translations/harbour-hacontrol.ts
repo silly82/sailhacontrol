@@ -173,7 +173,7 @@
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="59"/>
-        <source>Nur lokales Netz (Ausbaustufe 1). URL und Token werden über org.nemomobile.configuration gespeichert -- für Klartext-Speicherung ausreichend für einen lokalen Prototyp, aber kein Ersatz für Sailfish Secrets, falls das Gerät geteilt wird.</source>
+        <source>Nur lokales Netz (Ausbaustufe 1). URL und Token werden über Nemo.Configuration gespeichert -- für Klartext-Speicherung ausreichend für einen lokalen Prototyp, aber kein Ersatz für Sailfish Secrets, falls das Gerät geteilt wird.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

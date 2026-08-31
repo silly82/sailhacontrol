@@ -1,8 +1,8 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
-import org.nemomobile.configuration 1.0
-import Nemo.KeepAlive 1.1
-import org.nemomobile.notifications 1.0
+import Nemo.Configuration 1.0
+import Nemo.KeepAlive 1.2
+import Nemo.Notifications 1.0
 import Nemo.DBus 2.0
 import "pages"
 import "lib/HaApi.js" as HaApi
@@ -76,7 +76,7 @@ ApplicationWindow {
     }
 
     function notifyStateChange(entityId, friendlyName, isOn) {
-        var component = 'import QtQuick 2.0\nimport org.nemomobile.notifications 1.0\nNotification { appName: "HA Control"; category: "x-nemo.example" }'
+        var component = 'import QtQuick 2.0\nimport Nemo.Notifications 1.0\nNotification { appName: "HA Control"; category: "x-nemo.example" }'
         var notification = Qt.createQmlObject(component, appWindow, "HaControlNotification")
         notification.summary = friendlyName
         notification.body = isOn ? qsTr("eingeschaltet") : qsTr("ausgeschaltet")

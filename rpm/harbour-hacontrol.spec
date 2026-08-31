@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.6
+Version:    0.7
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -30,7 +30,7 @@ Sperrbildschirm aus bedienbar.
 
 
 %prep
-%setup -q -n %{name}-%{version}
+%autosetup -n %{name}-%{version}
 
 %build
 
@@ -42,14 +42,31 @@ Sperrbildschirm aus bedienbar.
 %install
 %qmake5_install
 
+# sfdk's dev-oriented qmake invocation sets QMAKE_STRIP=: (a no-op), so the
+# usual automatic strip never runs -- strip explicitly instead of relying on
+# it, otherwise Harbour's rpmlint check flags an unstripped-binary warning.
+%{__strip} %{buildroot}%{_bindir}/%{name}
 
 desktop-file-install --delete-original       \
   --dir %{buildroot}%{_datadir}/applications             \
    %{buildroot}%{_datadir}/applications/*.desktop
 
 %files
-%defattr(-,root,root,-)
 %{_bindir}/%{name}
 %{_datadir}/%{name}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
+
+%changelog
+* Mon Aug 31 2026 silly82 <noreply@example.org> - 0.7-1
+- Harbour submission prep: migrate deprecated org.nemomobile.* QML
+  imports to Nemo.*, bump Nemo.KeepAlive to the allowed 1.2, strip the
+  binary explicitly (sfdk's dev qmake run sets QMAKE_STRIP=:, a no-op).
+  Tried Requires: libkeepalive.so.1 (soname form, per rpmlint's
+  explicit-lib-dependency hint) but reverted it -- passed the local
+  harbour/rpmlint checks either way, yet broke real installation on the
+  phone ("nothing provides libkeepalive.so.1", zypper wants the
+  ()(64bit)-qualified form there) -- plain package-name Requires stays.
+  (Also tried %license under /usr/share/licenses -- Harbour's path
+  whitelist rejects that location, so no separate license file is
+  installed; the License: tag plus the repo's LICENSE file cover it.)
