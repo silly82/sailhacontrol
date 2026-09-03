@@ -1,5 +1,3 @@
-HA Control
-
 Steuere deine lokale Home-Assistant-Instanz von SailfishOS aus -- ohne Cloud-Abhängigkeit, ohne Companion-App.
 
 FUNKTIONEN
@@ -17,5 +15,3 @@ VORAUSSETZUNGEN
 - Ein Home-Assistant-Long-Lived-Access-Token (erstellt unter Profil -> Sicherheit in Home Assistant).
 
 Diese App spricht direkt mit deiner eigenen Home-Assistant-Instanz über dein lokales Netz. Sie nutzt und benötigt keinen Cloud-Dienst, und deine Zugangsdaten verlassen dein Gerät nur, um die von dir konfigurierte Home-Assistant-Instanz zu erreichen.
-
-Quellcode: https://github.com/silly82/sailhacontrol

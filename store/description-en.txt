@@ -1,5 +1,3 @@
-HA Control
-
 Control your local Home Assistant instance from SailfishOS -- no cloud dependency, no Companion App required.
 
 FEATURES
@@ -17,5 +15,3 @@ REQUIREMENTS
 - A Home Assistant Long-Lived Access Token (created under your Home Assistant profile -> Security).
 
 This app talks directly to your own Home Assistant instance over your local network. It does not use or require any cloud service, and your credentials never leave your device except to reach the Home Assistant instance you configure.
-
-Source code: https://github.com/silly82/sailhacontrol

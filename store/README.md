@@ -8,7 +8,7 @@ Field-by-field, matching the actual submission form:
 `HA Control` (10 characters -- well under the 30-char limit, no truncation risk).
 
 ## Details -> Description
-`description-en.txt` / `description-de.txt` (1276 / 1374 characters, well under the 4000-char limit). Add German as a second language via "+ Add a language" in the form if a German listing is wanted alongside English.
+`description-en.txt` / `description-de.txt` (1209 / 1294 characters, well under the 4000-char limit). Deliberately doesn't repeat the app name (already the Title field) or the GitHub link (already the Open source project URL field) -- pure body text only, no duplication of what the form already captures elsewhere. Add German as a second language via "+ Add a language" in the form if a German listing is wanted alongside English.
 
 ## Details -> Summary
 `summary-en.txt` / `summary-de.txt` (125 / 134 characters, under the 200-char limit).
