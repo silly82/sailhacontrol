@@ -1,0 +1,1 @@
+Steuere deine lokale Home-Assistant-Instanz — Lichter, Sensoren, Live-Updates und Benachrichtigungen vom Sperrbildschirm, ohne Cloud.
