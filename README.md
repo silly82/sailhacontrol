@@ -4,10 +4,11 @@ A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home
 
 See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated development log.
 
-## Status: v0.7, working prototype
+## Status: v0.8, working prototype
 
 - Entity list (lights/switches) with toggle, grouped by Home Assistant Area/Room, collapsible per room.
 - Tap a light's name to open brightness / color / color-temperature controls — only the controls that light actually supports are shown. The toggle switch itself is unchanged.
+- Tap a thermostat's name to open a target-temperature slider and HVAC mode selection (off/heat/auto/...).
 - Cross-room sensor overview (temperature, humidity, atmospheric pressure), rounded to one decimal, only sensors currently reporting a value.
 - Swipe left/right between the room view and the sensor overview — no menu navigation needed.
 - **Live updates via WebSocket**: an external change (HA web UI, physical switch, automation) shows up in the app immediately, no manual refresh needed.
@@ -58,10 +59,11 @@ Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer l
 
 Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md).
 
-## Status: v0.7, funktionierender Prototyp
+## Status: v0.8, funktionierender Prototyp
 
 - Entity-Liste (Lights/Switches) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar.
 - Tap auf den Namen eines Lichts öffnet Helligkeit-/Farb-/Farbtemperatur-Regler — nur was das jeweilige Licht tatsächlich unterstützt wird angezeigt. Der Toggle-Switch selbst bleibt unverändert.
+- Tap auf den Namen eines Thermostats öffnet einen Zieltemperatur-Regler und die Modus-Auswahl (Aus/Heizen/Automatik/...).
 - Raumübergreifende Sensor-Übersicht (Temperatur, Feuchtigkeit, Luftdruck), auf eine Nachkommastelle gerundet, nur Sensoren mit aktuell gültigem Wert.
 - Wischen nach links/rechts zwischen Raumansicht und Sensor-Übersicht — keine Menü-Navigation nötig.
 - **Live-Updates per WebSocket**: eine externe Änderung (HA-Weboberfläche, physischer Schalter, Automatisierung) erscheint sofort in der App, kein manuelles Refresh nötig.

@@ -501,3 +501,57 @@ Beschreibungstext für die Store-Auflistung auf Englisch und Deutsch.
   eine Kategorie-Liste (anders als die RPM/API-Regeln gibt es dafür
   keinen automatisierten Validator) -- `store/README.md` hält das
   explizit als unverifiziert fest, statt Zahlen zu erfinden.
+
+## 15. Update 2026-09-03: Store-Assets gegen das echte Formular verfeinert
+
+Nutzer hat das tatsächliche Harbour-Einreichungsformular gepostet
+(Title/Details/Categorization/Binaries/Compatibility/Visual
+assets/Contact details/Publish settings). Damit ließ sich raten durch
+Wissen ersetzen:
+
+- **Summary-Feld entdeckt**: eigenes Feld, getrennt von Description,
+  200-Zeichen-Limit -- vorher übersehen, `summary-en/de.txt` ergänzt.
+- **Screenshots neu**: echtes Gerät statt Emulator (1032x2272 nativ),
+  auf 1080x2378 hochskaliert, weil das Formular "at least 1080px wide"
+  verlangt und die native Handybreite knapp darunter liegt.
+- **Description bereinigt**: Titel-Zeile ("HA Control") und
+  GitHub-Link am Ende entfernt, da beides schon eigene Formularfelder
+  hat (Title, Open source project URL) -- keine Doppelung.
+- **Kategorie bleibt offen**: Dropdown-Optionen nie gesehen, Nutzer
+  trägt selbst ein.
+- Account existiert bereits, **Einreichung macht der Nutzer manuell
+  selbst** im Web-UI -- das ist kein Automatisierungs-Kandidat.
+
+## 16. Update 2026-09-07: Thermostat-Steuerung (climate-Domain)
+
+Analog zur Lichtsteuerung: Tap auf den Namen einer `climate`-Entity
+öffnet `qml/pages/ThermostatDetailPage.qml` mit Zieltemperatur-Regler
+(`min_temp`/`max_temp`/`target_temp_step` aus den Attributen) und
+Modus-Auswahl (`ComboBox` + `ContextMenu`+`Repeater` über
+`hvac_modes`). Vor dem Schreiben echte Climate-Attribute der
+HA-Instanz per curl geprüft (6 Thermostate, `hvac_modes` reicht von
+`["off","heat"]` bis `["auto","heat","off"]`, `target_temp_step` nicht
+immer vorhanden -- Fallback 0.5).
+
+**Zwei echte Bugs beim Testen gefunden+gefixt** (Nutzer-Feedback
+"Mode fehlt noch Off Heat", dann per Screenshot verifiziert):
+
+1. QML-`ListModel`-Rollen sind **typgebunden** (der erste Wert legt
+   den Typ fest) -- die `value`-Rolle war durch Toggle-/Sensor-Zeilen
+   bereits als String festgelegt; die Zieltemperatur einer
+   Climate-Zeile kam aber als Number rein (`s.attributes.temperature`)
+   und produzierte `Can't assign to existing role 'value' of
+   different type [Number -> String]`-Warnungen im Journal, mit
+   falscher/fehlender Anzeige als Symptom. Fix: Zieltemperatur immer
+   via `String(...)` in die Zeile schreiben.
+2. **Modus-Anzeige blieb leer**, obwohl "Modus" als Label sichtbar
+   war: `ThermostatDetailPage.qml` las `attributes.state`, aber HAs
+   `state` (bei climate == aktueller hvac_mode) liegt als
+   **Geschwisterfeld neben** `attributes`, nicht darin -- war also
+   immer `undefined`. Fix: eigenes `hvacMode`-Feld in `RoomsView.qml`s
+   Zeilen-Objekten, separat von `attributes` durchgereicht als
+   `entityHvacMode`-Property.
+- Verifiziert auf Emulator (Screenshot: "Modus Aus" korrekt) und
+  echtem Gerät (Nutzer: "geht, temperatur setzen funktioniert").
+  `sfdk check -s harbour`/`-s rpmlint` weiterhin sauber bis auf die
+  bereits akzeptierte `libkeepalive`-Warnung.

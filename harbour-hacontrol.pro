@@ -23,6 +23,7 @@ DISTFILES += qml/harbour-hacontrol.qml \
     qml/pages/FirstPage.qml \
     qml/pages/SettingsPage.qml \
     qml/pages/LightDetailPage.qml \
+    qml/pages/ThermostatDetailPage.qml \
     qml/views/RoomsView.qml \
     qml/views/SensorsView.qml \
     rpm/harbour-hacontrol.spec \
