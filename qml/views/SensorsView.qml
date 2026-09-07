@@ -28,7 +28,10 @@ Item {
     readonly property var sections: [
         { label: qsTr("Temperatur"), classes: ["temperature"] },
         { label: qsTr("Luftfeuchtigkeit"), classes: ["humidity"] },
-        { label: qsTr("Luftdruck"), classes: ["pressure", "atmospheric_pressure"] }
+        { label: qsTr("Luftdruck"), classes: ["pressure", "atmospheric_pressure"] },
+        { label: qsTr("Batterie"), classes: ["battery"] },
+        { label: qsTr("Energie"), classes: ["energy"] },
+        { label: qsTr("Leistung"), classes: ["power"] }
     ]
 
     ListModel {

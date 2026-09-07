@@ -555,3 +555,65 @@ immer vorhanden -- Fallback 0.5).
   echtem Gerät (Nutzer: "geht, temperatur setzen funktioniert").
   `sfdk check -s harbour`/`-s rpmlint` weiterhin sauber bis auf die
   bereits akzeptierte `libkeepalive`-Warnung.
+
+## 17. Update 2026-09-07 (Teil 2): Domain-Abdeckung erweitert (media_player/cover/fan/scene, weitere Sensor-Klassen), v0.9
+
+Ausgangspunkt: Analyse aller 1517 Entities der echten HA-Instanz nach
+Domain/`device_class` zeigte deutliche Lücken (siehe Gap-Analyse-Antwort
+im Chat). Auf Nachfrage "wichtigste 5 pro Kategorie ergänzen" wollte der
+Nutzer stattdessen **volle Abdeckung ohne künstliches Limit** ("Alle
+Entities zeigen, nicht limitieren") -- eine automatische "wichtigste 5"
+Auswahl (z.B. bei Batterie-Sensoren) ist ohne manuelle Kuratierung nicht
+sinnvoll definierbar.
+
+**Neu abgedeckt** (`qml/views/RoomsView.qml`):
+- `fan`/`cover` in die bestehenden `toggle`-Zeilen aufgenommen (nutzen
+  wie `light`/`switch` den generischen `<domain>.toggle`-Service). Einzige
+  Besonderheit: `cover`s "an"-Äquivalent ist `state === "open"`, nicht
+  `"on"` -- zentral in einer neuen `isEntityOn(domain, state)`-Helper-
+  funktion behandelt statt an jeder Stelle einzeln zu unterscheiden.
+- `media_player` als eigener `kind` mit Submenu (Tap auf Namen, analog
+  Licht/Thermostat) -- neue `qml/pages/MediaPlayerDetailPage.qml` mit
+  Play/Pause/Vor/Zurück (`media_play_pause`/`_next_track`/
+  `_previous_track`) und Lautstärke-Regler (`volume_set`), nur sichtbar
+  wenn die Entity `volume_level` überhaupt liefert (viele Chromecasts/
+  Sonos-Entities tun das nicht durchgehend). Titel/Interpret nur
+  angezeigt falls `media_title`/`media_artist` vorhanden (bei keiner der
+  23 realen media_player-Entities zum Testzeitpunkt aktiv befüllt, da
+  nichts lief -- defensiv codiert statt angenommen).
+- `scene` als eigener `kind` **ohne Switch**: Scenes haben laut echten
+  API-Daten (13 Entities geprüft) keinen sinnvollen on/off-Zustand (State
+  ist der Zeitpunkt der letzten Aktivierung, z.B.
+  `"2026-08-20T16:48:58...+00:00"`, oder `"unknown"`) und keinen
+  `toggle`-Service -- nur `scene.turn_on`. UI dafür: Tap auf die ganze
+  Zeile aktiviert sofort (`activateScene()`), rechts nur ein
+  "Aktivieren"-Hinweislabel statt eines Switches. Der Notify-Kontextmenü
+  (`menu:`) bewusst nicht für `scene` angeboten -- "bei Änderung
+  benachrichtigen" ergibt für einen Zeitstempel-State keinen Sinn.
+- Sensor-`device_class`-Liste um `battery`/`energy`/`power` erweitert
+  (waren mit 37/59/44 Entities die größten unabgedeckten Sensor-
+  Kategorien in der Analyse). `qml/views/SensorsView.qml` um die
+  entsprechenden Abschnitte ("Batterie"/"Energie"/"Leistung") ergänzt --
+  gleiches generisches Section-Muster wie Temperatur/Feuchte/Luftdruck,
+  keine Sonderbehandlung nötig.
+
+**Getestet**: i486-Build auf dem Emulator installiert; da für UI-Checks
+auf dem Emulator kein Touchscreen zur Verfügung steht, wurde die
+VirtualBox-Fensterausgabe per `import` gegriffen und Taps/Swipes über
+`xdotool` gegen das Fenster simuliert (einzelner schneller
+Mousedown→Mousemove→Mouseup-Sprung wird als Flick erkannt, mehrstufige
+langsame Bewegung dagegen als Long-Press -- wichtig für zukünftige
+Emulator-UI-Checks). Damit visuell bestätigt: Room-Zählungen stiegen
+sichtbar (z.B. Bastelzimmer 30→57) durch die neu erfassten Entities,
+mehrere Szenen-Zeilen im Wohnzimmer zeigen korrekt Name + "Aktivieren",
+Scroll/Expand/Collapse unverändert funktionsfähig. Kein einziges
+QML-`ListModel`-Rollentyp-Warning im Journal über den vollen Lauf mit
+allen 1517 Entities (die aus der Climate-Arbeit bekannte
+Type-Locking-Falle wurde durchgehend vermieden, u.a. durch `String(...)`
+für alle `value`-Zuweisungen). Auf dem echten Gerät (aarch64) installiert
+und Prozessstart ohne Fehler im Log bestätigt; volle visuelle
+Bestätigung dort nicht möglich (kein Display-Zugriff über die
+SSH-only-Verbindung) und daher noch ausständig, sobald der Nutzer selbst
+schaut.
+`sfdk check -s harbour`/`-s rpmlint` auf allen drei Architekturen weiterhin
+sauber bis auf die bereits akzeptierte `libkeepalive`-Warnung.
