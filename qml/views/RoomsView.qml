@@ -38,12 +38,28 @@ Item {
     // room name -> bool. Missing key == collapsed (rooms start folded).
     property var expandedRooms: ({})
 
-    readonly property var toggleDomains: ["light", "switch"]
+    // "toggle" umfasst alle Domains, die HAs generischen <domain>.toggle-
+    // Service unterstützen -- fan/cover haben kein eigenes Submenu, nur
+    // Ein-/Aus (bzw. Auf/Zu) über den bestehenden Switch-Mechanismus.
+    readonly property var toggleDomains: ["light", "switch", "fan", "cover"]
     readonly property var climateDomains: ["climate"]
-    readonly property var sensorDeviceClasses: ["temperature", "humidity", "pressure", "atmospheric_pressure"]
-    // Reihenfolge innerhalb eines Raums: steuerbare Entities zuerst
-    // (Toggle, dann Thermostat), read-only Sensoren zuletzt.
-    readonly property var kindOrder: ({ toggle: 0, climate: 1, sensor: 2 })
+    readonly property var mediaPlayerDomains: ["media_player"]
+    // scene hat keinen sinnvollen on/off-state (state ist der Zeitpunkt der
+    // letzten Aktivierung) und keinen toggle-Service -- eigener kind mit
+    // Tap-zum-Aktivieren statt Switch.
+    readonly property var sceneDomains: ["scene"]
+    readonly property var sensorDeviceClasses: ["temperature", "humidity", "pressure", "atmospheric_pressure", "battery", "energy", "power"]
+    // Reihenfolge innerhalb eines Raums: steuerbare Entities zuerst,
+    // read-only Sensoren zuletzt.
+    readonly property var kindOrder: ({ toggle: 0, climate: 1, mediaplayer: 2, scene: 3, sensor: 4 })
+
+    // "Aus"-Gegenstück ist bei den meisten toggle-Domains state === "on",
+    // bei cover aber state === "open" (closed/opening/closing sind die
+    // anderen Werte) -- zentral an einer Stelle, statt an jeder Prüfstelle
+    // einzeln zu unterscheiden.
+    function isEntityOn(domain, state) {
+        return domain === "cover" ? state === "open" : state === "on"
+    }
 
     // Flat list, mixed row types: {rowType: "header", room, count} and
     // {rowType: "entity", room, kind: "toggle"|"sensor", ...}. Flat + a
@@ -77,6 +93,19 @@ Item {
         return text + (unit ? (" " + unit) : "")
     }
 
+    function mediaStateLabel(state) {
+        switch (state) {
+        case "playing": return qsTr("Spielt")
+        case "paused": return qsTr("Pausiert")
+        case "idle": return qsTr("Bereit")
+        case "off": return qsTr("Aus")
+        case "on": return qsTr("Ein")
+        case "buffering": return qsTr("Lädt")
+        case "standby": return qsTr("Standby")
+        default: return state
+        }
+    }
+
     function toggleRoom(room) {
         var next = {}
         for (var key in expandedRooms) {
@@ -104,6 +133,10 @@ Item {
                 kind = "toggle"
             } else if (climateDomains.indexOf(domain) >= 0) {
                 kind = "climate"
+            } else if (mediaPlayerDomains.indexOf(domain) >= 0) {
+                kind = "mediaplayer"
+            } else if (sceneDomains.indexOf(domain) >= 0) {
+                kind = "scene"
             } else if (domain === "sensor" && sensorDeviceClasses.indexOf(deviceClass) >= 0) {
                 kind = "sensor"
             }
@@ -120,7 +153,7 @@ Item {
                 domain: domain,
                 kind: kind,
                 friendlyName: s.attributes.friendly_name || s.entity_id,
-                isOn: s.state === "on",
+                isOn: isEntityOn(domain, s.state),
                 notify: watched.indexOf(s.entity_id) >= 0,
                 // Bei Thermostaten: Zieltemperatur statt hvac_mode-state
                 // in der Zeile anzeigen, mit "°C" statt der (meist
@@ -135,11 +168,12 @@ Item {
                 // Geschwisterfeld daneben -- eigenes Feld nötig, "value"
                 // ist für climate-Zeilen schon mit der Zieltemperatur belegt.
                 hvacMode: kind === "climate" ? s.state : "",
-                // Für Lichter und Thermostate: Rohattribute (u.a.
-                // supported_color_modes/brightness bzw. hvac_modes/
-                // min_temp/max_temp) fürs Submenu -- s.u.
-                // openLightDetail()/openThermostatDetail().
-                attributes: (domain === "light" || domain === "climate") ? s.attributes : ({})
+                // Für Lichter, Thermostate und Media Player: Rohattribute
+                // (u.a. supported_color_modes/brightness bzw. hvac_modes/
+                // min_temp/max_temp bzw. volume_level/media_title) fürs
+                // Submenu -- s.u. openLightDetail()/openThermostatDetail()/
+                // openMediaPlayerDetail().
+                attributes: (domain === "light" || domain === "climate" || domain === "media_player") ? s.attributes : ({})
             })
         }
 
@@ -188,6 +222,26 @@ Item {
             entityHvacMode: entry.hvacMode,
             attributes: entry.attributes
         })
+    }
+
+    function openMediaPlayerDetail(index) {
+        var entry = entriesModel.get(index)
+        pageStack.push(Qt.resolvedUrl("../pages/MediaPlayerDetailPage.qml"), {
+            entityId: entry.entityId,
+            entityName: entry.friendlyName,
+            entityState: entry.value,
+            attributes: entry.attributes
+        })
+    }
+
+    // Szenen haben keinen on/off-Zustand und keinen toggle-Service -- Tap
+    // aktiviert sie direkt, statt eine Detailseite zu öffnen.
+    function activateScene(index) {
+        var entry = entriesModel.get(index)
+        HaApi.callService(baseUrlSetting.value, tokenSetting.value,
+            "scene", "turn_on", { entity_id: entry.entityId },
+            function () {},
+            function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
     }
 
     function refresh() {
@@ -261,7 +315,7 @@ Item {
                 continue
             }
             if (row.kind === "toggle") {
-                entriesModel.setProperty(i, "isOn", newState.state === "on")
+                entriesModel.setProperty(i, "isOn", isEntityOn(row.domain, newState.state))
             } else if (row.kind === "sensor") {
                 entriesModel.setProperty(i, "value", newState.state)
                 entriesModel.setProperty(i, "unit", (newState.attributes && newState.attributes.unit_of_measurement) || "")
@@ -269,6 +323,9 @@ Item {
                 var newTemp = newState.attributes && newState.attributes.temperature
                 entriesModel.setProperty(i, "value", newTemp !== undefined && newTemp !== null ? String(newTemp) : "")
                 entriesModel.setProperty(i, "hvacMode", newState.state || "")
+                entriesModel.setProperty(i, "attributes", newState.attributes || {})
+            } else if (row.kind === "mediaplayer") {
+                entriesModel.setProperty(i, "value", newState.state)
                 entriesModel.setProperty(i, "attributes", newState.attributes || {})
             }
             return
@@ -380,13 +437,17 @@ Item {
             visible: rowVisible
             clip: true
 
-            menu: (!isHeader && (model.kind === "toggle" || model.kind === "climate")) ? notifyMenuComponent : null
+            // Bei Szenen ergibt "bei Änderung benachrichtigen" keinen Sinn
+            // -- ihr state ist nur der Zeitpunkt der letzten Aktivierung,
+            // kein sinnvoller on/off-Zustand.
+            menu: (!isHeader && (model.kind === "toggle" || model.kind === "climate" || model.kind === "mediaplayer")) ? notifyMenuComponent : null
 
-            // Bei Lichtern/Thermostaten: Tap auf den Namen öffnet das
-            // jeweilige Submenu. Der Switch hat sein eigenes onClicked und
-            // "gewinnt" für Taps auf seinem eigenen Bereich; koexistiert mit
-            // dem Long-Press-Kontextmenü oben (ListItem unterstützt
-            // onClicked + menu: gleichzeitig).
+            // Bei Lichtern/Thermostaten/Media-Playern: Tap auf den Namen
+            // öffnet das jeweilige Submenu. Bei Szenen aktiviert der Tap
+            // direkt (kein Submenu, kein on/off). Der Switch hat sein
+            // eigenes onClicked und "gewinnt" für Taps auf seinem eigenen
+            // Bereich; koexistiert mit dem Long-Press-Kontextmenü oben
+            // (ListItem unterstützt onClicked + menu: gleichzeitig).
             onClicked: {
                 if (isHeader) {
                     return
@@ -395,6 +456,10 @@ Item {
                     openLightDetail(index)
                 } else if (model.kind === "climate") {
                     openThermostatDetail(index)
+                } else if (model.kind === "mediaplayer") {
+                    openMediaPlayerDetail(index)
+                } else if (model.kind === "scene") {
+                    activateScene(index)
                 }
             }
 
@@ -495,6 +560,43 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: formatSensorValue(model.value, model.unit)
                 color: model.attributes && model.attributes.hvac_action === "heating" ? Theme.highlightColor : Theme.secondaryHighlightColor
+            }
+
+            // -- Entity row: media_player -- Tap öffnet Submenu mit
+            // Play/Pause und Lautstärke, wie bei Lichtern/Thermostaten.
+            ScrollingLabel {
+                visible: !delegateItem.isHeader && model.kind === "mediaplayer"
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin - mediaValueLabel.width - Theme.paddingSmall
+                anchors.verticalCenter: parent.verticalCenter
+                text: model.friendlyName || ""
+            }
+            Label {
+                id: mediaValueLabel
+                visible: !delegateItem.isHeader && model.kind === "mediaplayer"
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.horizontalPageMargin
+                anchors.verticalCenter: parent.verticalCenter
+                text: mediaStateLabel(model.value)
+                color: model.value === "playing" ? Theme.highlightColor : Theme.secondaryHighlightColor
+            }
+
+            // -- Entity row: scene -- kein on/off, Tap aktiviert direkt.
+            ScrollingLabel {
+                visible: !delegateItem.isHeader && model.kind === "scene"
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin - sceneHintLabel.width - Theme.paddingSmall
+                anchors.verticalCenter: parent.verticalCenter
+                text: model.friendlyName || ""
+            }
+            Label {
+                id: sceneHintLabel
+                visible: !delegateItem.isHeader && model.kind === "scene"
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.horizontalPageMargin
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Aktivieren")
+                color: Theme.secondaryHighlightColor
             }
         }
 

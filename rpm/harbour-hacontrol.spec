@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.8
+Version:    0.9
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -20,14 +20,15 @@ BuildRequires:  desktop-file-utils
 
 %description
 Native SailfishOS-App zur Steuerung einer lokalen Home-Assistant-Instanz.
-Entity-Liste (Lights/Switches) mit Toggle, nach Raum gruppiert und ein-/
-ausklappbar, inkl. Temperatur-/Feuchte-/Luftdruck-Sensoren. Live-Updates
-per WebSocket, erweiterte Lichtsteuerung (Helligkeit/Farbe/Farbtemperatur)
-per Tap auf den Namen, Thermostat-Steuerung (Zieltemperatur/Modus).
-Periodischer Background-Poll (BackgroundJob) mit
-lokaler Benachrichtigung bei Zustandsänderung beobachteter Entities --
-die Benachrichtigung hat einen Umschalten-Button, direkt vom
-Sperrbildschirm aus bedienbar.
+Entity-Liste (Lights/Switches/Fans/Covers) mit Toggle, Media Player mit
+Play/Pause/Lautstärke, Szenen zum Aktivieren, nach Raum gruppiert und
+ein-/ausklappbar, inkl. Temperatur-/Feuchte-/Luftdruck-/Batterie-/
+Energie-/Leistungs-Sensoren. Live-Updates per WebSocket, erweiterte
+Lichtsteuerung (Helligkeit/Farbe/Farbtemperatur) per Tap auf den Namen,
+Thermostat-Steuerung (Zieltemperatur/Modus). Periodischer Background-Poll
+(BackgroundJob) mit lokaler Benachrichtigung bei Zustandsänderung
+beobachteter Entities -- die Benachrichtigung hat einen
+Umschalten-Button, direkt vom Sperrbildschirm aus bedienbar.
 
 
 %prep
@@ -59,6 +60,21 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Mon Sep 07 2026 silly82 <noreply@example.org> - 0.9-1
+- Expand domain coverage: fan/cover joined the existing toggle rows
+  (generic <domain>.toggle service; cover's "on"-equivalent state is
+  "open", not "on" -- handled via a new isEntityOn() helper). New
+  media_player kind with a submenu (play/pause/prev/next, volume slider
+  shown only if volume_level is present). New scene kind with no
+  switch -- scenes have no on/off state (state is the last-activation
+  timestamp) and no toggle service, only scene.turn_on -- tap the row
+  to activate directly. Sensor device classes extended with
+  battery/energy/power (matching SensorsView.qml sections). Based on a
+  device_class/domain gap analysis against a real 1517-entity instance;
+  user explicitly asked for full coverage with no artificial per-
+  category limit, since an automatic "top 5" selection isn't well-
+  defined for e.g. battery sensors.
+
 * Mon Sep 07 2026 silly82 <noreply@example.org> - 0.8-1
 - Add thermostat control (climate domain): tap a thermostat's name to
   open target-temperature slider + HVAC mode selection, same submenu

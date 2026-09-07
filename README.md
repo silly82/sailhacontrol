@@ -4,12 +4,14 @@ A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home
 
 See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated development log.
 
-## Status: v0.8, working prototype
+## Status: v0.9, working prototype
 
-- Entity list (lights/switches) with toggle, grouped by Home Assistant Area/Room, collapsible per room.
+- Entity list (lights/switches/fans/covers) with toggle, grouped by Home Assistant Area/Room, collapsible per room.
 - Tap a light's name to open brightness / color / color-temperature controls — only the controls that light actually supports are shown. The toggle switch itself is unchanged.
 - Tap a thermostat's name to open a target-temperature slider and HVAC mode selection (off/heat/auto/...).
-- Cross-room sensor overview (temperature, humidity, atmospheric pressure), rounded to one decimal, only sensors currently reporting a value.
+- Tap a media player's name to open play/pause/skip controls and a volume slider (shown only if the player reports `volume_level`).
+- Scenes show up as an "Activate" row — tap activates them directly (`scene.turn_on`); scenes have no meaningful on/off state, so there's no switch.
+- Cross-room sensor overview (temperature, humidity, atmospheric pressure, battery, energy, power), rounded to one decimal, only sensors currently reporting a value.
 - Swipe left/right between the room view and the sensor overview — no menu navigation needed.
 - **Live updates via WebSocket**: an external change (HA web UI, physical switch, automation) shows up in the app immediately, no manual refresh needed.
 - Local background poll (every 10 min) with a notification when a watched entity's state changes — the notification itself has a toggle button, actionable right from the lock screen without opening the app. (There's no public lockscreen-widget API on SailfishOS for third-party apps; this is the closest equivalent.)
@@ -59,12 +61,14 @@ Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer l
 
 Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md).
 
-## Status: v0.8, funktionierender Prototyp
+## Status: v0.9, funktionierender Prototyp
 
-- Entity-Liste (Lights/Switches) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar.
+- Entity-Liste (Lights/Switches/Fans/Covers) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar.
 - Tap auf den Namen eines Lichts öffnet Helligkeit-/Farb-/Farbtemperatur-Regler — nur was das jeweilige Licht tatsächlich unterstützt wird angezeigt. Der Toggle-Switch selbst bleibt unverändert.
 - Tap auf den Namen eines Thermostats öffnet einen Zieltemperatur-Regler und die Modus-Auswahl (Aus/Heizen/Automatik/...).
-- Raumübergreifende Sensor-Übersicht (Temperatur, Feuchtigkeit, Luftdruck), auf eine Nachkommastelle gerundet, nur Sensoren mit aktuell gültigem Wert.
+- Tap auf den Namen eines Media Players öffnet Play/Pause/Vor/Zurück und einen Lautstärke-Regler (nur sichtbar, falls die Entity `volume_level` liefert).
+- Szenen erscheinen als "Aktivieren"-Zeile — Tap aktiviert sie direkt (`scene.turn_on`); Szenen haben keinen sinnvollen on/off-Zustand, darum kein Switch.
+- Raumübergreifende Sensor-Übersicht (Temperatur, Feuchtigkeit, Luftdruck, Batterie, Energie, Leistung), auf eine Nachkommastelle gerundet, nur Sensoren mit aktuell gültigem Wert.
 - Wischen nach links/rechts zwischen Raumansicht und Sensor-Übersicht — keine Menü-Navigation nötig.
 - **Live-Updates per WebSocket**: eine externe Änderung (HA-Weboberfläche, physischer Schalter, Automatisierung) erscheint sofort in der App, kein manuelles Refresh nötig.
 - Lokaler Hintergrund-Poll (alle 10 Minuten) mit Benachrichtigung bei Zustandsänderung einer beobachteten Entity — die Benachrichtigung selbst hat einen Umschalten-Button, direkt vom Sperrbildschirm aus bedienbar, ohne die App zu öffnen. (Es gibt keine öffentliche Lockscreen-Widget-API für Drittanbieter-Apps auf SailfishOS -- das ist das nächstliegende Äquivalent.)
