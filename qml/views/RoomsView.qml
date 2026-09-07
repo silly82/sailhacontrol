@@ -39,7 +39,11 @@ Item {
     property var expandedRooms: ({})
 
     readonly property var toggleDomains: ["light", "switch"]
+    readonly property var climateDomains: ["climate"]
     readonly property var sensorDeviceClasses: ["temperature", "humidity", "pressure", "atmospheric_pressure"]
+    // Reihenfolge innerhalb eines Raums: steuerbare Entities zuerst
+    // (Toggle, dann Thermostat), read-only Sensoren zuletzt.
+    readonly property var kindOrder: ({ toggle: 0, climate: 1, sensor: 2 })
 
     // Flat list, mixed row types: {rowType: "header", room, count} and
     // {rowType: "entity", room, kind: "toggle"|"sensor", ...}. Flat + a
@@ -98,6 +102,8 @@ Item {
             var kind = null
             if (toggleDomains.indexOf(domain) >= 0) {
                 kind = "toggle"
+            } else if (climateDomains.indexOf(domain) >= 0) {
+                kind = "climate"
             } else if (domain === "sensor" && sensorDeviceClasses.indexOf(deviceClass) >= 0) {
                 kind = "sensor"
             }
@@ -116,12 +122,24 @@ Item {
                 friendlyName: s.attributes.friendly_name || s.entity_id,
                 isOn: s.state === "on",
                 notify: watched.indexOf(s.entity_id) >= 0,
-                value: s.state,
-                unit: s.attributes.unit_of_measurement || "",
-                // Für Lichter: Rohattribute (supported_color_modes,
-                // brightness, color_temp_kelvin, ...) fürs Submenu
-                // in LightDetailPage.qml -- s.u. openLightDetail().
-                attributes: domain === "light" ? s.attributes : ({})
+                // Bei Thermostaten: Zieltemperatur statt hvac_mode-state
+                // in der Zeile anzeigen, mit "°C" statt der (meist
+                // fehlenden) unit_of_measurement. Als String, da die
+                // "value"-Rolle im ListModel typgebunden ist (erster
+                // Eintrag legt den Typ fest) -- ein Number-Wert hier würde
+                // mit den String-Werten der anderen Kinds kollidieren.
+                value: kind === "climate" ? String(s.attributes.temperature !== undefined ? s.attributes.temperature : "") : s.state,
+                unit: kind === "climate" ? "°C" : (s.attributes.unit_of_measurement || ""),
+                // HAs "state" (bei climate == aktueller hvac_mode wie
+                // "off"/"heat") liegt NICHT in attributes, sondern als
+                // Geschwisterfeld daneben -- eigenes Feld nötig, "value"
+                // ist für climate-Zeilen schon mit der Zieltemperatur belegt.
+                hvacMode: kind === "climate" ? s.state : "",
+                // Für Lichter und Thermostate: Rohattribute (u.a.
+                // supported_color_modes/brightness bzw. hvac_modes/
+                // min_temp/max_temp) fürs Submenu -- s.u.
+                // openLightDetail()/openThermostatDetail().
+                attributes: (domain === "light" || domain === "climate") ? s.attributes : ({})
             })
         }
 
@@ -137,11 +155,11 @@ Item {
             var entities = rooms[roomName]
             entities.sort(function (x, y) {
                 if (x.kind !== y.kind) {
-                    return x.kind === "toggle" ? -1 : 1
+                    return kindOrder[x.kind] - kindOrder[y.kind]
                 }
                 return x.friendlyName.localeCompare(y.friendlyName)
             })
-            entriesModel.append({ rowType: "header", room: roomName, count: entities.length, entityId: "", domain: "", kind: "", friendlyName: "", isOn: false, notify: false, value: "", unit: "", attributes: ({}) })
+            entriesModel.append({ rowType: "header", room: roomName, count: entities.length, entityId: "", domain: "", kind: "", friendlyName: "", isOn: false, notify: false, value: "", unit: "", hvacMode: "", attributes: ({}) })
             for (var m = 0; m < entities.length; m++) {
                 var e = entities[m]
                 e.rowType = "entity"
@@ -158,6 +176,16 @@ Item {
             entityId: entry.entityId,
             entityName: entry.friendlyName,
             entityIsOn: entry.isOn,
+            attributes: entry.attributes
+        })
+    }
+
+    function openThermostatDetail(index) {
+        var entry = entriesModel.get(index)
+        pageStack.push(Qt.resolvedUrl("../pages/ThermostatDetailPage.qml"), {
+            entityId: entry.entityId,
+            entityName: entry.friendlyName,
+            entityHvacMode: entry.hvacMode,
             attributes: entry.attributes
         })
     }
@@ -237,6 +265,11 @@ Item {
             } else if (row.kind === "sensor") {
                 entriesModel.setProperty(i, "value", newState.state)
                 entriesModel.setProperty(i, "unit", (newState.attributes && newState.attributes.unit_of_measurement) || "")
+            } else if (row.kind === "climate") {
+                var newTemp = newState.attributes && newState.attributes.temperature
+                entriesModel.setProperty(i, "value", newTemp !== undefined && newTemp !== null ? String(newTemp) : "")
+                entriesModel.setProperty(i, "hvacMode", newState.state || "")
+                entriesModel.setProperty(i, "attributes", newState.attributes || {})
             }
             return
         }
@@ -347,16 +380,21 @@ Item {
             visible: rowVisible
             clip: true
 
-            menu: (!isHeader && model.kind === "toggle") ? notifyMenuComponent : null
+            menu: (!isHeader && (model.kind === "toggle" || model.kind === "climate")) ? notifyMenuComponent : null
 
-            // Bei Lichtern: Tap auf den Namen öffnet das Submenu mit
-            // Helligkeit/Farbe/Farbtemperatur. Der Switch hat sein eigenes
-            // onClicked und "gewinnt" für Taps auf seinem eigenen Bereich;
-            // koexistiert mit dem Long-Press-Kontextmenü oben (ListItem
-            // unterstützt onClicked + menu: gleichzeitig).
+            // Bei Lichtern/Thermostaten: Tap auf den Namen öffnet das
+            // jeweilige Submenu. Der Switch hat sein eigenes onClicked und
+            // "gewinnt" für Taps auf seinem eigenen Bereich; koexistiert mit
+            // dem Long-Press-Kontextmenü oben (ListItem unterstützt
+            // onClicked + menu: gleichzeitig).
             onClicked: {
-                if (!isHeader && model.kind === "toggle" && model.domain === "light") {
+                if (isHeader) {
+                    return
+                }
+                if (model.kind === "toggle" && model.domain === "light") {
                     openLightDetail(index)
+                } else if (model.kind === "climate") {
+                    openThermostatDetail(index)
                 }
             }
 
@@ -438,6 +476,25 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: formatSensorValue(model.value, model.unit)
                 color: Theme.secondaryHighlightColor
+            }
+
+            // -- Entity row: climate (Thermostat) -- Tap öffnet Submenu mit
+            // Zieltemperatur-Regler + Modus, wie bei Lichtern.
+            ScrollingLabel {
+                visible: !delegateItem.isHeader && model.kind === "climate"
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin - climateValueLabel.width - Theme.paddingSmall
+                anchors.verticalCenter: parent.verticalCenter
+                text: model.friendlyName || ""
+            }
+            Label {
+                id: climateValueLabel
+                visible: !delegateItem.isHeader && model.kind === "climate"
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.horizontalPageMargin
+                anchors.verticalCenter: parent.verticalCenter
+                text: formatSensorValue(model.value, model.unit)
+                color: model.attributes && model.attributes.hvac_action === "heating" ? Theme.highlightColor : Theme.secondaryHighlightColor
             }
         }
 

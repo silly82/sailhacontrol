@@ -50,48 +50,48 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="189"/>
-        <location filename="../qml/views/RoomsView.qml" line="209"/>
+        <location filename="../qml/views/RoomsView.qml" line="217"/>
+        <location filename="../qml/views/RoomsView.qml" line="237"/>
         <source>Unbekannter Fehler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="309"/>
+        <location filename="../qml/views/RoomsView.qml" line="342"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="313"/>
+        <location filename="../qml/views/RoomsView.qml" line="346"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="319"/>
+        <location filename="../qml/views/RoomsView.qml" line="352"/>
         <source>HA Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="320"/>
+        <location filename="../qml/views/RoomsView.qml" line="353"/>
         <source>Live</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="328"/>
+        <location filename="../qml/views/RoomsView.qml" line="361"/>
         <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="367"/>
+        <location filename="../qml/views/RoomsView.qml" line="405"/>
         <source>Benachrichtigung deaktivieren</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="367"/>
+        <location filename="../qml/views/RoomsView.qml" line="405"/>
         <source>Bei Änderung benachrichtigen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="412"/>
+        <location filename="../qml/views/RoomsView.qml" line="450"/>
         <source>benachrichtigt</source>
         <translation type="unfinished"></translation>
     </message>
@@ -174,6 +174,64 @@
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="59"/>
         <source>Nur lokales Netz (Ausbaustufe 1). URL und Token werden über Nemo.Configuration gespeichert -- für Klartext-Speicherung ausreichend für einen lokalen Prototyp, aber kein Ersatz für Sailfish Secrets, falls das Gerät geteilt wird.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ThermostatDetailPage</name>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="43"/>
+        <source>Aus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="44"/>
+        <source>Heizen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="45"/>
+        <source>Kühlen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="46"/>
+        <source>Heizen/Kühlen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="47"/>
+        <source>Automatik</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="48"/>
+        <source>Trocknen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="49"/>
+        <source>Nur Lüfter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="59"/>
+        <source>Unbekannter Fehler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="90"/>
+        <source>Aktuell: %1 °C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="97"/>
+        <source>Modus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ThermostatDetailPage.qml" line="116"/>
+        <source>Zieltemperatur</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

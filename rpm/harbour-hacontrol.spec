@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.7
+Version:    0.8
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -23,7 +23,8 @@ Native SailfishOS-App zur Steuerung einer lokalen Home-Assistant-Instanz.
 Entity-Liste (Lights/Switches) mit Toggle, nach Raum gruppiert und ein-/
 ausklappbar, inkl. Temperatur-/Feuchte-/Luftdruck-Sensoren. Live-Updates
 per WebSocket, erweiterte Lichtsteuerung (Helligkeit/Farbe/Farbtemperatur)
-per Tap auf den Namen. Periodischer Background-Poll (BackgroundJob) mit
+per Tap auf den Namen, Thermostat-Steuerung (Zieltemperatur/Modus).
+Periodischer Background-Poll (BackgroundJob) mit
 lokaler Benachrichtigung bei Zustandsänderung beobachteter Entities --
 die Benachrichtigung hat einen Umschalten-Button, direkt vom
 Sperrbildschirm aus bedienbar.
@@ -58,6 +59,18 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Mon Sep 07 2026 silly82 <noreply@example.org> - 0.8-1
+- Add thermostat control (climate domain): tap a thermostat's name to
+  open target-temperature slider + HVAC mode selection, same submenu
+  pattern as lights. Bug found+fixed during testing: ListModel's
+  "value" role is type-locked by its first-seen type (string, from
+  toggle/sensor rows) -- assigning a Number for climate rows silently
+  produced "Can't assign to existing role" warnings, fixed by always
+  storing it as a String. Second bug: read hvac_mode from
+  attributes.state, but HA's "state" is a sibling field of attributes,
+  not inside it -- mode selector showed blank until fixed via a
+  separate hvacMode field threaded through from RoomsView.
+
 * Mon Aug 31 2026 silly82 <noreply@example.org> - 0.7-1
 - Harbour submission prep: migrate deprecated org.nemomobile.* QML
   imports to Nemo.*, bump Nemo.KeepAlive to the allowed 1.2, strip the
