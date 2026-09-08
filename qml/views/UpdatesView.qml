@@ -50,7 +50,13 @@ Item {
                 installedVersion: s.attributes.installed_version || "?",
                 latestVersion: s.attributes.latest_version || "?",
                 canInstall: canInstall,
-                inProgress: s.attributes.in_progress === true
+                inProgress: s.attributes.in_progress === true,
+                // -1 statt null/undefined als "kein Prozentwert bekannt" --
+                // ListModel-Rollen sind typgebunden (erster Wert legt den Typ
+                // fest), ein Number/null-Mix auf derselben Rolle würde die
+                // gleiche Falle wie beim "value"-Feld in RoomsView.qml
+                // reproduzieren (s. dortige Kommentare).
+                updatePercentage: typeof s.attributes.update_percentage === "number" ? s.attributes.update_percentage : -1
             })
         }
         matches.sort(function (a, b) { return a.friendlyName.localeCompare(b.friendlyName) })
@@ -59,6 +65,19 @@ Item {
         for (var m = 0; m < matches.length; m++) {
             entriesModel.append(matches[m])
         }
+        anyInProgress = matches.some(function (e) { return e.inProgress })
+    }
+
+    // Treibt den Fortschrittsbalken während einer laufenden Installation --
+    // läuft nur solange mindestens eine Zeile in_progress ist, stoppt sich
+    // danach über den nächsten buildEntries()-Aufruf von selbst.
+    property bool anyInProgress: false
+    Timer {
+        id: progressPollTimer
+        interval: 3000
+        repeat: true
+        running: anyInProgress
+        onTriggered: refresh()
     }
 
     function refresh() {
@@ -148,7 +167,7 @@ Item {
         delegate: ListItem {
             id: delegateItem
             width: listView.width
-            contentHeight: Theme.itemSizeMedium
+            contentHeight: model.inProgress ? Theme.itemSizeMedium + Theme.paddingSmall : Theme.itemSizeMedium
 
             onClicked: installUpdate(index)
 
@@ -165,11 +184,63 @@ Item {
                     text: model.friendlyName || ""
                 }
                 Label {
+                    visible: !model.inProgress
                     width: parent.width
                     text: model.installedVersion + " → " + model.latestVersion
                     font.pixelSize: Theme.fontSizeExtraSmall
                     color: Theme.secondaryHighlightColor
                     truncationMode: TruncationMode.Fade
+                }
+
+                // Schmaler Fortschrittsbalken statt der Versions-Zeile,
+                // solange die Installation läuft. Manche Integrationen
+                // liefern update_percentage (dann füllt sich der Balken
+                // passend), andere nicht -- dort läuft stattdessen ein
+                // wanderndes Highlight (unbestimmter Fortschritt), damit
+                // trotzdem sichtbar ist, dass etwas passiert.
+                Item {
+                    visible: model.inProgress
+                    width: parent.width
+                    height: Theme.paddingLarge
+
+                    Rectangle {
+                        id: progressTrack
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - (model.updatePercentage >= 0 ? percentLabel.width + Theme.paddingSmall : 0)
+                        height: Theme.paddingSmall
+                        radius: height / 2
+                        color: Theme.rgba(Theme.secondaryColor, Theme.opacityFaint)
+                        clip: true
+
+                        Rectangle {
+                            id: progressFill
+                            height: parent.height
+                            radius: parent.radius
+                            color: Theme.highlightColor
+                            width: model.updatePercentage >= 0
+                                ? parent.width * Math.max(0, Math.min(100, model.updatePercentage)) / 100
+                                : parent.width * 0.35
+                            Behavior on width { NumberAnimation { duration: 400 } }
+
+                            SequentialAnimation on x {
+                                running: model.inProgress && model.updatePercentage < 0
+                                loops: Animation.Infinite
+                                NumberAnimation { from: 0; to: Math.max(0, progressTrack.width - progressFill.width); duration: 900; easing.type: Easing.InOutQuad }
+                                NumberAnimation { from: Math.max(0, progressTrack.width - progressFill.width); to: 0; duration: 900; easing.type: Easing.InOutQuad }
+                            }
+                        }
+                    }
+
+                    Label {
+                        id: percentLabel
+                        visible: model.updatePercentage >= 0
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Math.round(model.updatePercentage) + "%"
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        color: Theme.secondaryHighlightColor
+                    }
                 }
             }
 

@@ -52,6 +52,7 @@ Item {
     // Reihenfolge innerhalb eines Raums: steuerbare Entities zuerst,
     // read-only Sensoren zuletzt.
     readonly property var kindOrder: ({ toggle: 0, climate: 1, mediaplayer: 2, scene: 3, sensor: 4 })
+    readonly property real colorSwatchDiameter: Theme.iconSizeExtraSmall
 
     // "Aus"-Gegenstück ist bei den meisten toggle-Domains state === "on",
     // bei cover aber state === "open" (closed/opening/closing sind die
@@ -59,6 +60,48 @@ Item {
     // einzeln zu unterscheiden.
     function isEntityOn(domain, state) {
         return domain === "cover" ? state === "open" : state === "on"
+    }
+
+    // Farb-Swatch neben Licht-Zeilen: bevorzugt echtes rgb_color, sonst eine
+    // Näherung aus color_temp_kelvin (Tanner-Helland-Approximation -- kein
+    // exaktes Colorimetrie-Modell, aber für einen kleinen Vorschau-Kreis
+    // ausreichend). null, wenn das Licht aus ist oder keins von beidem
+    // liefert (HA meldet beide Attribute als null solange das Licht aus
+    // ist, siehe LightDetailPage.qml).
+    function kelvinToRgb(kelvin) {
+        var temp = kelvin / 100
+        var r, g, b
+        if (temp <= 66) {
+            r = 255
+        } else {
+            r = Math.max(0, Math.min(255, 329.698727446 * Math.pow(temp - 60, -0.1332047592)))
+        }
+        if (temp <= 66) {
+            g = Math.max(0, Math.min(255, 99.4708025861 * Math.log(temp) - 161.1195681661))
+        } else {
+            g = Math.max(0, Math.min(255, 288.1221695283 * Math.pow(temp - 60, -0.0755148492)))
+        }
+        if (temp >= 66) {
+            b = 255
+        } else if (temp <= 19) {
+            b = 0
+        } else {
+            b = Math.max(0, Math.min(255, 138.5177312231 * Math.log(temp - 10) - 305.0447927307))
+        }
+        return Qt.rgba(r / 255, g / 255, b / 255, 1)
+    }
+
+    function colorForLight(attrs, isOn) {
+        if (!isOn || !attrs) {
+            return null
+        }
+        if (attrs.rgb_color) {
+            return Qt.rgba(attrs.rgb_color[0] / 255, attrs.rgb_color[1] / 255, attrs.rgb_color[2] / 255, 1)
+        }
+        if (attrs.color_temp_kelvin) {
+            return kelvinToRgb(attrs.color_temp_kelvin)
+        }
+        return null
     }
 
     // Flat list, mixed row types: {rowType: "header", room, count} and
@@ -316,6 +359,13 @@ Item {
             }
             if (row.kind === "toggle") {
                 entriesModel.setProperty(i, "isOn", isEntityOn(row.domain, newState.state))
+                // Nur für Lichter tatsächlich befüllt (s. buildEntries()) --
+                // hier trotzdem generisch mitgeführt, damit der Farb-Swatch
+                // auch bei externen Änderungen (Live-Update) sofort
+                // nachzieht, statt erst beim nächsten Pull-to-refresh.
+                if (row.domain === "light") {
+                    entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                }
             } else if (row.kind === "sensor") {
                 entriesModel.setProperty(i, "value", newState.state)
                 entriesModel.setProperty(i, "unit", (newState.attributes && newState.attributes.unit_of_measurement) || "")
@@ -502,9 +552,27 @@ Item {
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "toggle"
                 x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin - notifyLabel.width - toggleSwitch.width
+                width: parent.width - 2 * Theme.horizontalPageMargin - notifyLabel.width - toggleSwitch.width - colorSwatchDiameter - Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
+            }
+            // Farbvorschau bei Lichtern mit bekannter Farbe/Farbtemperatur --
+            // nur sichtbar wenn an (HA liefert rgb_color/color_temp_kelvin
+            // sonst als null, s. colorForLight()).
+            Rectangle {
+                id: colorSwatch
+                readonly property var swatchColor: !delegateItem.isHeader && model.kind === "toggle" && model.domain === "light"
+                    ? colorForLight(model.attributes, model.isOn) : null
+                visible: swatchColor !== null
+                anchors.right: notifyLabel.left
+                anchors.rightMargin: Theme.paddingSmall
+                anchors.verticalCenter: parent.verticalCenter
+                width: colorSwatchDiameter
+                height: colorSwatchDiameter
+                radius: width / 2
+                color: swatchColor || "transparent"
+                border.width: 1
+                border.color: Theme.primaryColor
             }
             Label {
                 id: notifyLabel

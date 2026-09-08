@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.10
+Version:    0.11
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -20,13 +20,15 @@ BuildRequires:  desktop-file-utils
 
 %description
 Native SailfishOS-App zur Steuerung einer lokalen Home-Assistant-Instanz.
-Entity-Liste (Lights/Switches/Fans/Covers) mit Toggle, Media Player mit
+Entity-Liste (Lights/Switches/Fans/Covers) mit Toggle -- Lichter mit
+bekannter Farbe zeigen einen Farb-Punkt --, Media Player mit
 Play/Pause/Lautstärke, Szenen zum Aktivieren, nach Raum gruppiert und
 ein-/ausklappbar, inkl. Temperatur-/Feuchte-/Luftdruck-/Batterie-/
 Energie-/Leistungs-Sensoren. Raumübergreifende Übersicht anstehender
-Geräte-Updates mit Installieren-Button. Live-Updates per WebSocket,
-erweiterte Lichtsteuerung (Helligkeit/Farbe/Farbtemperatur) per Tap auf
-den Namen, Thermostat-Steuerung (Zieltemperatur/Modus). Periodischer
+Geräte-Updates mit Installieren-Button und Fortschrittsbalken während
+der Installation. Live-Updates per WebSocket, erweiterte Lichtsteuerung
+(Helligkeit/Farbe/Farbtemperatur) per Tap auf den Namen,
+Thermostat-Steuerung (Zieltemperatur/Modus). Periodischer
 Background-Poll (BackgroundJob) mit lokaler Benachrichtigung bei
 Zustandsänderung beobachteter Entities -- die Benachrichtigung hat einen
 Umschalten-Button, direkt vom Sperrbildschirm aus bedienbar.
@@ -61,6 +63,18 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Tue Sep 08 2026 silly82 <siliwalker@gmail.com> - 0.11-1
+- UI polish: color swatch next to light rows (real rgb_color, or a
+  Tanner-Helland approximation from color_temp_kelvin when only that
+  is available; hidden while the light is off, since HA reports both
+  attributes as null then). Progress bar replacing the version line
+  on updates that are actively installing -- percentage-filled if the
+  device reports update_percentage, an animated indeterminate bar
+  otherwise; a new 3s poll timer keeps it live while any install is
+  in progress. Both features reuse attributes already being fetched,
+  no new API calls. Took three height/thickness iterations on the
+  progress bar to stop looking like a stray underline under the name.
+
 * Tue Sep 08 2026 silly82 <siliwalker@gmail.com> - 0.10-1
 - Add a third swipeable sub-view, UpdatesView.qml, listing update-domain
   entities with a pending update (state == "on") -- name, installed ->

@@ -665,3 +665,71 @@ QML-Rollentyp- oder Referenzfehler im Journal. Auf dem echten Gerät
 ("sieht gut aus auf handy"). `sfdk check -s harbour`/`-s rpmlint` auf
 allen drei Architekturen sauber bis auf die bereits akzeptierte
 `libkeepalive`-Warnung.
+
+## 19. Update 2026-09-08 (Teil 2): UI-Politur -- Farb-Swatch bei Lichtern, Fortschrittsbalken bei Updates, v0.11
+
+Auf Nachfrage "Vorschlag für etwas fancy shiny UI, immer noch minimal"
+mehrere Optionen genannt (Domain-Icons, Live-Flash bei WS-Updates,
+Farb-Swatch bei Lichtern, Fortschrittsbalken bei Updates,
+CoverPage-Quick-Action); Nutzer wählte die beiden datengetriebenen
+Optionen -- beide brauchen keinen neuen API-Call, nur Attribute, die
+schon abgefragt werden.
+
+**Farb-Swatch bei Lichtern** (`qml/views/RoomsView.qml`): kleiner
+farbiger Kreis zwischen Name und Switch bei `light`-Entities mit
+bekannter Farbe. Bevorzugt echtes `rgb_color`; falls nicht vorhanden,
+Näherung aus `color_temp_kelvin` per Tanner-Helland-Approximation
+(`kelvinToRgb()` -- kein exaktes Farbmodell, aber für einen kleinen
+Vorschau-Kreis ausreichend). `null` (Swatch unsichtbar) wenn das Licht
+aus ist oder keins von beidem liefert -- HA meldet beide Attribute als
+`null` solange aus (bekannte Einschränkung, s. README). `attributes`
+wurde bisher nur für climate/media_player-Zeilen per WebSocket
+live nachgezogen (`applyStateChange()`) -- jetzt auch für
+`light`-Toggle-Zeilen, damit der Swatch bei externen Änderungen sofort
+nachzieht statt erst beim nächsten Pull-to-refresh.
+
+**Fortschrittsbalken bei laufenden Updates** (`qml/views/UpdatesView.qml`):
+ersetzt die Versions-Zeile ("X → Y") durch einen schmalen, abgerundeten
+Balken in `Theme.highlightColor`, solange `in_progress === true`. Manche
+Integrationen liefern `update_percentage` (Balken füllt sich passend,
+Prozentzahl daneben), andere nicht -- dort läuft stattdessen ein
+wanderndes Highlight (`SequentialAnimation on x`, hin und her) als
+unbestimmter Fortschritt. `updatePercentage` wird als `-1` statt
+`null`/`undefined` gespeichert, wenn unbekannt -- sonst dieselbe
+ListModel-Rollentyp-Falle wie beim `value`-Feld in RoomsView.qml
+(Number/null-Mix auf derselben Rolle). Ein neuer `Timer`
+(`progressPollTimer`, 3s, läuft nur solange `anyInProgress`) pollt
+während einer laufenden Installation automatisch nach, damit der
+Balken tatsächlich mitwächst statt nur einmal beim initialen
+Tap-Refresh stehen zu bleiben.
+
+**Debugging-Hinweis**: die erste Version des Balkens sass sichtbar zu
+eng an der Namenszeile (wirkte wie eine Unterstreichung statt einer
+zweiten Zeile) -- Ursache war schlicht eine zu knapp bemessene Höhe
+für das Balken-`Item` (`Theme.paddingMedium`, dann versuchsweise
+`Theme.fontSizeExtraSmall + Theme.paddingSmall`, beides noch zu
+knapp). Fix: Item-Höhe auf `Theme.paddingLarge`, Balkendicke von
+`Theme.paddingSmall/2` auf volles `Theme.paddingSmall` erhöht (klar
+sichtbarer "Pill"-Balken statt Haarlinie), UND `contentHeight` der
+`ListItem`-Delegate selbst für `in_progress`-Zeilen um
+`Theme.paddingSmall` vergrössert, damit die zusätzliche Höhe nicht mit
+der nächsten Zeile kollidiert. Erst nach dieser dritten Iteration sah
+es im Screenshot tatsächlich wie ein sauberer Balken aus statt wie ein
+Rendering-Fehler.
+
+Für die visuelle Prüfung auf dem Emulator wurden testweise zwei
+Fake-Zeilen (`in_progress: true`, eine mit/eine ohne Prozentwert) am
+Anfang von `buildEntries()` eingefügt (`matches.unshift(...)`), um
+den Balken ohne ein echtes `update.install` gegen die reale
+HA-Instanz auszulösen zu können -- ein echter Install-Trigger hätte
+tatsächlich Geräte-Firmware auf der Hardware des Nutzers angestossen,
+das wollte ich nicht ungefragt riskieren. Die Fake-Zeilen wurden vor
+dem Commit wieder entfernt.
+
+**Getestet**: Emulator (Farb-Swatch mit "Küche Tisch Lampe", reale
+`rgb_color: [255, 167, 88]`, korrekt als warmer Orange-Punkt
+gerendert; Fortschrittsbalken mit den Fake-Test-Zeilen verifiziert,
+s. o.), echtes Gerät (aarch64, installiert+startet fehlerfrei, keine
+QML-Fehler im Log). `sfdk check -s harbour`/`-s rpmlint` auf allen
+drei Architekturen sauber bis auf die bereits akzeptierte
+`libkeepalive`-Warnung.
