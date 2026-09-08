@@ -61,7 +61,7 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
-* Tue Sep 08 2026 silly82 <noreply@example.org> - 0.10-1
+* Tue Sep 08 2026 silly82 <siliwalker@gmail.com> - 0.10-1
 - Add a third swipeable sub-view, UpdatesView.qml, listing update-domain
   entities with a pending update (state == "on") -- name, installed ->
   latest version, and a tap-to-install action (update.install), same
@@ -73,7 +73,7 @@ desktop-file-install --delete-original       \
   to round-to-nearest-page-width, clamped to the content range, so it
   keeps snapping cleanly with a third (and future) sub-view.
 
-* Mon Sep 07 2026 silly82 <noreply@example.org> - 0.9-1
+* Mon Sep 07 2026 silly82 <siliwalker@gmail.com> - 0.9-1
 - Expand domain coverage: fan/cover joined the existing toggle rows
   (generic <domain>.toggle service; cover's "on"-equivalent state is
   "open", not "on" -- handled via a new isEntityOn() helper). New
@@ -88,7 +88,7 @@ desktop-file-install --delete-original       \
   category limit, since an automatic "top 5" selection isn't well-
   defined for e.g. battery sensors.
 
-* Mon Sep 07 2026 silly82 <noreply@example.org> - 0.8-1
+* Mon Sep 07 2026 silly82 <siliwalker@gmail.com> - 0.8-1
 - Add thermostat control (climate domain): tap a thermostat's name to
   open target-temperature slider + HVAC mode selection, same submenu
   pattern as lights. Bug found+fixed during testing: ListModel's
@@ -100,7 +100,7 @@ desktop-file-install --delete-original       \
   not inside it -- mode selector showed blank until fixed via a
   separate hvacMode field threaded through from RoomsView.
 
-* Mon Aug 31 2026 silly82 <noreply@example.org> - 0.7-1
+* Mon Aug 31 2026 silly82 <siliwalker@gmail.com> - 0.7-1
 - Harbour submission prep: migrate deprecated org.nemomobile.* QML
   imports to Nemo.*, bump Nemo.KeepAlive to the allowed 1.2, strip the
   binary explicitly (sfdk's dev qmake run sets QMAKE_STRIP=:, a no-op).
