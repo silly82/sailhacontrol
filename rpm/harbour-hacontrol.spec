@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.9
+Version:    0.10
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -23,11 +23,12 @@ Native SailfishOS-App zur Steuerung einer lokalen Home-Assistant-Instanz.
 Entity-Liste (Lights/Switches/Fans/Covers) mit Toggle, Media Player mit
 Play/Pause/Lautstärke, Szenen zum Aktivieren, nach Raum gruppiert und
 ein-/ausklappbar, inkl. Temperatur-/Feuchte-/Luftdruck-/Batterie-/
-Energie-/Leistungs-Sensoren. Live-Updates per WebSocket, erweiterte
-Lichtsteuerung (Helligkeit/Farbe/Farbtemperatur) per Tap auf den Namen,
-Thermostat-Steuerung (Zieltemperatur/Modus). Periodischer Background-Poll
-(BackgroundJob) mit lokaler Benachrichtigung bei Zustandsänderung
-beobachteter Entities -- die Benachrichtigung hat einen
+Energie-/Leistungs-Sensoren. Raumübergreifende Übersicht anstehender
+Geräte-Updates mit Installieren-Button. Live-Updates per WebSocket,
+erweiterte Lichtsteuerung (Helligkeit/Farbe/Farbtemperatur) per Tap auf
+den Namen, Thermostat-Steuerung (Zieltemperatur/Modus). Periodischer
+Background-Poll (BackgroundJob) mit lokaler Benachrichtigung bei
+Zustandsänderung beobachteter Entities -- die Benachrichtigung hat einen
 Umschalten-Button, direkt vom Sperrbildschirm aus bedienbar.
 
 
@@ -60,6 +61,18 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Tue Sep 08 2026 silly82 <noreply@example.org> - 0.10-1
+- Add a third swipeable sub-view, UpdatesView.qml, listing update-domain
+  entities with a pending update (state == "on") -- name, installed ->
+  latest version, and a tap-to-install action (update.install), same
+  tap-to-act pattern as v0.9's scene rows. Not grouped by room (updates
+  aren't naturally room-scoped) and filtered to only pending updates,
+  since most update entities are idle most of the time (107 in the
+  real instance, typically only a handful pending). FirstPage.qml's
+  swipe-snap logic was hardcoded for exactly two pages -- generalized
+  to round-to-nearest-page-width, clamped to the content range, so it
+  keeps snapping cleanly with a third (and future) sub-view.
+
 * Mon Sep 07 2026 silly82 <noreply@example.org> - 0.9-1
 - Expand domain coverage: fan/cover joined the existing toggle rows
   (generic <domain>.toggle service; cover's "on"-equivalent state is
