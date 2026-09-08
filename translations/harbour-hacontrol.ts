@@ -340,6 +340,60 @@
     </message>
 </context>
 <context>
+    <name>UpdatesView</name>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="66"/>
+        <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="78"/>
+        <location filename="../qml/views/UpdatesView.qml" line="101"/>
+        <source>Unbekannter Fehler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="116"/>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="120"/>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="126"/>
+        <source>Updates (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="126"/>
+        <source>Updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="135"/>
+        <source>Noch nicht konfiguriert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="143"/>
+        <source>Alle Geräte sind aktuell.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="181"/>
+        <source>Installiert…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="181"/>
+        <source>Installieren</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>harbour-hacontrol</name>
     <message>
         <location filename="../qml/harbour-hacontrol.qml" line="82"/>

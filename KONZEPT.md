@@ -617,3 +617,52 @@ SSH-only-Verbindung) und daher noch ausständig, sobald der Nutzer selbst
 schaut.
 `sfdk check -s harbour`/`-s rpmlint` auf allen drei Architekturen weiterhin
 sauber bis auf die bereits akzeptierte `libkeepalive`-Warnung.
+
+## 18. Update 2026-09-08: update-Domain (zu aktualisierende Geräte), v0.10
+
+Aus der ursprünglichen Gap-Analyse noch offen: `update`-Domain (107
+Entities in der echten Instanz, aber zum Prüfzeitpunkt nur 3 mit
+`state === "on"`, d.h. Update verfügbar -- die meisten Entities sind die
+meiste Zeit "off"/aktuell). Auf Nachfrage "was braucht [es] für die
+Anzeige von zu updatenden Geräten" kurz die relevanten Attribute genannt
+(`installed_version`/`latest_version`/`title`, `supported_features`-Bit 0
+== `UpdateEntityFeature.INSTALL`) und empfohlen, das **nicht** pro Raum
+in `RoomsView.qml` einzuhängen, sondern als eigene, raumübergreifende
+dritte Sub-View analog `SensorsView.qml` -- Updates sind naturgemäss
+nicht raumgebunden interessant, und ungefiltert wären es 107 grössten-
+teils irrelevante Zeilen für typischerweise eine Handvoll echte Treffer.
+Nutzer hat zugestimmt ("ja, umsetzen").
+
+**Neu**: `qml/views/UpdatesView.qml` -- flache (keine Sections, anders
+als bei den Sensoren) Liste, gefiltert auf `state === "on"`. Pro Zeile:
+Name (`title` bevorzugt vor `friendly_name`, HA befüllt `title` bei
+`update`-Entities meist mit dem eigentlichen Produktnamen statt der
+technischen Entity-Bezeichnung) + zweite Zeile mit
+`installed_version → latest_version`, rechts ein "Installieren"-Label
+(gleiches Tap-zum-Aktivieren-Muster wie bei `scene` in v0.9 -- kein
+Submenu nötig für einen einzelnen Install-Trigger). Ruft
+`update.install` auf; danach (wie bei `toggle()`/`activateScene()`)
+kurzer Timer + Refresh, da der Service-Call nur die Annahme bestätigt,
+nicht den Abschluss. Zeilen mit `in_progress === true` zeigen
+"Installiert…" statt "Installieren" und sind nicht mehr antippbar;
+Entities ohne das `INSTALL`-Feature-Bit ebenfalls nicht antippbar
+(seltener Fall, aber `supported_features` variiert real zwischen 5/15/27
+je nach Integration).
+
+`FirstPage.qml`s Swipe-Snap-Logik war bisher hart auf zwei Seiten
+(0/`page.width`) codiert -- verallgemeinert auf
+`Math.round(contentX / page.width) * page.width`, geclampt auf
+`[0, viewRow.width - page.width]`, damit sie mit einer dritten Sub-View
+(und potenziell weiteren) weiterhin sauber einrastet statt zwischen
+Seiten hängen zu bleiben.
+
+**Getestet**: auf dem Emulator (i486) installiert, `xdotool`-Swipe (s.
+[[sailfishos-sdk-workflow]] für die Geste) zur dritten Seite bestätigt
+korrektes Rendering mit den drei echten anstehenden Updates der
+Instanz (u. a. zwei ESPHome-Taster-Firmware-Updates). Kein
+QML-Rollentyp- oder Referenzfehler im Journal. Auf dem echten Gerät
+(aarch64) installiert und fehlerfrei gestartet; volle visuelle
+Bestätigung dort weiterhin nicht möglich (SSH-only-Verbindung, wie
+schon bei v0.9 vermerkt). `sfdk check -s harbour`/`-s rpmlint` auf allen
+drei Architekturen sauber bis auf die bereits akzeptierte
+`libkeepalive`-Warnung.
