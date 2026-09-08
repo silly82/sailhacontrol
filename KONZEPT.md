@@ -661,8 +661,7 @@ Seiten hängen zu bleiben.
 korrektes Rendering mit den drei echten anstehenden Updates der
 Instanz (u. a. zwei ESPHome-Taster-Firmware-Updates). Kein
 QML-Rollentyp- oder Referenzfehler im Journal. Auf dem echten Gerät
-(aarch64) installiert und fehlerfrei gestartet; volle visuelle
-Bestätigung dort weiterhin nicht möglich (SSH-only-Verbindung, wie
-schon bei v0.9 vermerkt). `sfdk check -s harbour`/`-s rpmlint` auf allen
-drei Architekturen sauber bis auf die bereits akzeptierte
+(aarch64) installiert, gestartet und vom Nutzer visuell bestätigt
+("sieht gut aus auf handy"). `sfdk check -s harbour`/`-s rpmlint` auf
+allen drei Architekturen sauber bis auf die bereits akzeptierte
 `libkeepalive`-Warnung.
