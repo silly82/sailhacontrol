@@ -4,7 +4,7 @@ A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home
 
 See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated development log.
 
-## Status: v0.52, working prototype
+## Status: v0.52, ready for use
 
 - Entity list (lights/switches/fans/covers) with toggle, grouped by Home Assistant Area/Room, collapsible per room. Lights with a known color/color-temperature show a small color swatch next to the switch.
 - Tap a light's name to open brightness / color / color-temperature controls — only the controls that light actually supports are shown. The toggle switch itself is unchanged.
@@ -67,7 +67,7 @@ Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer l
 
 Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md).
 
-## Status: v0.52, funktionierender Prototyp
+## Status: v0.52, einsatzbereit
 
 - Entity-Liste (Lights/Switches/Fans/Covers) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar. Lichter mit bekannter Farbe/Farbtemperatur zeigen einen kleinen Farb-Punkt neben dem Switch.
 - Tap auf den Namen eines Lichts öffnet Helligkeit-/Farb-/Farbtemperatur-Regler — nur was das jeweilige Licht tatsächlich unterstützt wird angezeigt. Der Toggle-Switch selbst bleibt unverändert.
