@@ -1,6 +1,5 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import Nemo.Configuration 1.0
 import "../lib/HaApi.js" as HaApi
 
 // Submenu für Thermostate (climate-Domain), geöffnet per Tap auf den Namen
@@ -18,17 +17,6 @@ Page {
     // attributes -- eigene Property, von RoomsView.qml separat befüllt.
     property string entityHvacMode: ""
     property var attributes: ({})
-
-    ConfigurationValue {
-        id: baseUrlSetting
-        key: "/apps/harbour-hacontrol/baseUrl"
-        defaultValue: ""
-    }
-    ConfigurationValue {
-        id: tokenSetting
-        key: "/apps/harbour-hacontrol/token"
-        defaultValue: ""
-    }
 
     readonly property var hvacModes: attributes.hvac_modes || []
     readonly property real minTemp: attributes.min_temp !== undefined ? attributes.min_temp : 10
@@ -54,7 +42,7 @@ Page {
     function callClimate(service, serviceData) {
         errorText = ""
         serviceData.entity_id = entityId
-        HaApi.callService(baseUrlSetting.value, tokenSetting.value, "climate", service, serviceData,
+        HaApi.callService(Credentials.baseUrl, Credentials.token, "climate", service, serviceData,
             function () {},
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
     }

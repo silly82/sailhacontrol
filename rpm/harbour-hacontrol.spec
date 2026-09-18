@@ -1,8 +1,8 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.50
-Release:    1
+Version:    0.51
+Release:    2
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
 Source0:    %{name}-%{version}.tar.bz2
@@ -12,10 +12,18 @@ Requires:   libkeepalive
 Requires:   qt5-qtdeclarative-import-websockets
 Requires:   qt5-qtwebsockets
 Requires:   nemo-qml-plugin-dbus-qt5
+# libsailfishsecrets (the C++ API used by src/credentials.{h,cpp}) is *not*
+# listed here on purpose: Harbour's validator rejects the plain package name
+# ("Dependency not allowed"), while the automatic soname dependency rpmbuild
+# derives from the linked binary (libsailfishsecrets.so.0, which is on
+# Harbour's allowed APIs list) passes. Hand-writing the soname instead was what
+# broke pkcon installation back in v0.7 for libkeepalive, so let it stay
+# auto-generated.
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Quick)
+BuildRequires:  pkgconfig(sailfishsecrets)
 BuildRequires:  desktop-file-utils
 
 %description
@@ -34,7 +42,9 @@ Zustandsänderung beobachteter Entities -- die Benachrichtigung hat einen
 Umschalten-Button, direkt vom Sperrbildschirm aus bedienbar. Echte
 mobile_app-Integration: Push-Benachrichtigungen aus HA-Automationen
 (notify.mobile_app_...) per WebSocket, sowie drei Device-Status-Sensoren
-(Akkustand, Lädt, Verbindungsart) zurück an HA.
+(Akkustand, Lädt, Verbindungsart) zurück an HA. HA-URL und
+Long-Lived Access Token liegen verschlüsselt in Sailfish Secrets
+(Sailjail-Berechtigung Secrets) statt im Klartext in dconf.
 
 
 %prep
@@ -66,6 +76,44 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.51-2
+- Pull-down-"Refresh" aktualisiert jetzt alle drei Sub-Views statt nur der
+  sichtbaren: die drei Views liegen gleichzeitig nebeneinander in einer Row
+  und laden ihre Daten selbst, ein Refresh nur der aktiven Seite liess die
+  anderen mit veralteten Daten zurück (jede View bittet die Seite per Signal
+  um einen Refresh aller drei).
+- Geräte-Status-Sensoren (Akkustand/Lädt/Verbindungsart) werden zusätzlich
+  bei jedem App-Start und bei jedem Pull-down-Refresh an HA gemeldet. Auf
+  dem Gerät verifiziert: der 10-Minuten-BackgroundJob feuert nicht, solange
+  die App im Vordergrund ist -- in HA standen die Sensoren deshalb stundenlang
+  still, obwohl die App lief.
+
+* Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.51-1
+- HA-URL und Long-Lived Access Token liegen nicht mehr im Klartext
+  (Nemo.Configuration/dconf), sondern verschlüsselt in Sailfish Secrets.
+  Neu: src/credentials.{h,cpp} -- ein C++-Credentials-Objekt, das die
+  Secrets-Requests kapselt und per Context-Property als "Credentials" in
+  QML sichtbar ist (gleiche API wie zuvor: baseUrl/token/loaded/save()).
+  Grund für C++: die QML-Variante konnte beide nötigen Requests nicht
+  abbilden. StoredSecretRequest.identifier ist vom Typ
+  Secret::Identifier, einer einfachen C++-Klasse ohne Q_GADGET, die das
+  QML-Plugin nie registriert (JS-Objektliteral und Gruppenschreibweise
+  scheitern beide: "Cannot assign QJSValue to
+  Sailfish::Secrets::Secret::Identifier"), und
+  StoreSecretRequest.secretStorageType ist ein Enum ohne Q_ENUM
+  ("Cannot assign int to an unregistered type", auch imperativ aus JS).
+  Beides auf echter Hardware im Journal verifiziert -- Speichern UND
+  Lesen waren so nicht möglich, die App war nur im RAM konfiguriert.
+- Einmalige Migration: vorhandene Klartextwerte werden beim ersten Start
+  automatisch nach Secrets übernommen, danach werden die dconf-Kopien
+  geleert (kein Neueintippen nötig).
+- SettingsPage: schreibt bei Fokusverlust bzw. beim Verlassen der Seite
+  statt bei jedem Tastendruck, und nur wenn beide Felder vollständig
+  sind und sich geändert haben; zeigt Fehler des Secrets-Daemons an.
+- Spec: Requires: libsailfishsecrets (ersetzt libsailfishsecretsplugin,
+  das nur den QML-Import bediente), BuildRequires:
+  pkgconfig(sailfishsecrets).
+
 * Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.50-1
 - SensorsView.qml: raumbasierte Gruppierung statt Gruppierung nach
   Messgrösse (Temperatur/Batterie/...), ein-/ausklappbar pro Raum --

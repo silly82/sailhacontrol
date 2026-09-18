@@ -11,7 +11,16 @@ import "lib/HaApi.js" as HaApi
 ApplicationWindow {
     id: appWindow
 
-    initialPage: Component { FirstPage {} }
+    initialPage: Component {
+        FirstPage {
+            // Pull-down-"Refresh" meldet zusätzlich den Geräte-Status an HA --
+            // sonst käme der nur über den 10-Minuten-BackgroundJob, der im
+            // Vordergrund nicht feuert (s. FirstPage.qml). Explizit über die
+            // App-Id, damit die Auflösung nicht von der QML-Scope-Regel
+            // "Funktionen des Wurzelobjekts derselben Datei" abhängt.
+            onDeviceStatusRefreshRequested: appWindow.updateDeviceSensors()
+        }
+    }
     cover: Qt.resolvedUrl("cover/CoverPage.qml")
     allowedOrientations: defaultAllowedOrientations
 
@@ -31,16 +40,55 @@ ApplicationWindow {
     // libkeepalive-Version nicht mehr -- registriert ist stattdessen
     // BackgroundJob mit enabled/frequency/onTriggered/finished().
 
+    // HA-URL und Token liegen seit v0.51 nicht mehr hier (Klartext via
+    // ConfigurationValue/dconf), sondern in Sailfish Secrets -- gekapselt in
+    // src/credentials.{h,cpp} und per Context-Property als "Credentials" in
+    // QML sichtbar (die QML-Singleton-Variante konnte nicht funktionieren, s.
+    // Kopfkommentar in src/credentials.h). Die beiden folgenden
+    // ConfigurationValues sind nur noch Migrationshilfe für
+    // Bestandsinstallationen und werden danach geleert.
     ConfigurationValue {
-        id: baseUrlSetting
+        id: legacyBaseUrlSetting
         key: "/apps/harbour-hacontrol/baseUrl"
         defaultValue: ""
     }
     ConfigurationValue {
-        id: tokenSetting
+        id: legacyTokenSetting
         key: "/apps/harbour-hacontrol/token"
         defaultValue: ""
     }
+
+    // Einmalig beim Start: vorhandene Klartextwerte nach Secrets übernehmen,
+    // damit niemand sie neu eintippen muss. Läuft nur, solange in Secrets noch
+    // nichts liegt -- und losgelöst vom Löschen der Klartext-Kopien (s.u.).
+    function migrateLegacyCredentials() {
+        if (!Credentials.loaded || Credentials.saveBusy) {
+            return
+        }
+        if (Credentials.baseUrl.length > 0 || Credentials.token.length > 0) {
+            return
+        }
+        var url = legacyBaseUrlSetting.value
+        var token = legacyTokenSetting.value
+        if (url.length === 0 || token.length === 0) {
+            return
+        }
+        Credentials.save(url, token)
+    }
+
+    // Klartext in dconf erst löschen, wenn die verschlüsselte Kopie nachweislich
+    // gespeichert ist: ein fehlgeschlagener Store würde die Zugangsdaten sonst
+    // vernichten (genau das passierte beim ersten Versuch, bevor der
+    // Speicher-Weg funktionierte).
+    function clearLegacyCredentials() {
+        if (legacyBaseUrlSetting.value.length > 0) {
+            legacyBaseUrlSetting.value = ""
+        }
+        if (legacyTokenSetting.value.length > 0) {
+            legacyTokenSetting.value = ""
+        }
+    }
+
     ConfigurationValue {
         id: watchedSetting
         key: "/apps/harbour-hacontrol/watchedEntities"
@@ -92,8 +140,8 @@ ApplicationWindow {
     // keine webhookId gespeichert ist (erster Start, oder nach "Gerät neu
     // registrieren" in den Settings, das webhookIdSetting.value leert).
     function ensureMobileAppRegistered() {
-        var baseUrl = baseUrlSetting.value
-        var token = tokenSetting.value
+        var baseUrl = Credentials.baseUrl
+        var token = Credentials.token
         if (baseUrl.length === 0 || token.length === 0 || webhookIdSetting.value.length > 0) {
             return
         }
@@ -112,7 +160,7 @@ ApplicationWindow {
     // gleiche unique_id aktualisiert nur den Zustand) -- kann darum bei
     // jeder Neuregistrierung ohne Sonderfall erneut aufgerufen werden.
     function registerDeviceSensors() {
-        var baseUrl = baseUrlSetting.value
+        var baseUrl = Credentials.baseUrl
         var webhookId = webhookIdSetting.value
         if (baseUrl.length === 0 || webhookId.length === 0) {
             return
@@ -135,9 +183,10 @@ ApplicationWindow {
     }
 
     function updateDeviceSensors() {
-        var baseUrl = baseUrlSetting.value
+        var baseUrl = Credentials.baseUrl
         var webhookId = webhookIdSetting.value
         if (baseUrl.length === 0 || webhookId.length === 0) {
+            console.log("DeviceSensors: übersprungen (URL " + baseUrl.length + " Zeichen, webhookId " + webhookId.length + " Zeichen)")
             return
         }
         deviceStatusProbe.query(function (status) {
@@ -150,17 +199,26 @@ ApplicationWindow {
             if (status.batteryLevel >= 0) {
                 sensors.push({ type: "sensor", unique_id: "battery_level", state: status.batteryLevel })
             }
-            HaApi.callWebhook(baseUrl, webhookId, "update_sensor_states", sensors, function () {}, function () {})
+            HaApi.callWebhook(baseUrl, webhookId, "update_sensor_states", sensors,
+                function () { console.log("DeviceSensors: " + sensors.length + " Sensoren an HA gemeldet") },
+                function (error) { console.log("DeviceSensors: Meldung fehlgeschlagen -- " + (error.hint || "unbekannt")) })
         })
     }
 
     Connections {
-        target: baseUrlSetting
-        onValueChanged: ensureMobileAppRegistered()
-    }
-    Connections {
-        target: tokenSetting
-        onValueChanged: ensureMobileAppRegistered()
+        target: Credentials
+        onBaseUrlChanged: ensureMobileAppRegistered()
+        onTokenChanged: ensureMobileAppRegistered()
+        onLoadedChanged: {
+            migrateLegacyCredentials()
+            // Bei jedem App-Start einmal die Geräte-Sensoren melden: der
+            // 10-Minuten-BackgroundJob feuert nicht, solange die App im
+            // Vordergrund ist, sonst stünden die Sensoren in HA still.
+            if (Credentials.loaded) {
+                updateDeviceSensors()
+            }
+        }
+        onLastSaveOkChanged: if (Credentials.lastSaveOk) clearLegacyCredentials()
     }
     Connections {
         target: webhookIdSetting
@@ -184,7 +242,7 @@ ApplicationWindow {
 
         function toggleEntity(entityId) {
             var domain = entityId.split(".")[0]
-            HaApi.callService(baseUrlSetting.value, tokenSetting.value, domain, "toggle", { entity_id: entityId },
+            HaApi.callService(Credentials.baseUrl, Credentials.token, domain, "toggle", { entity_id: entityId },
                 function () {},
                 function (error) {})
         }
@@ -209,8 +267,8 @@ ApplicationWindow {
         enabled: true
 
         onTriggered: {
-            var baseUrl = baseUrlSetting.value
-            var token = tokenSetting.value
+            var baseUrl = Credentials.baseUrl
+            var token = Credentials.token
             var watched = watchedSetting.value.split(",").map(function (s) { return s.trim() }).filter(function (s) { return s.length > 0 })
 
             // Huckepack auf dem ohnehin laufenden 10-Minuten-Intervall -- kein

@@ -16,6 +16,7 @@ Name[de]=HA Control
 OrganizationName=org.example
 # ApplicationName does not have to be identical to Name
 ApplicationName=hacontrol
-# Only local-network HTTP(S) to the Home Assistant instance is needed --
-# no Camera/Location/etc. permissions for Ausbaustufe 1.
-Permissions=Internet;
+# Only local-network HTTP(S) to the Home Assistant instance is needed for
+# Ausbaustufe 1 -- Secrets added for encrypted credential storage (see
+# KONZEPT.md's Sailfish-Secrets migration).
+Permissions=Internet;Secrets;

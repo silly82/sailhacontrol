@@ -7,16 +7,23 @@ Page {
 
     allowedOrientations: Orientation.All
 
-    ConfigurationValue {
-        id: baseUrlSetting
-        key: "/apps/harbour-hacontrol/baseUrl"
-        defaultValue: ""
+    // Geschrieben wird erst, wenn beide Felder vollständig sind und sich
+    // gegenüber dem gespeicherten Stand geändert haben -- der
+    // Secrets-Daemon-Anfrage zuliebe (jeder Tastendruck wäre ein Request) und
+    // damit ein halb ausgefülltes Feld den gültigen Satz nicht überschreibt.
+    // Ausgelöst beim Fokusverlust und beim Verlassen der Seite.
+    function saveCredentialsIfComplete() {
+        if (baseUrlField.text.length === 0 || tokenField.text.length === 0) {
+            return
+        }
+        if (baseUrlField.text === Credentials.baseUrl && tokenField.text === Credentials.token) {
+            return
+        }
+        Credentials.save(baseUrlField.text, tokenField.text)
     }
-    ConfigurationValue {
-        id: tokenSetting
-        key: "/apps/harbour-hacontrol/token"
-        defaultValue: ""
-    }
+
+    onStatusChanged: if (status === PageStatus.Deactivating) saveCredentialsIfComplete()
+
     ConfigurationValue {
         id: deviceNameSetting
         key: "/apps/harbour-hacontrol/deviceName"
@@ -50,8 +57,8 @@ Page {
                 label: qsTr("Home Assistant URL")
                 placeholderText: qsTr("http://homeassistant.local:8123")
                 inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase
-                text: baseUrlSetting.value
-                onTextChanged: baseUrlSetting.value = text
+                text: Credentials.baseUrl
+                onActiveFocusChanged: if (!activeFocus) page.saveCredentialsIfComplete()
             }
 
             TextField {
@@ -61,15 +68,25 @@ Page {
                 placeholderText: qsTr("erstellt in HA: Profil → Sicherheit")
                 echoMode: TextInput.Password
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
-                text: tokenSetting.value
-                onTextChanged: tokenSetting.value = text
+                text: Credentials.token
+                onActiveFocusChanged: if (!activeFocus) page.saveCredentialsIfComplete()
             }
 
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 wrapMode: Text.Wrap
-                text: qsTr("Nur lokales Netz (Ausbaustufe 1). URL und Token werden über Nemo.Configuration gespeichert -- für Klartext-Speicherung ausreichend für einen lokalen Prototyp, aber kein Ersatz für Sailfish Secrets, falls das Gerät geteilt wird.")
+                visible: Credentials.lastError.length > 0
+                text: qsTr("Speichern fehlgeschlagen: ") + Credentials.lastError
+                color: Theme.errorColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                wrapMode: Text.Wrap
+                text: qsTr("URL und Token werden über Sailfish Secrets verschlüsselt gespeichert und sind an die Gerätesperre gebunden. Gespeichert wird, sobald beide Felder ausgefüllt sind und den Fokus verlassen.")
                 color: Theme.secondaryHighlightColor
                 font.pixelSize: Theme.fontSizeExtraSmall
             }

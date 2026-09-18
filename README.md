@@ -44,7 +44,7 @@ Local network only — no Nabu Casa / reverse-proxy support yet.
 
 ## Known limitations
 
-- Token is stored in plain text via `org.nemomobile.configuration` (dconf) — fine for a single-user device, not a shared one.
+- URL and token are stored via **Sailfish Secrets** (encrypted, tied to the device lock), not in plaintext in dconf. That needs C++ (`src/credentials.h/.cpp`): the QML `Sailfish.Secrets` module cannot express the two requests involved — `StoredSecretRequest.identifier` is of a type the plugin never registers, and `StoreSecretRequest.secretStorageType` is an enum without `Q_ENUM`, so both fail from QML (verified on-device). Which storage/encryption plugin to use is asked from the daemon at startup rather than hardcoded, because the image may not register the encrypted-storage plugin.
 - The `armv7hl` build is untested (see table above).
 - Background notifications rely on `Nemo.KeepAlive`'s `BackgroundJob`, which only keeps the app process alive while it's already resident (foreground or recently backgrounded) — a fully terminated app is not woken up by it.
 - The WebSocket subscription receives every entity's `state_changed` event (Home Assistant doesn't support server-side domain filtering here) — on a very large instance this is a lot of client-side filtering; not a problem in testing, but a possible future optimization.
@@ -104,7 +104,7 @@ Nur lokales Netz — Nabu Casa / Reverse-Proxy wird noch nicht unterstützt.
 
 ## Bekannte Einschränkungen
 
-- Der Token wird im Klartext über `org.nemomobile.configuration` (dconf) gespeichert — für ein Einzelbenutzer-Gerät akzeptabel, nicht für ein geteiltes Gerät gedacht.
+- URL und Token werden über **Sailfish Secrets** verschlüsselt und an die Gerätesperre gebunden gespeichert, nicht mehr im Klartext in dconf. Dafür braucht es C++ (`src/credentials.h/.cpp`): das QML-Modul `Sailfish.Secrets` kann die beiden nötigen Requests nicht abbilden — `StoredSecretRequest.identifier` ist von einem Typ, den das Plugin nie registriert, und `StoreSecretRequest.secretStorageType` ist ein Enum ohne `Q_ENUM`; aus QML scheitern beide (auf dem Gerät verifiziert). Welches Storage-/Encryption-Plugin zu verwenden ist, wird beim Start beim Daemon erfragt statt fest verdrahtet, weil das Image das Encrypted-Storage-Plugin nicht unbedingt registriert.
 - Der `armv7hl`-Build ist ungetestet (siehe Tabelle oben).
 - Hintergrund-Benachrichtigungen basieren auf `Nemo.KeepAlive`s `BackgroundJob`, welcher den App-Prozess nur wach hält, solange dieser ohnehin bereits resident ist (im Vordergrund oder kürzlich in den Hintergrund geschickt) — eine vollständig beendete App wird dadurch nicht wieder gestartet.
 - Das WebSocket-Abo erhält jedes `state_changed`-Event aller Entities (Home Assistant kennt hier keine serverseitige Domain-Filterung) — bei einer sehr grossen Instanz entsprechend viel Client-seitiges Filtern; im Test kein Problem, aber ein möglicher Kandidat für spätere Optimierung.

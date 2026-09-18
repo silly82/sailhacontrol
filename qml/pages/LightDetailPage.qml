@@ -1,6 +1,5 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import Nemo.Configuration 1.0
 import "../lib/HaApi.js" as HaApi
 
 // Submenu für Lichter, geöffnet per Tap auf den Namen in RoomsView.qml.
@@ -17,17 +16,6 @@ Page {
     property bool entityIsOn: false
     property var attributes: ({})
 
-    ConfigurationValue {
-        id: baseUrlSetting
-        key: "/apps/harbour-hacontrol/baseUrl"
-        defaultValue: ""
-    }
-    ConfigurationValue {
-        id: tokenSetting
-        key: "/apps/harbour-hacontrol/token"
-        defaultValue: ""
-    }
-
     readonly property var supportedModes: attributes.supported_color_modes || []
     readonly property bool supportsBrightness: supportedModes.some(function (m) { return m !== "onoff" })
     readonly property bool supportsColorTemp: supportedModes.indexOf("color_temp") >= 0
@@ -41,7 +29,7 @@ Page {
     function callLight(serviceData) {
         errorText = ""
         serviceData.entity_id = entityId
-        HaApi.callService(baseUrlSetting.value, tokenSetting.value, "light", "turn_on", serviceData,
+        HaApi.callService(Credentials.baseUrl, Credentials.token, "light", "turn_on", serviceData,
             function () {},
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
     }

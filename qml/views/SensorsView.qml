@@ -1,6 +1,5 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import Nemo.Configuration 1.0
 import "../lib/HaApi.js" as HaApi
 import "../components"
 
@@ -13,16 +12,10 @@ import "../components"
 Item {
     id: root
 
-    ConfigurationValue {
-        id: baseUrlSetting
-        key: "/apps/harbour-hacontrol/baseUrl"
-        defaultValue: ""
-    }
-    ConfigurationValue {
-        id: tokenSetting
-        key: "/apps/harbour-hacontrol/token"
-        defaultValue: ""
-    }
+    // Bittet die Seite (FirstPage.qml) um einen Refresh aller Sub-Views --
+    // die drei Views liegen gleichzeitig nebeneinander, ein Refresh nur der
+    // sichtbaren würde die anderen mit alten Daten stehen lassen.
+    signal refreshRequested()
 
     property string errorText: ""
     readonly property string noRoomLabel: qsTr("Ohne Raum")
@@ -107,15 +100,15 @@ Item {
     }
 
     function refresh() {
-        if (baseUrlSetting.value.length === 0 || tokenSetting.value.length === 0) {
+        if (Credentials.baseUrl.length === 0 || Credentials.token.length === 0) {
             errorText = qsTr("Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.")
             return
         }
         errorText = ""
         busyIndicator.running = true
-        HaApi.getStates(baseUrlSetting.value, tokenSetting.value,
+        HaApi.getStates(Credentials.baseUrl, Credentials.token,
             function (states) {
-                HaApi.getAreaMap(baseUrlSetting.value, tokenSetting.value,
+                HaApi.getAreaMap(Credentials.baseUrl, Credentials.token,
                     function (areaPairs) {
                         busyIndicator.running = false
                         buildEntries(states, areaPairs)
@@ -151,7 +144,7 @@ Item {
                 }
                 MenuItem {
                     text: qsTr("Refresh")
-                    onClicked: refresh()
+                    onClicked: root.refreshRequested()
                 }
             }
 

@@ -1,6 +1,5 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import Nemo.Configuration 1.0
 import "../lib/HaApi.js" as HaApi
 
 // Submenü für Media Player, geöffnet per Tap auf den Namen in
@@ -15,17 +14,6 @@ Page {
     property string entityName
     property string entityState: ""
     property var attributes: ({})
-
-    ConfigurationValue {
-        id: baseUrlSetting
-        key: "/apps/harbour-hacontrol/baseUrl"
-        defaultValue: ""
-    }
-    ConfigurationValue {
-        id: tokenSetting
-        key: "/apps/harbour-hacontrol/token"
-        defaultValue: ""
-    }
 
     property string errorText: ""
 
@@ -45,7 +33,7 @@ Page {
     function callMediaPlayer(service, serviceData) {
         errorText = ""
         serviceData.entity_id = entityId
-        HaApi.callService(baseUrlSetting.value, tokenSetting.value, "media_player", service, serviceData,
+        HaApi.callService(Credentials.baseUrl, Credentials.token, "media_player", service, serviceData,
             function () {},
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
     }

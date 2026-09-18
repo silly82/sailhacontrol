@@ -10,6 +10,22 @@ Page {
 
     allowedOrientations: Orientation.All
 
+    // Alle drei Sub-Views liegen gleichzeitig nebeneinander in der Row, jede
+    // lädt ihre Daten selbst -- ein "Refresh" im Pull-down-Menü nur der gerade
+    // sichtbaren Seite liesse die beiden anderen mit veralteten Daten zurück.
+    // Darum bittet jede Sub-View hier um einen Refresh, und der geht an alle.
+    // Zusätzlich wird die App-Ebene gebeten, den Geräte-Status an HA zu melden
+    // (der 10-Minuten-BackgroundJob feuert nicht, solange die App im
+    // Vordergrund ist -- so gibt es wenigstens einen manuellen Weg).
+    signal deviceStatusRefreshRequested()
+
+    function refreshAll() {
+        roomsView.refresh()
+        sensorsView.refresh()
+        updatesView.refresh()
+        deviceStatusRefreshRequested()
+    }
+
     SilicaFlickable {
         id: swipeContainer
         anchors.fill: parent
@@ -23,16 +39,22 @@ Page {
             height: swipeContainer.height
 
             RoomsView {
+                id: roomsView
                 width: page.width
                 height: swipeContainer.height
+                onRefreshRequested: page.refreshAll()
             }
             SensorsView {
+                id: sensorsView
                 width: page.width
                 height: swipeContainer.height
+                onRefreshRequested: page.refreshAll()
             }
             UpdatesView {
+                id: updatesView
                 width: page.width
                 height: swipeContainer.height
+                onRefreshRequested: page.refreshAll()
             }
         }
 

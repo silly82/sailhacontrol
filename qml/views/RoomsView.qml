@@ -11,16 +11,11 @@ import "../components"
 Item {
     id: root
 
-    ConfigurationValue {
-        id: baseUrlSetting
-        key: "/apps/harbour-hacontrol/baseUrl"
-        defaultValue: ""
-    }
-    ConfigurationValue {
-        id: tokenSetting
-        key: "/apps/harbour-hacontrol/token"
-        defaultValue: ""
-    }
+    // Bittet die Seite (FirstPage.qml) um einen Refresh aller Sub-Views --
+    // die drei Views liegen gleichzeitig nebeneinander, ein Refresh nur der
+    // sichtbaren würde die anderen mit alten Daten stehen lassen.
+    signal refreshRequested()
+
     // Comma-separated entity_ids -- shared with the BackgroundJob poller
     // in harbour-hacontrol.qml (Ausbaustufe 3, Variante B).
     ConfigurationValue {
@@ -37,7 +32,7 @@ Item {
         defaultValue: ""
     }
 
-    property bool configured: baseUrlSetting.value.length > 0 && tokenSetting.value.length > 0
+    property bool configured: Credentials.baseUrl.length > 0 && Credentials.token.length > 0
     property string errorText: ""
     // true once HA has confirmed our WS auth + subscribe_events -- drives
     // the "Live"-Hinweis im PageHeader.
@@ -295,7 +290,7 @@ Item {
     // aktiviert sie direkt, statt eine Detailseite zu öffnen.
     function activateScene(index) {
         var entry = entriesModel.get(index)
-        HaApi.callService(baseUrlSetting.value, tokenSetting.value,
+        HaApi.callService(Credentials.baseUrl, Credentials.token,
             "scene", "turn_on", { entity_id: entry.entityId },
             function () {},
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
@@ -307,9 +302,9 @@ Item {
         }
         errorText = ""
         busyIndicator.running = true
-        HaApi.getStates(baseUrlSetting.value, tokenSetting.value,
+        HaApi.getStates(Credentials.baseUrl, Credentials.token,
             function (states) {
-                HaApi.getAreaMap(baseUrlSetting.value, tokenSetting.value,
+                HaApi.getAreaMap(Credentials.baseUrl, Credentials.token,
                     function (areaPairs) {
                         busyIndicator.running = false
                         buildEntries(states, areaPairs)
@@ -342,7 +337,7 @@ Item {
 
     function toggle(index) {
         var entry = entriesModel.get(index)
-        HaApi.callService(baseUrlSetting.value, tokenSetting.value,
+        HaApi.callService(Credentials.baseUrl, Credentials.token,
             entry.domain, "toggle", { entity_id: entry.entityId },
             function () { postToggleRefreshTimer.restart() },
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
@@ -421,7 +416,7 @@ Item {
 
     WebSocket {
         id: liveSocket
-        url: baseUrlSetting.value.length > 0 ? wsUrlFor(baseUrlSetting.value) : ""
+        url: Credentials.baseUrl.length > 0 ? wsUrlFor(Credentials.baseUrl) : ""
         active: configured
 
         onStatusChanged: {
@@ -440,7 +435,7 @@ Item {
                 return
             }
             if (msg.type === "auth_required") {
-                sendTextMessage(JSON.stringify({ type: "auth", access_token: tokenSetting.value }))
+                sendTextMessage(JSON.stringify({ type: "auth", access_token: Credentials.token }))
             } else if (msg.type === "auth_ok") {
                 wsMessageId = 1
                 sendTextMessage(JSON.stringify({ id: wsMessageId, type: "subscribe_events", event_type: "state_changed" }))
@@ -503,7 +498,7 @@ Item {
                 }
                 MenuItem {
                     text: qsTr("Refresh")
-                    onClicked: refresh()
+                    onClicked: root.refreshRequested()
                 }
             }
 

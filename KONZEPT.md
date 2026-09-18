@@ -890,3 +890,126 @@ eines Seitentitels -- als einzige der drei Sub-Views ohne eigenen Titel
 "0.5" als Wunsch unklar war -- Rücksprung oder Tippfehler für die
 fortlaufende Zählung) hat der Nutzer den Sprung auf 0.50 explizit
 bestätigt, kein Fortsetzen der fortlaufenden 0.1x-Zählung.
+
+## 22. Update 2026-09-18 (Teil 3): Zugangsdaten verschlüsselt in Sailfish Secrets, v0.51
+
+Ziel: HA-URL und Long-Lived Access Token nicht mehr im Klartext in dconf
+(`ConfigurationValue`) ablegen, sondern über Sailfish Secrets verschlüsselt,
+an die Gerätesperre gebunden, mit der Sailjail-Berechtigung `Secrets`.
+Nutzerauftrag war ausdrücklich "auf dem Handy testen" -- das Ergebnis vorweg:
+**läuft auf der realen Jolla Phone**, Details und Belege unten.
+
+**Der erste, rein in QML gebaute Anlauf war nicht reparierbar** (v0.50-3 auf
+dem Gerät installiert, Journal-Mitschnitt per `devel-su journalctl -f`):
+
+- `Credentials.qml:125: Error: Cannot assign QJSValue to
+  Sailfish::Secrets::Secret::Identifier` -- das JS-Objektliteral, das den
+  Identifier für `StoredSecretRequest` setzen sollte. Grund (in den Quellen
+  von `sailfish-secrets` nachgelesen, nicht geraten): `Secret::Identifier`
+  ist in `lib/Secrets/secret.h` eine einfache C++-Klasse ohne
+  `Q_OBJECT`/`Q_GADGET`, und `qml/Secrets/main.cpp` registriert sie
+  nirgends -- sie ist in QML damit weder konstruierbar noch zuweisbar. Der
+  Lese-Pfad ist über die QML-API also gar nicht bedienbar.
+- `Credentials.qml:64: Error: Cannot assign int to an unregistered type`
+  (bei jedem Speicherversuch) -- `StoreSecretRequest.secretStorageType` ist
+  ein Enum ohne `Q_ENUM`; auch die (im Dateikommentar als funktionierend
+  dokumentierte) imperative Zuweisung aus JS scheitert.
+- Gegenprobe: in
+  `~/.local/share/system/privileged/Secrets/.../secrets.db` kein Treffer für
+  `harbour-hacontrol`, WAL-Zeitstempel unverändert -- es wurde nichts
+  gespeichert. Die App war nach manueller Eingabe nur im RAM konfiguriert
+  (ein Neustart hätte die Werte verloren).
+
+**Umgesetzt: C++-Kapselung** (`src/credentials.{h,cpp}`, erstes natives
+Objekt in diesem Projekt -- das README warb bisher explizit mit "kein
+C++-Bridge-Objekt"):
+
+- Klasse `Credentials : QObject` mit `baseUrl`/`token`/`loaded`/`lastError`/
+  `saveBusy`/`lastSaveOk` als Properties und `save(url, token)`/`reload()`;
+  in `main()` als Context-Property `Credentials` gesetzt, dadurch bleiben
+  alle QML-Aufrufstellen unverändert (nur die `import "../lib"`-Zeilen
+  fielen weg). Das QML-Singleton `qml/lib/Credentials.qml` und `qmldir`
+  wurden gelöscht -- damit verschwand auch die Build-Warnung
+  `qmldeps: no valid module definition`.
+- Requests laufen asynchron (`statusChanged`), nie `waitForFinished()` im
+  UI-Thread. Speichern ist ein Upsert: erst `DeleteSecretRequest`, dann
+  `StoreSecretRequest` (`SecretAlreadyExistsError` sonst).
+- **Plugin-Wahl zur Laufzeit statt fest verdrahtet**: `PluginInfoRequest`
+  fragt beim Start beim Daemon, welche Plugins er kennt. Zwei auf dem Gerät
+  verifizierte Stolperfallen: (1) `StandaloneDeviceLockSecret` mit dem
+  *encrypted storage*-Plugin scheiterte -- `No such storage plugin exists:
+  org.sailfishos.secrets.plugin.encryptedstorage.sqlcipher`, obwohl die
+  `.so` installiert ist und der Daemon das Plugin in
+  `encryptedStoragePlugins` auch auflistet; er akzeptiert es nur nicht als
+  *Storage*-Plugin. (2) Ohne `encryptionPluginName` scheitert der Store mit
+  `No such encryption plugin exists: ` (leerer Name). Funktionierende
+  Kombination auf der Jolla Phone:
+  `org.sailfishos.secrets.plugin.storage.sqlite` +
+  `org.sailfishos.secrets.plugin.encryption.openssl`.
+- **Einmalige Migration** (`qml/harbour-hacontrol.qml`): vorhandene
+  Klartextwerte werden beim Start automatisch nach Secrets übernommen,
+  danach werden die dconf-Kopien geleert -- aber **erst nach bestätigtem
+  Store** (`saveBusy`/`lastSaveOk`). Erste Fassung löschte unbedingt und
+  hätte bei fehlgeschlagenem Store die Zugangsdaten vernichtet (ist beim
+  ersten Testlauf genau so passiert; die Werte wurden für den weiteren Test
+  per `dconf load` aus dem Backup wiederhergestellt).
+- SettingsPage schreibt bei Fokusverlust/Seitenwechsel statt bei jedem
+  Tastendruck, nur wenn beide Felder vollständig sind und sich geändert
+  haben, und zeigt `lastError` des Daemons an.
+
+**Verifiziert auf der realen Jolla Phone (aarch64, 192.168.2.15)**:
+
+- Store + Migration: Journal `Credentials: stored "baseUrl"` /
+  `"token"`, danach sind `baseUrl`/`token` in dconf leer.
+- Persistenz über einen App-Neustart: `Credentials: loaded -- baseUrl 17
+  chars, token 183 chars` (17 = `https://ha.zwx.ch`, 183 = Tokenlänge) --
+  ohne jede Neueingabe.
+- Echte Verbindung: der App-Prozess hat eine ESTABLISHED-TLS-Verbindung zu
+  `109.202.212.70:443`, das ist die aufgelöste `ha.zwx.ch` -- die aus Secrets
+  geladenen Werte werden also tatsächlich gegen die reale Instanz benutzt.
+- Keine QML-Fehler mehr im Journal (die beiden oben genannten sind weg).
+- **Harbour**: `sfdk check -s harbour` läuft sauber durch, nachdem
+  `Requires: libsailfishsecrets` entfernt wurde -- der Validator lehnt den
+  reinen Paketnamen ab ("Dependency not allowed"), während die von rpmbuild
+  automatisch erzeugte Soname-Abhängigkeit `libsailfishsecrets.so.0()(64bit)`
+  (steht in Harbours Allowed-APIs-Liste) akzeptiert wird. Nicht selbst als
+  Soname hinschreiben -- genau das hatte in v0.7 bei `libkeepalive` die
+  echte `pkcon`-Installation zerschossen. `-s rpmlint` weiterhin nur mit der
+  akzeptierten `explicit-lib-dependency libkeepalive`-Meldung.
+
+**Nachtrag, selbe Session -- Pull-down-Refresh + Geräte-Sensoren (0.51-2)**:
+Nutzerwunsch "refresh pull down soll refresh auf allen seiten machen" plus
+"teste noch mal ob home sensor daten von phone erhält".
+
+- Die drei Sub-Views liegen gleichzeitig nebeneinander in einer Row und laden
+  ihre Daten selbst; ein Refresh nur der sichtbaren liess die anderen mit
+  veralteten Daten zurück. Jede View hat jetzt ein `refreshRequested()`-Signal,
+  `FirstPage.qml` bündelt das in `refreshAll()` und ruft alle drei `refresh()`
+  auf.
+- **Befund zu den Geräte-Sensoren**: In HA standen `sensor.sailfishos_phone_*_2`
+  seit Stunden still, obwohl die App lief -- der 10-Minuten-`BackgroundJob`
+  feuert nicht, solange die App im Vordergrund ist (nur über den BackgroundJob
+  wurden die Sensoren bisher gemeldet). Darum meldet die App den Geräte-Status
+  jetzt zusätzlich bei jedem App-Start (`onLoadedChanged`) und bei jedem
+  Pull-down-Refresh (`updateDeviceSensors()`), mit Journal-Log
+  (`DeviceSensors: 3 Sensoren an HA gemeldet`).
+- **Wichtige HA-Eigenschaft, die die Diagnose erst verwirrte**: HAs
+  `mobile_app`-Ablauf schreibt einen Sensorwert nur, wenn er sich tatsächlich
+  ändert -- `last_updated` bleibt also stehen, auch wenn die App erfolgreich
+  meldet (`{"battery_level":{"success":true},...}`). Nachgewiesen per
+  Gegenprobe: der Token-Webhook wurde von aussen mit Akkustand `91` beschickt
+  (HA zeigte 91), danach der App-Neustart -- HA stand auf `90` mit frischem
+  `last_updated`, also dem echten Wert des Handys (`/sys/class/power_supply/
+  battery/capacity`). Die Zustellung Handy → HA ist damit belegt, nicht nur
+  behauptet.
+- Auf der Hardware geprüft: 0.51-2 installiert, Journal ohne QML-Fehler,
+  `Credentials: loaded -- baseUrl 17 chars, token 183 chars`, zweimal
+  `DeviceSensors: 3 Sensoren an HA gemeldet`. Der Pull-down selbst braucht
+  einen Tap aufs Gerät (Touchscreen kann ich nicht bedienen) -- noch vom
+  Nutzer zu bestätigen.
+
+**Noch offen**: Emulator-Test (i486) und `armv7hl`-Build/-Check für v0.51
+(bisher nur aarch64 gebaut und auf Hardware getestet); Bestätigung des
+Pull-down-Refresh durch einen Tap auf dem Gerät; der Zugangsdaten-Backup
+`~/sailhacontrol-credentials-backup.txt` kann nach der Migration gelöscht
+werden.

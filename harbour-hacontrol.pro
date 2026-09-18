@@ -14,7 +14,22 @@ TARGET = harbour-hacontrol
 
 CONFIG += sailfishapp
 
-SOURCES += src/harbour-hacontrol.cpp
+# Needed for the Sailfish.Secrets C++ API (src/credentials.{h,cpp}) -- the QML
+# plugin can't express what we need (see src/credentials.h), and the C++ API
+# uses Q_ENUM values, so it also wants C++11 lambdas in the request handlers.
+CONFIG += link_pkgconfig c++11
+# sailfishapp listed again on purpose: sailfishapp's own .prf adds itself to
+# PKGCONFIG, and the pkgconfig list must be complete whenever qmake evaluates
+# it (with only "PKGCONFIG += sailfishsecrets" the sailfishapp libs silently
+# dropped out of the link line: "undefined reference to
+# SailfishApp::createView()").
+PKGCONFIG += sailfishsecrets sailfishapp
+
+SOURCES += src/harbour-hacontrol.cpp \
+    src/credentials.cpp
+
+HEADERS += \
+    src/credentials.h
 
 DISTFILES += qml/harbour-hacontrol.qml \
     qml/cover/CoverPage.qml \
