@@ -1013,3 +1013,83 @@ Nutzerwunsch "refresh pull down soll refresh auf allen seiten machen" plus
 Pull-down-Refresh durch einen Tap auf dem Gerät; der Zugangsdaten-Backup
 `~/sailhacontrol-credentials-backup.txt` kann nach der Migration gelöscht
 werden.
+
+## 23. Update 2026-09-18 (Teil 4): Cover nach UI-Guidelines nachgebessert, drei Bugs dabei gefunden, v0.52
+
+Ausgangspunkt war ein Abgleich der App gegen die offiziellen UI-Guidelines
+(`docs.sailfishos.org/Develop/Apps/UI/`). Das meiste war schon konform: jede
+Sub-View hat einen eigenen `PageHeader` und ein Pull-down-Menü mit nur zwei
+Einträgen (die Guideline empfiehlt unter fünf), der horizontale Seitenwechsel
+hat mit dem `HorizontalScrollDecorator` den Silica-eigenen Gesten-Hinweis, und
+die Detailseiten sind echte gestapelte `Page`s statt Dialoge.
+
+Die eine echte Lücke war `qml/cover/CoverPage.qml`: ein statisches
+"HA Control"-Label, obwohl Covers laut Guideline "key information" zeigen und
+"Cover Actions for quick tasks without opening apps" anbieten sollen.
+
+**Umgesetzt:**
+- Der Cover zeigt jetzt die Anzahl eingeschalteter Lichter ("4 Lichter an" /
+  "Alle Lichter aus").
+- Eine `CoverAction` schaltet das zuletzt in der App bediente Licht um, ohne
+  die App zu öffnen. Icon ist `icon-cover-favorite` -- im Stock-Theme gibt es
+  kein Lampen-/Power-Icon (per `sfdk tools exec` in der Icon-Liste des
+  Build-Targets geprüft, nicht geraten).
+- Beides wird von `RoomsView.qml` über drei `ConfigurationValue`s nachgeführt
+  (`coverLightsOnCount`, `coverLastLightId`, `coverLastLightName`), gleiches
+  Muster wie `webhookIdSetting`. So braucht der Cover keine eigene HA-Abfrage,
+  während die App im Hintergrund ist.
+
+**Bug 1 -- Listen blieben bis zum manuellen Pull-down leer.** Fiel beim Testen
+auf und war schon länger da, nur als Gewohnheit abgetan ("man muss halt immer
+einmal refreshen"). Ursache: `Component.onCompleted: refresh()` feuert in allen
+drei Sub-Views, bevor der asynchrone Sailfish-Secrets-Request von `Credentials`
+fertig ist -- `baseUrl`/`token` sind dann noch leer, der Versuch läuft ins Leere
+(SensorsView/UpdatesView zeigten sogar sichtbar "Noch nicht konfiguriert"), und
+nichts holte ihn danach nach. Fix: RoomsView reagiert zusätzlich auf
+`onConfiguredChanged`, SensorsView/UpdatesView auf `Credentials`'
+`onBaseUrlChanged`/`onTokenChanged`.
+
+**Bug 2 -- ANR beim Refresh (selbst eingebaut).** Die erste Fassung der
+Lichter-Zählung machte einen vollen Scan über `entriesModel` -- einmal pro
+Refresh und zusätzlich bei **jedem einzelnen** `light`-`state_changed`-Event
+über den WebSocket. Bei der echten Instanz (~1500 Entities, 700+ Zeilen im
+Model) und einem Handy unter hoher Last (Android App Support mit mehreren
+residenten Apps, `loadavg` > 15) blockierte das den `QSGRenderThread`
+dauerhaft: die App lief in ein echtes ANR ("HA Control reagiert nicht"), kein
+Absturz. Nachgewiesen per `/proc/<pid>/task/<tid>/stat`-Sampling -- der
+Render-Thread sammelte durchgehend ~8-10 CPU-Ticks pro Sekunde, statt in den
+Leerlauf zurückzufallen. Fix: die Zählung läuft in `buildEntries()` im selben
+Durchlauf mit, der ohnehin über das rohe `states`-Array iteriert, und bei
+Live-Updates wird nur noch inkrementell (+1/-1) nachgeführt.
+
+**Bug 3 -- Seitenwechsel zu empfindlich, und der erste Fix war schlimmer.**
+Ein etwas kräftigerer Flick liess die `SilicaFlickable` frei weitergleiten;
+die Snap-Logik rastete dann auf der nächstgelegenen Seite ein und übersprang
+eine (Räume -> direkt Updates). Das Snap-Ziel wird jetzt auf +/-1 Seite
+gegenüber der Startseite der Geste begrenzt. Der erste Versuch merkte sich die
+Startseite in `onMovementStarted` -- das feuert aber auch bei der
+**programmatischen** Snap-Animation, wodurch die Startseite mitten in der
+Animation neu gesetzt wurde, das geclampte Ziel sich verschob, die nächste
+Animation startete, und so weiter: Endlosschleife, Render-Thread dauerhaft
+belegt, ANR rund eine Sekunde nach dem Start, noch vor dem Datenladen. Merkregel
+für künftige Flickables: Snap-Logik gehört an `onDragStarted` plus ein
+`userGesture`-Flag, nie an die Movement-Signale allein.
+
+**Neu dazugelernt: UI-Tests auf dem echten Gerät sind möglich.** Bisher galt
+"über SSH kein Display-Zugriff, visuelle Prüfung nur im Emulator". Tatsächlich
+lassen sich Touch-Events direkt in den Touchscreen einspeisen: `hyn_ts` ist
+`/dev/input/event5`, seine ABS-Range deckt sich 1:1 mit der Display-Auflösung
+(1032x2272), `evemu`-Tools fehlen zwar, aber `python3` ist da und kann rohe
+`struct input_event`s schreiben (Type-B-Multitouch: `ABS_MT_SLOT`,
+`ABS_MT_TRACKING_ID`, `ABS_MT_POSITION_X/Y`, `BTN_TOUCH`, `SYN_REPORT`; das
+Loslassen unbedingt in ein `finally` legen, sonst bleibt der Touchscreen für
+den echten Finger blockiert). Damit wurde v0.52 auf der Hardware geprüft statt
+nur im Emulator: alle drei Seiten laden beim Start von selbst (Räume,
+Sensor-Übersicht, Update-Übersicht je mit echten Daten), ein kräftiger Flick
+bewegt genau eine Seite, der Render-Thread bleibt im Leerlauf (1 CPU-Tick über
+3 Sekunden), und der Cover zeigt live "4 Lichter an".
+
+**Noch offen**: Der Cover-Stern erscheint erst, nachdem einmal ein Lichtschalter
+in der App selbst angetippt wurde -- `coverLastLightId` ist bis dahin leer. Das
+ist so gewollt ("zuletzt bedientes Licht"), war beim ersten Test aber
+verwirrend.
