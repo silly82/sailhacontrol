@@ -508,7 +508,7 @@ Item {
             }
 
             PageHeader {
-                title: qsTr("HA Control")
+                title: qsTr("Räume")
                 description: wsSubscribed ? qsTr("Live") : ""
             }
 

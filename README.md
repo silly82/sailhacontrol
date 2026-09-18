@@ -4,14 +4,14 @@ A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home
 
 See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated development log.
 
-## Status: v0.12, working prototype
+## Status: v0.50, working prototype
 
 - Entity list (lights/switches/fans/covers) with toggle, grouped by Home Assistant Area/Room, collapsible per room. Lights with a known color/color-temperature show a small color swatch next to the switch.
 - Tap a light's name to open brightness / color / color-temperature controls — only the controls that light actually supports are shown. The toggle switch itself is unchanged.
 - Tap a thermostat's name to open a target-temperature slider and HVAC mode selection (off/heat/auto/...).
 - Tap a media player's name to open play/pause/skip controls and a volume slider (shown only if the player reports `volume_level`).
 - Scenes show up as an "Activate" row — tap activates them directly (`scene.turn_on`); scenes have no meaningful on/off state, so there's no switch.
-- Cross-room sensor overview (temperature, humidity, atmospheric pressure, battery, energy, power), rounded to one decimal, only sensors currently reporting a value.
+- Sensor overview (temperature, humidity, atmospheric pressure, battery, energy, power), rounded to one decimal, only sensors currently reporting a value — grouped by room and collapsible, same as the room view.
 - Cross-room updates overview — only devices that actually have a pending update, with current → new version and a one-tap "Install" action. While an install is running, the version line becomes a progress bar (percentage if the device reports one, an animated indeterminate bar otherwise).
 - Swipe left/right between the room view, the sensor overview, and the updates overview — no menu navigation needed.
 - **Live updates via WebSocket**: an external change (HA web UI, physical switch, automation) shows up in the app immediately, no manual refresh needed.
@@ -64,14 +64,14 @@ Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer l
 
 Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md).
 
-## Status: v0.12, funktionierender Prototyp
+## Status: v0.50, funktionierender Prototyp
 
 - Entity-Liste (Lights/Switches/Fans/Covers) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar. Lichter mit bekannter Farbe/Farbtemperatur zeigen einen kleinen Farb-Punkt neben dem Switch.
 - Tap auf den Namen eines Lichts öffnet Helligkeit-/Farb-/Farbtemperatur-Regler — nur was das jeweilige Licht tatsächlich unterstützt wird angezeigt. Der Toggle-Switch selbst bleibt unverändert.
 - Tap auf den Namen eines Thermostats öffnet einen Zieltemperatur-Regler und die Modus-Auswahl (Aus/Heizen/Automatik/...).
 - Tap auf den Namen eines Media Players öffnet Play/Pause/Vor/Zurück und einen Lautstärke-Regler (nur sichtbar, falls die Entity `volume_level` liefert).
 - Szenen erscheinen als "Aktivieren"-Zeile — Tap aktiviert sie direkt (`scene.turn_on`); Szenen haben keinen sinnvollen on/off-Zustand, darum kein Switch.
-- Raumübergreifende Sensor-Übersicht (Temperatur, Feuchtigkeit, Luftdruck, Batterie, Energie, Leistung), auf eine Nachkommastelle gerundet, nur Sensoren mit aktuell gültigem Wert.
+- Sensor-Übersicht (Temperatur, Feuchtigkeit, Luftdruck, Batterie, Energie, Leistung), auf eine Nachkommastelle gerundet, nur Sensoren mit aktuell gültigem Wert — gruppiert nach Raum und ein-/ausklappbar, gleich wie die Raumansicht.
 - Raumübergreifende Update-Übersicht — nur Geräte mit tatsächlich anstehendem Update, mit aktueller → neuer Version und einem "Installieren"-Button per Tap. Während der Installation wird aus der Versions-Zeile ein Fortschrittsbalken (Prozentzahl falls vom Gerät geliefert, sonst ein animierter unbestimmter Balken).
 - Wischen nach links/rechts zwischen Raumansicht, Sensor-Übersicht und Update-Übersicht — keine Menü-Navigation nötig.
 - **Live-Updates per WebSocket**: eine externe Änderung (HA-Weboberfläche, physischer Schalter, Automatisierung) erscheint sofort in der App, kein manuelles Refresh nötig.

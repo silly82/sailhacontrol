@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.12
+Version:    0.50
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -66,6 +66,23 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.50-1
+- SensorsView.qml: raumbasierte Gruppierung statt Gruppierung nach
+  Messgrösse (Temperatur/Batterie/...), ein-/ausklappbar pro Raum --
+  gleiches Muster wie RoomsView.qml (getAreaMap(), expandedRooms,
+  toggleRoom()). Räume starten eingeklappt; ein Raum kann gemischte
+  Sensor-Typen enthalten (z.B. Temperatur+Energie+Luftdruck im selben
+  Raum), das Format (Wert+Einheit) bleibt unverändert. Visuell auf dem
+  Emulator verifiziert (Swipe-Simulation war diese Session unzuverlässig
+  -- stattdessen kurzzeitig FirstPage.qml auf contentX = page.width
+  gesetzt, verifiziert, wieder entfernt, statt blind zu vertrauen).
+- RoomsView.qml: PageHeader-Titel "HA Control" (App-Name) durch "Räume"
+  ersetzt -- war die einzige der drei Sub-Views ohne eigenen Seitentitel
+  (Sensor-Übersicht/Updates hatten schon einen), auf Nutzerrückfrage
+  ("hat jede Seite ein Titel...?") aufgefallen.
+- Versionssprung auf 0.50 (statt fortlaufend 0.13) auf expliziten
+  Nutzerwunsch nach Rückfrage.
+
 * Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.12-1
 - Real mobile_app integration, nachgebaut aus der offiziellen HA-Companion-App:
   Registrierung (POST /api/mobile_app/registrations) mit

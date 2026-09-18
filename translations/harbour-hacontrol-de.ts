@@ -156,7 +156,7 @@
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="511"/>
-        <source>HA Control</source>
+        <source>Räume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -193,62 +193,37 @@
 <context>
     <name>SensorsView</name>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="29"/>
-        <source>Temperatur</source>
+        <location filename="../qml/views/SensorsView.qml" line="28"/>
+        <source>Ohne Raum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="30"/>
-        <source>Luftfeuchtigkeit</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/views/SensorsView.qml" line="31"/>
-        <source>Luftdruck</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/views/SensorsView.qml" line="32"/>
-        <source>Batterie</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/views/SensorsView.qml" line="33"/>
-        <source>Energie</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/views/SensorsView.qml" line="34"/>
-        <source>Leistung</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/views/SensorsView.qml" line="86"/>
+        <location filename="../qml/views/SensorsView.qml" line="111"/>
         <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="98"/>
+        <location filename="../qml/views/SensorsView.qml" line="133"/>
         <source>Unbekannter Fehler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="114"/>
+        <location filename="../qml/views/SensorsView.qml" line="149"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="118"/>
+        <location filename="../qml/views/SensorsView.qml" line="153"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="124"/>
+        <location filename="../qml/views/SensorsView.qml" line="159"/>
         <source>Sensor-Übersicht</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="133"/>
+        <location filename="../qml/views/SensorsView.qml" line="168"/>
         <source>Noch nicht konfiguriert</source>
         <translation type="unfinished"></translation>
     </message>

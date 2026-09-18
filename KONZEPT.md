@@ -857,3 +857,36 @@ wieder entfernt). Echter Push (`notify.send_message` auf
 ("ja"). `sfdk check -s harbour`/`-s rpmlint` auf allen drei
 Architekturen sauber bis auf die bereits akzeptierte
 `libkeepalive`-Warnung.
+
+## 21. Update 2026-09-18 (Teil 2): SensorsView nach Raum gruppiert, v0.50
+
+Nutzerwunsch: "Sensor Page auch nach Raum aufteilen und ausklappbar
+machen" -- `qml/views/SensorsView.qml` gruppierte Sensoren bisher nach
+Messgrösse (Temperatur/Batterie/...), nicht nach Raum. Umgebaut auf
+exakt das gleiche Muster wie `RoomsView.qml`: `HaApi.getAreaMap()` für
+die Raumzuordnung, `expandedRooms`/`toggleRoom()` fürs Ein-/Ausklappen
+(Räume starten eingeklappt), gleicher Header-Zeilen-Stil (▸/▾ +
+Raumname + Anzahl). Ein Raum kann jetzt gemischte Sensor-Typen
+enthalten (z.B. Temperatur+Energie+Luftdruck im selben Raum
+hintereinander) -- Wert+Einheit-Format unverändert. Die
+Kategorie-Header (Temperatur/Batterie/...) sind entfallen.
+
+**Swipe-Simulation war diese Session unzuverlässig** (anders als in
+früheren Sessions, s. [[sailfishos-sdk-workflow]]) -- mehrere Versuche
+mit dem sonst funktionierenden Einzelsprung-Muster landeten inkonsistent
+(mal gar keine Bewegung, mal zwei Seiten übersprungen). Statt blind der
+Code-Analogie zu RoomsView.qml zu vertrauen, kurzzeitig
+`FirstPage.qml`s `SilicaFlickable` um `Component.onCompleted: contentX = page.width`
+ergänzt, um direkt auf der Sensor-Seite zu landen, per Screenshot
+verifiziert (Räume mit Zähler, Ausklappen funktioniert, gemischte
+Sensor-Typen korrekt), Debug-Zeile danach wieder entfernt.
+
+Auf Nutzerrückfrage ("hat jede Seite ein Titel...?") aufgefallen:
+`RoomsView.qml`s `PageHeader` zeigte "HA Control" (den App-Namen) statt
+eines Seitentitels -- als einzige der drei Sub-Views ohne eigenen Titel
+(Sensor-Übersicht/Updates hatten schon einen). Auf "Räume" geändert.
+
+**Versionssprung 0.13 → 0.50**: nach Rückfrage (per AskUserQuestion, da
+"0.5" als Wunsch unklar war -- Rücksprung oder Tippfehler für die
+fortlaufende Zählung) hat der Nutzer den Sprung auf 0.50 explizit
+bestätigt, kein Fortsetzen der fortlaufenden 0.1x-Zählung.

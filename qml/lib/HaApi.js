@@ -70,7 +70,7 @@ function registerMobileApp(baseUrl, token, deviceId, deviceName, onSuccess, onEr
         device_id: deviceId,
         app_id: "harbour-hacontrol",
         app_name: "HA Control",
-        app_version: "0.12",
+        app_version: "0.50",
         device_name: deviceName,
         manufacturer: "SailfishOS",
         model: "Phone",
