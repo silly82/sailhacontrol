@@ -128,6 +128,15 @@ Item {
     }
 
     Component.onCompleted: refresh()
+    // Component.onCompleted feuert oft, bevor Credentials' asynchroner
+    // Secrets-Request fertig ist -- der obige refresh() zeigt dann nur
+    // "Noch nicht konfiguriert" und nichts holt ihn automatisch nach, bis
+    // man manuell pull-to-refresh gemacht hat (s. RoomsView.qml).
+    Connections {
+        target: Credentials
+        onBaseUrlChanged: refresh()
+        onTokenChanged: refresh()
+    }
 
     SilicaListView {
         id: listView

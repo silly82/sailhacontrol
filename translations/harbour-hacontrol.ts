@@ -4,8 +4,23 @@
 <context>
     <name>CoverPage</name>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="7"/>
+        <location filename="../qml/cover/CoverPage.qml" line="39"/>
         <source>HA Control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/cover/CoverPage.qml" line="52"/>
+        <source>Alle Lichter aus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/cover/CoverPage.qml" line="55"/>
+        <source>1 Licht an</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/cover/CoverPage.qml" line="57"/>
+        <source>%1 Lichter an</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -93,99 +108,99 @@
 <context>
     <name>RoomsView</name>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="46"/>
+        <location filename="../qml/views/RoomsView.qml" line="65"/>
         <source>Ohne Raum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="150"/>
+        <location filename="../qml/views/RoomsView.qml" line="169"/>
         <source>Spielt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="151"/>
+        <location filename="../qml/views/RoomsView.qml" line="170"/>
         <source>Pausiert</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="152"/>
+        <location filename="../qml/views/RoomsView.qml" line="171"/>
         <source>Bereit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="153"/>
+        <location filename="../qml/views/RoomsView.qml" line="172"/>
         <source>Aus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="154"/>
+        <location filename="../qml/views/RoomsView.qml" line="173"/>
         <source>Ein</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="155"/>
+        <location filename="../qml/views/RoomsView.qml" line="174"/>
         <source>Lädt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="156"/>
+        <location filename="../qml/views/RoomsView.qml" line="175"/>
         <source>Standby</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="296"/>
-        <location filename="../qml/views/RoomsView.qml" line="323"/>
-        <location filename="../qml/views/RoomsView.qml" line="343"/>
+        <location filename="../qml/views/RoomsView.qml" line="325"/>
+        <location filename="../qml/views/RoomsView.qml" line="352"/>
+        <location filename="../qml/views/RoomsView.qml" line="381"/>
         <source>Unbekannter Fehler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="464"/>
+        <location filename="../qml/views/RoomsView.qml" line="512"/>
         <source>Home Assistant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="496"/>
+        <location filename="../qml/views/RoomsView.qml" line="551"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="500"/>
+        <location filename="../qml/views/RoomsView.qml" line="555"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="506"/>
+        <location filename="../qml/views/RoomsView.qml" line="561"/>
         <source>Räume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="507"/>
+        <location filename="../qml/views/RoomsView.qml" line="562"/>
         <source>Live</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="515"/>
+        <location filename="../qml/views/RoomsView.qml" line="570"/>
         <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="567"/>
+        <location filename="../qml/views/RoomsView.qml" line="622"/>
         <source>Benachrichtigung deaktivieren</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="567"/>
+        <location filename="../qml/views/RoomsView.qml" line="622"/>
         <source>Bei Änderung benachrichtigen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="630"/>
+        <location filename="../qml/views/RoomsView.qml" line="685"/>
         <source>benachrichtigt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="713"/>
+        <location filename="../qml/views/RoomsView.qml" line="768"/>
         <source>Aktivieren</source>
         <translation type="unfinished"></translation>
     </message>
@@ -208,22 +223,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="142"/>
+        <location filename="../qml/views/SensorsView.qml" line="151"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="146"/>
+        <location filename="../qml/views/SensorsView.qml" line="155"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="152"/>
+        <location filename="../qml/views/SensorsView.qml" line="161"/>
         <source>Sensor-Übersicht</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="161"/>
+        <location filename="../qml/views/SensorsView.qml" line="170"/>
         <source>Noch nicht konfiguriert</source>
         <translation type="unfinished"></translation>
     </message>
@@ -369,42 +384,42 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="128"/>
+        <location filename="../qml/views/UpdatesView.qml" line="137"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="132"/>
+        <location filename="../qml/views/UpdatesView.qml" line="141"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="138"/>
+        <location filename="../qml/views/UpdatesView.qml" line="147"/>
         <source>Updates (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="138"/>
+        <location filename="../qml/views/UpdatesView.qml" line="147"/>
         <source>Updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="147"/>
+        <location filename="../qml/views/UpdatesView.qml" line="156"/>
         <source>Noch nicht konfiguriert</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="155"/>
+        <location filename="../qml/views/UpdatesView.qml" line="164"/>
         <source>Alle Geräte sind aktuell.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="245"/>
+        <location filename="../qml/views/UpdatesView.qml" line="254"/>
         <source>Installiert…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="245"/>
+        <location filename="../qml/views/UpdatesView.qml" line="254"/>
         <source>Installieren</source>
         <translation type="unfinished"></translation>
     </message>

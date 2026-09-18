@@ -58,11 +58,45 @@ Page {
             }
         }
 
-        // Auf die nächstliegende Seite einrasten -- verallgemeinert auf
-        // beliebig viele Sub-Views statt fest auf zwei (0/page.width).
+        // Seite, auf der die Wischgeste begonnen hat -- nur auf die
+        // nächstliegende Seite zu snappen reichte nicht: ein etwas
+        // kräftigerer Flick liess die Flickable frei weitergleiten und
+        // übersprang eine Seite (Räume -> direkt Updates). Ein Wisch
+        // bewegt jetzt höchstens eine Seite weit.
+        //
+        // Beides MUSS an einer echten Fingergeste hängen (onDragStarted +
+        // userGesture), nicht an onMovementStarted/onMovementEnded allein:
+        // die Snap-Animation unten bewegt die Flickable selbst und löst
+        // dieselben Movement-Signale aus. Wird dabei die Startseite neu
+        // gesetzt, verschiebt sich das geclampte Ziel mitten in der
+        // Animation, die nächste Animation startet, und das Ganze läuft
+        // endlos weiter -- was den Render-Thread blockiert und die App
+        // beim Start in ein ANR laufen lässt (genau so passiert).
+        property int dragStartPage: 0
+        property bool userGesture: false
+
+        onDragStarted: {
+            userGesture = true
+            dragStartPage = pageIndexAt(contentX)
+        }
+
+        function pageIndexAt(x) {
+            if (page.width <= 0) {
+                return 0
+            }
+            return Math.round(x / page.width)
+        }
+
         onMovementEnded: {
-            var target = Math.round(contentX / page.width) * page.width
-            target = Math.max(0, Math.min(target, viewRow.width - page.width))
+            if (!userGesture || page.width <= 0) {
+                return
+            }
+            userGesture = false
+            var lastPage = Math.max(0, Math.round((viewRow.width - page.width) / page.width))
+            var targetPage = pageIndexAt(contentX)
+            targetPage = Math.max(dragStartPage - 1, Math.min(dragStartPage + 1, targetPage))
+            targetPage = Math.max(0, Math.min(targetPage, lastPage))
+            var target = targetPage * page.width
             if (Math.round(contentX) !== target) {
                 snapAnimation.to = target
                 snapAnimation.restart()

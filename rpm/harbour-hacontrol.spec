@@ -1,8 +1,8 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.51
-Release:    2
+Version:    0.52
+Release:    3
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
 Source0:    %{name}-%{version}.tar.bz2
@@ -76,6 +76,40 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.52-3
+- Seitenwechsel per Wischgeste war zu empfindlich: ein etwas kräftigerer
+  Flick liess die Flickable frei weitergleiten, und die Snap-Logik rastete
+  dann auf der übernächsten Seite ein (Räume -> direkt Updates, Sensoren
+  übersprungen). Ein Wisch bewegt jetzt höchstens eine Seite weit, indem
+  das Ziel auf +/-1 Seite gegenüber der Startseite der Geste begrenzt wird.
+- Behebt ein ANR beim Refresh: die Lichter-an-Zählung für den Cover machte
+  einen vollen Scan über alle Listenzeilen -- einmal pro Refresh und
+  zusätzlich bei jedem einzelnen Licht-Update über den WebSocket. Bei ~1500
+  Entities und hoher Systemlast blockierte das den Render-Thread dauerhaft.
+  Wird jetzt beim Aufbau der Liste mitgezählt und bei Live-Updates nur noch
+  inkrementell (+1/-1) nachgeführt.
+
+* Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.52-2
+- Fix: Räume/Sensoren/Updates blieben nach App-Start leer, bis man manuell
+  pull-to-refresh gemacht hat. Ursache: Component.onCompleted: refresh()
+  feuert oft, bevor Credentials' asynchroner Sailfish-Secrets-Request
+  fertig ist (baseUrl/token dann noch leer) -- der erste refresh()-Versuch
+  lief ins Leere und nichts hat ihn danach automatisch nachgeholt. Jetzt
+  reagieren alle drei Sub-Views zusätzlich auf Credentials.baseUrl/token,
+  sobald die echten Werte eintreffen.
+
+* Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.52-1
+- Cover-Nachbesserung nach den offiziellen UI-Guidelines
+  (docs.sailfishos.org/Develop/Apps/UI/): CoverPage.qml zeigte bisher nur
+  einen statischen "HA Control"-Schriftzug, obwohl Covers laut Guideline
+  "key information" zeigen und "Cover Actions for quick tasks without
+  opening apps" anbieten sollen. Zeigt jetzt zusätzlich die Anzahl
+  eingeschalteter Lichter ("3 Lichter an" / "Alle Lichter aus") und bietet
+  eine CoverAction zum Umschalten des zuletzt bedienten Lichts, ohne die
+  App zu öffnen. Beides wird von RoomsView.qml über ConfigurationValues
+  nachgeführt (gleiches Muster wie webhookIdSetting), damit der Cover
+  selbst keine eigene HA-Abfrage im Hintergrund braucht.
+
 * Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.51-2
 - Pull-down-"Refresh" aktualisiert jetzt alle drei Sub-Views statt nur der
   sichtbaren: die drei Views liegen gleichzeitig nebeneinander in einer Row

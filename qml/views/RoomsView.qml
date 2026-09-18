@@ -31,6 +31,25 @@ Item {
         key: "/apps/harbour-hacontrol/webhookId"
         defaultValue: ""
     }
+    // Read by CoverPage.qml (separate ConfigurationValue instances on the
+    // same keys, same pattern as webhookIdSetting above) so the cover can
+    // show "key information" and offer a Cover Action without needing its
+    // own HA query while minimized.
+    ConfigurationValue {
+        id: coverLightsOnCountSetting
+        key: "/apps/harbour-hacontrol/coverLightsOnCount"
+        defaultValue: 0
+    }
+    ConfigurationValue {
+        id: coverLastLightIdSetting
+        key: "/apps/harbour-hacontrol/coverLastLightId"
+        defaultValue: ""
+    }
+    ConfigurationValue {
+        id: coverLastLightNameSetting
+        key: "/apps/harbour-hacontrol/coverLastLightName"
+        defaultValue: ""
+    }
 
     property bool configured: Credentials.baseUrl.length > 0 && Credentials.token.length > 0
     property string errorText: ""
@@ -175,6 +194,11 @@ Item {
 
         var watched = watchedIds()
         var rooms = {}
+        // Für CoverPage.qml -- im selben Durchlauf mitgezählt statt per
+        // separatem O(n)-Scan über das fertig gebaute entriesModel danach
+        // (das kostete auf einem Gerät mit ~700+ Zeilen und schon hoher
+        // Systemlast spürbar Zeit auf dem GUI-Thread -- ANR beim Refresh).
+        var lightsOnCount = 0
 
         for (var j = 0; j < states.length; j++) {
             var s = states[j]
@@ -200,12 +224,16 @@ Item {
             if (!rooms[room]) {
                 rooms[room] = []
             }
+            var isOnValue = isEntityOn(domain, s.state)
+            if (kind === "toggle" && domain === "light" && isOnValue) {
+                lightsOnCount++
+            }
             rooms[room].push({
                 entityId: s.entity_id,
                 domain: domain,
                 kind: kind,
                 friendlyName: s.attributes.friendly_name || s.entity_id,
-                isOn: isEntityOn(domain, s.state),
+                isOn: isOnValue,
                 notify: watched.indexOf(s.entity_id) >= 0,
                 // Bei Thermostaten: Zieltemperatur statt hvac_mode-state
                 // in der Zeile anzeigen, mit "°C" statt der (meist
@@ -254,6 +282,7 @@ Item {
                 entriesModel.append(e)
             }
         }
+        coverLightsOnCountSetting.value = lightsOnCount
     }
 
     function openLightDetail(index) {
@@ -339,7 +368,16 @@ Item {
         var entry = entriesModel.get(index)
         HaApi.callService(Credentials.baseUrl, Credentials.token,
             entry.domain, "toggle", { entity_id: entry.entityId },
-            function () { postToggleRefreshTimer.restart() },
+            function () {
+                postToggleRefreshTimer.restart()
+                // Merkt sich das zuletzt umgeschaltete Licht für die
+                // CoverAction in CoverPage.qml -- andere Domains (switch/
+                // fan/cover) haben dort keinen sinnvollen Anwendungsfall.
+                if (entry.domain === "light") {
+                    coverLastLightIdSetting.value = entry.entityId
+                    coverLastLightNameSetting.value = entry.friendlyName
+                }
+            },
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
     }
 
@@ -367,13 +405,23 @@ Item {
                 continue
             }
             if (row.kind === "toggle") {
-                entriesModel.setProperty(i, "isOn", isEntityOn(row.domain, newState.state))
+                var wasOn = row.isOn === true
+                var nowOn = isEntityOn(row.domain, newState.state)
+                entriesModel.setProperty(i, "isOn", nowOn)
                 // Nur für Lichter tatsächlich befüllt (s. buildEntries()) --
                 // hier trotzdem generisch mitgeführt, damit der Farb-Swatch
                 // auch bei externen Änderungen (Live-Update) sofort
                 // nachzieht, statt erst beim nächsten Pull-to-refresh.
                 if (row.domain === "light") {
                     entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                    // O(1) nachführen statt eines vollen Rescans über
+                    // entriesModel bei jedem einzelnen Live-Update -- ein
+                    // Rescan pro Event kostete auf einem Gerät mit ~700+
+                    // Zeilen und schon hoher Systemlast spürbar GUI-Thread-
+                    // Zeit (ANR).
+                    if (wasOn !== nowOn) {
+                        coverLightsOnCountSetting.value += nowOn ? 1 : -1
+                    }
                 }
             } else if (row.kind === "sensor") {
                 entriesModel.setProperty(i, "value", newState.state)
@@ -482,6 +530,13 @@ Item {
     }
 
     Component.onCompleted: refresh()
+    // Component.onCompleted feuert oft, bevor Credentials' asynchroner
+    // Sailfish-Secrets-Request fertig ist (baseUrl/token dann noch leer,
+    // s. Credentials-Log beim Start) -- der obige refresh() lief dann ins
+    // Leere und nichts hat ihn danach automatisch nachgeholt, bis man
+    // manuell pull-to-refresh gemacht hat. configured wird reaktiv wahr,
+    // sobald die echten Werte eintreffen -- dann einmalig nachholen.
+    onConfiguredChanged: if (configured) refresh()
 
     SilicaListView {
         id: listView
