@@ -561,23 +561,29 @@ Item {
                 title: qsTr("Räume")
                 description: wsSubscribed ? qsTr("Live") : ""
             }
+        }
 
-            Label {
-                visible: !configured
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: qsTr("Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.")
-                color: Theme.secondaryHighlightColor
-            }
-            Label {
-                visible: errorText.length > 0
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: errorText
-                color: Theme.errorColor
-            }
+        // Leere Zustände über Silicas ViewPlaceholder statt über eigene
+        // Labels im Header -- zentriert, plattformtypisch, und der hintText
+        // nennt gleich den Weg zurück (Settings bzw. Pull-down-Refresh),
+        // statt den Nutzer vor einer leeren Seite stehen zu lassen.
+        ViewPlaceholder {
+            flickable: listView
+            enabled: !configured
+            text: qsTr("Noch nicht konfiguriert")
+            hintText: qsTr("Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.")
+        }
+        ViewPlaceholder {
+            flickable: listView
+            enabled: configured && errorText.length > 0
+            text: qsTr("Keine Verbindung")
+            hintText: errorText
+        }
+        ViewPlaceholder {
+            flickable: listView
+            enabled: configured && errorText.length === 0 && entriesModel.count === 0 && !busyIndicator.running
+            text: qsTr("Keine Geräte")
+            hintText: qsTr("Home Assistant meldet keine steuerbaren Entities. Nach unten ziehen zum Aktualisieren.")
         }
 
         delegate: ListItem {
