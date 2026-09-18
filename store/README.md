@@ -41,7 +41,7 @@ Reaching specific in-app states (an expanded room, the Settings page) for a scre
 These show the maintainer's real Home Assistant instance (real room and device/person names, e.g. "Lars", "Licht Gabi") -- confirmed acceptable to publish as-is rather than staging anonymized/demo data in earlier rounds; unchanged policy, not re-confirmed for this specific v0.50 batch.
 
 ## Visual assets -> Cover image
-Not prepared (optional field, 1080x540px). Could be generated in the same visual style as the app icon (navy-to-HA-blue gradient) if wanted later.
+`cover-1080x540.png` -- same visual style as the app icon (navy-to-HA-blue diagonal gradient, white house motif from `icons/source/generate-icon.py`'s path, reused at a larger scale as a left-aligned badge) plus "HA Control" / "Home Assistant für SailfishOS" in white. Generated reproducibly via `store/generate-cover.py` (same pycairo approach as the icon generator -- no SVG parser involved, matches the icon-rendering gotcha already noted in KONZEPT.md), not a hand-made image.
 
 ## Contact details -> Email
 Not filled in here -- this goes to Jolla directly tied to the submitter's account, fill in manually.
