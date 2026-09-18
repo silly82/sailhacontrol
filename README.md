@@ -4,7 +4,7 @@ A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home
 
 See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated development log.
 
-## Status: v0.50, working prototype
+## Status: v0.51, working prototype
 
 - Entity list (lights/switches/fans/covers) with toggle, grouped by Home Assistant Area/Room, collapsible per room. Lights with a known color/color-temperature show a small color swatch next to the switch.
 - Tap a light's name to open brightness / color / color-temperature controls — only the controls that light actually supports are shown. The toggle switch itself is unchanged.
@@ -16,7 +16,9 @@ See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated de
 - Swipe left/right between the room view, the sensor overview, and the updates overview — no menu navigation needed.
 - **Live updates via WebSocket**: an external change (HA web UI, physical switch, automation) shows up in the app immediately, no manual refresh needed.
 - Local background poll (every 10 min) with a notification when a watched entity's state changes — the notification itself has a toggle button, actionable right from the lock screen without opening the app. (There's no public lockscreen-widget API on SailfishOS for third-party apps; this is the closest equivalent.)
-- **Real `mobile_app` integration**: the device registers with HA and gets a genuine `notify.mobile_app_<device>` target, delivered instantly over the app's existing WebSocket connection while it's running (no cloud/Google/Apple push infrastructure involved). Three device-status sensors (battery level, charging, connection type) are reported back to HA and update every 10 minutes, piggybacking on the same background poll.
+- **Real `mobile_app` integration**: the device registers with HA and gets a genuine `notify.mobile_app_<device>` target, delivered instantly over the app's existing WebSocket connection while it's running (no cloud/Google/Apple push infrastructure involved). Three device-status sensors (battery level, charging, connection type) are reported back to HA every 10 minutes (piggybacking on the same background poll) and also on every app start and every pull-down refresh — the background job does not fire while the app is in the foreground, and HA only rewrites a sensor when its value actually changes, so a silent timestamp does not mean the app stopped reporting.
+- **HA URL and token are stored in Sailfish Secrets** (encrypted, tied to the device lock) rather than plaintext — see the C++ note under Known limitations. An existing installation's values are migrated automatically once and the plaintext copies are then cleared.
+- Pull-down "Refresh" refreshes all three pages at once, not just the visible one.
 - Confirmed working end-to-end against a real, large (1500+ entity) Home Assistant instance, on both the SailfishOS SDK emulator and a real aarch64 device.
 - Passes Jolla's official Harbour validation (`sfdk check -s harbour` / `-s rpmlint`) cleanly on all three architectures -- not yet actually submitted to the Jolla Store, but the package itself is store-ready.
 
@@ -64,7 +66,7 @@ Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer l
 
 Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md).
 
-## Status: v0.50, funktionierender Prototyp
+## Status: v0.51, funktionierender Prototyp
 
 - Entity-Liste (Lights/Switches/Fans/Covers) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar. Lichter mit bekannter Farbe/Farbtemperatur zeigen einen kleinen Farb-Punkt neben dem Switch.
 - Tap auf den Namen eines Lichts öffnet Helligkeit-/Farb-/Farbtemperatur-Regler — nur was das jeweilige Licht tatsächlich unterstützt wird angezeigt. Der Toggle-Switch selbst bleibt unverändert.
@@ -76,7 +78,9 @@ Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in
 - Wischen nach links/rechts zwischen Raumansicht, Sensor-Übersicht und Update-Übersicht — keine Menü-Navigation nötig.
 - **Live-Updates per WebSocket**: eine externe Änderung (HA-Weboberfläche, physischer Schalter, Automatisierung) erscheint sofort in der App, kein manuelles Refresh nötig.
 - Lokaler Hintergrund-Poll (alle 10 Minuten) mit Benachrichtigung bei Zustandsänderung einer beobachteten Entity — die Benachrichtigung selbst hat einen Umschalten-Button, direkt vom Sperrbildschirm aus bedienbar, ohne die App zu öffnen. (Es gibt keine öffentliche Lockscreen-Widget-API für Drittanbieter-Apps auf SailfishOS -- das ist das nächstliegende Äquivalent.)
-- **Echte `mobile_app`-Integration**: Das Gerät registriert sich bei HA und erhält ein echtes `notify.mobile_app_<gerät>`-Ziel, zugestellt sofort über die bestehende WebSocket-Verbindung der App, solange sie läuft (keine Cloud-/Google-/Apple-Push-Infrastruktur nötig). Drei Device-Status-Sensoren (Akkustand, Lädt, Verbindungsart) werden alle 10 Minuten an HA zurückgemeldet, huckepack auf dem bestehenden Hintergrund-Poll.
+- **Echte `mobile_app`-Integration**: Das Gerät registriert sich bei HA und erhält ein echtes `notify.mobile_app_<gerät>`-Ziel, zugestellt sofort über die bestehende WebSocket-Verbindung der App, solange sie läuft (keine Cloud-/Google-/Apple-Push-Infrastruktur nötig). Drei Device-Status-Sensoren (Akkustand, Lädt, Verbindungsart) werden alle 10 Minuten an HA zurückgemeldet (huckepack auf dem bestehenden Hintergrund-Poll) und zusätzlich bei jedem App-Start und jedem Pull-down-Refresh — der Hintergrund-Job feuert nicht, solange die App im Vordergrund ist, und HA schreibt einen Sensor nur, wenn sich sein Wert tatsächlich ändert; ein unveränderter Zeitstempel heisst also nicht, dass die App nicht mehr meldet.
+- **HA-URL und Token liegen in Sailfish Secrets** (verschlüsselt, an die Gerätesperre gebunden) statt im Klartext — siehe die C++-Anmerkung unter Bekannte Einschränkungen. Bestandsinstallationen werden einmalig automatisch migriert, danach werden die Klartext-Kopien gelöscht.
+- Pull-down-"Refresh" aktualisiert alle drei Seiten auf einmal, nicht nur die sichtbare.
 - Bestätigt funktionierend, Ende-zu-Ende, gegen eine echte, grosse (1500+ Entities) Home-Assistant-Instanz — sowohl im SailfishOS-SDK-Emulator als auch auf einem echten aarch64-Gerät.
 - Besteht Jollas offizielle Harbour-Validierung (`sfdk check -s harbour` / `-s rpmlint`) sauber auf allen drei Architekturen — noch nicht tatsächlich im Jolla Store eingereicht, das Paket selbst ist aber store-fertig.
 
