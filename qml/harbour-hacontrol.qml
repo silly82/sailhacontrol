@@ -5,6 +5,7 @@ import Nemo.KeepAlive 1.2
 import Nemo.Notifications 1.0
 import Nemo.DBus 2.0
 import "pages"
+import "components"
 import "lib/HaApi.js" as HaApi
 
 ApplicationWindow {
@@ -53,6 +54,120 @@ ApplicationWindow {
         defaultValue: "{}"
     }
 
+    // Ausbaustufe 3, Teil 2: echte mobile_app-Integration (Registrierung +
+    // Push per WebSocket + Device-Status-Sensoren), s. KONZEPT.md. deviceId
+    // wird einmalig generiert und bleibt stabil, solange die App nicht neu
+    // installiert wird -- reicht für HA als Identität, keine Kryptoqualität
+    // nötig.
+    ConfigurationValue {
+        id: deviceIdSetting
+        key: "/apps/harbour-hacontrol/deviceId"
+        defaultValue: ""
+    }
+    ConfigurationValue {
+        id: deviceNameSetting
+        key: "/apps/harbour-hacontrol/deviceName"
+        defaultValue: qsTr("SailfishOS Phone")
+    }
+    ConfigurationValue {
+        id: webhookIdSetting
+        key: "/apps/harbour-hacontrol/webhookId"
+        defaultValue: ""
+    }
+
+    DeviceStatusProbe {
+        id: deviceStatusProbe
+    }
+
+    function randomDeviceId() {
+        var chars = "0123456789abcdef"
+        var id = ""
+        for (var i = 0; i < 32; i++) {
+            id += chars.charAt(Math.floor(Math.random() * chars.length))
+        }
+        return id
+    }
+
+    // Registriert dieses Gerät bei HA, falls URL+Token gültig sind und noch
+    // keine webhookId gespeichert ist (erster Start, oder nach "Gerät neu
+    // registrieren" in den Settings, das webhookIdSetting.value leert).
+    function ensureMobileAppRegistered() {
+        var baseUrl = baseUrlSetting.value
+        var token = tokenSetting.value
+        if (baseUrl.length === 0 || token.length === 0 || webhookIdSetting.value.length > 0) {
+            return
+        }
+        if (deviceIdSetting.value.length === 0) {
+            deviceIdSetting.value = randomDeviceId()
+        }
+        HaApi.registerMobileApp(baseUrl, token, deviceIdSetting.value, deviceNameSetting.value,
+            function (result) {
+                webhookIdSetting.value = result.webhook_id
+                registerDeviceSensors()
+            },
+            function (error) {})
+    }
+
+    // register_sensor ist laut HA-Doku idempotent (zweiter Aufruf für die
+    // gleiche unique_id aktualisiert nur den Zustand) -- kann darum bei
+    // jeder Neuregistrierung ohne Sonderfall erneut aufgerufen werden.
+    function registerDeviceSensors() {
+        var baseUrl = baseUrlSetting.value
+        var webhookId = webhookIdSetting.value
+        if (baseUrl.length === 0 || webhookId.length === 0) {
+            return
+        }
+        HaApi.callWebhook(baseUrl, webhookId, "register_sensor", {
+            type: "sensor", unique_id: "battery_level", name: qsTr("Akkustand"),
+            device_class: "battery", unit_of_measurement: "%", state_class: "measurement",
+            icon: "mdi:battery", state: null
+        }, function () {}, function () {})
+        HaApi.callWebhook(baseUrl, webhookId, "register_sensor", {
+            type: "binary_sensor", unique_id: "battery_charging", name: qsTr("Lädt"),
+            device_class: "battery_charging", icon: "mdi:power-plug", state: false
+        }, function () {}, function () {})
+        HaApi.callWebhook(baseUrl, webhookId, "register_sensor", {
+            type: "sensor", unique_id: "connection_type", name: qsTr("Verbindungsart"),
+            icon: "mdi:wifi", state: "offline"
+        }, function () {}, function () {})
+
+        updateDeviceSensors()
+    }
+
+    function updateDeviceSensors() {
+        var baseUrl = baseUrlSetting.value
+        var webhookId = webhookIdSetting.value
+        if (baseUrl.length === 0 || webhookId.length === 0) {
+            return
+        }
+        deviceStatusProbe.query(function (status) {
+            var sensors = [
+                { type: "binary_sensor", unique_id: "battery_charging", state: status.charging },
+                { type: "sensor", unique_id: "connection_type", state: status.connectionType }
+            ]
+            // -1 (unknown, z.B. auf dem SDK-Emulator ohne echten Akku) nicht
+            // senden -- HA erwartet für device_class battery eine Zahl.
+            if (status.batteryLevel >= 0) {
+                sensors.push({ type: "sensor", unique_id: "battery_level", state: status.batteryLevel })
+            }
+            HaApi.callWebhook(baseUrl, webhookId, "update_sensor_states", sensors, function () {}, function () {})
+        })
+    }
+
+    Connections {
+        target: baseUrlSetting
+        onValueChanged: ensureMobileAppRegistered()
+    }
+    Connections {
+        target: tokenSetting
+        onValueChanged: ensureMobileAppRegistered()
+    }
+    Connections {
+        target: webhookIdSetting
+        onValueChanged: ensureMobileAppRegistered()
+    }
+    Component.onCompleted: ensureMobileAppRegistered()
+
     // D-Bus-Endpunkt für den "Umschalten"-Button auf der Benachrichtigung
     // (s. notifyStateChange() unten) -- rein in QML über Nemo.DBus'
     // DBusAdaptor, kein C++ nötig. service/path/iface ergeben sich aus dem
@@ -97,6 +212,10 @@ ApplicationWindow {
             var baseUrl = baseUrlSetting.value
             var token = tokenSetting.value
             var watched = watchedSetting.value.split(",").map(function (s) { return s.trim() }).filter(function (s) { return s.length > 0 })
+
+            // Huckepack auf dem ohnehin laufenden 10-Minuten-Intervall -- kein
+            // eigener Timer für die Device-Status-Sensoren nötig.
+            updateDeviceSensors()
 
             if (baseUrl.length === 0 || token.length === 0 || watched.length === 0) {
                 pollActivity.finished()

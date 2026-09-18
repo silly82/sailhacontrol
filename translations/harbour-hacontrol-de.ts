@@ -93,94 +93,99 @@
 <context>
     <name>RoomsView</name>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="37"/>
+        <location filename="../qml/views/RoomsView.qml" line="51"/>
         <source>Ohne Raum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="141"/>
+        <location filename="../qml/views/RoomsView.qml" line="155"/>
         <source>Spielt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="142"/>
+        <location filename="../qml/views/RoomsView.qml" line="156"/>
         <source>Pausiert</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="143"/>
+        <location filename="../qml/views/RoomsView.qml" line="157"/>
         <source>Bereit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="144"/>
+        <location filename="../qml/views/RoomsView.qml" line="158"/>
         <source>Aus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="145"/>
+        <location filename="../qml/views/RoomsView.qml" line="159"/>
         <source>Ein</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="146"/>
+        <location filename="../qml/views/RoomsView.qml" line="160"/>
         <source>Lädt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="147"/>
+        <location filename="../qml/views/RoomsView.qml" line="161"/>
         <source>Standby</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="287"/>
-        <location filename="../qml/views/RoomsView.qml" line="314"/>
-        <location filename="../qml/views/RoomsView.qml" line="334"/>
+        <location filename="../qml/views/RoomsView.qml" line="301"/>
+        <location filename="../qml/views/RoomsView.qml" line="328"/>
+        <location filename="../qml/views/RoomsView.qml" line="348"/>
         <source>Unbekannter Fehler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="449"/>
+        <location filename="../qml/views/RoomsView.qml" line="469"/>
+        <source>Home Assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/RoomsView.qml" line="501"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="453"/>
+        <location filename="../qml/views/RoomsView.qml" line="505"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="459"/>
+        <location filename="../qml/views/RoomsView.qml" line="511"/>
         <source>HA Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="460"/>
+        <location filename="../qml/views/RoomsView.qml" line="512"/>
         <source>Live</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="468"/>
+        <location filename="../qml/views/RoomsView.qml" line="520"/>
         <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="520"/>
+        <location filename="../qml/views/RoomsView.qml" line="572"/>
         <source>Benachrichtigung deaktivieren</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="520"/>
+        <location filename="../qml/views/RoomsView.qml" line="572"/>
         <source>Bei Änderung benachrichtigen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="583"/>
+        <location filename="../qml/views/RoomsView.qml" line="635"/>
         <source>benachrichtigt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="666"/>
+        <location filename="../qml/views/RoomsView.qml" line="718"/>
         <source>Aktivieren</source>
         <translation type="unfinished"></translation>
     </message>
@@ -251,33 +256,64 @@
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="31"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="23"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="85"/>
+        <source>SailfishOS Phone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="44"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="37"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="50"/>
         <source>Home Assistant URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="38"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="51"/>
         <source>http://homeassistant.local:8123</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="47"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="60"/>
         <source>Long-Lived Access Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="48"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="61"/>
         <source>erstellt in HA: Profil → Sicherheit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="59"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="72"/>
         <source>Nur lokales Netz (Ausbaustufe 1). URL und Token werden über Nemo.Configuration gespeichert -- für Klartext-Speicherung ausreichend für einen lokalen Prototyp, aber kein Ersatz für Sailfish Secrets, falls das Gerät geteilt wird.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="78"/>
+        <source>Home-Assistant-Geräteregistrierung</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="84"/>
+        <source>Gerätename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="95"/>
+        <source>Registriert -- erscheint in HA als eigenes Gerät (notify.mobile_app_...) mit Akkustand-/Verbindungs-Sensoren.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="96"/>
+        <source>Noch nicht registriert -- wird automatisch versucht, sobald URL und Token gültig sind.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="103"/>
+        <source>Gerät neu registrieren</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -396,17 +432,37 @@
 <context>
     <name>harbour-hacontrol</name>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="82"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="70"/>
+        <source>SailfishOS Phone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/harbour-hacontrol.qml" line="121"/>
+        <source>Akkustand</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/harbour-hacontrol.qml" line="126"/>
+        <source>Lädt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/harbour-hacontrol.qml" line="130"/>
+        <source>Verbindungsart</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/harbour-hacontrol.qml" line="197"/>
         <source>eingeschaltet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="82"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="197"/>
         <source>ausgeschaltet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="84"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="199"/>
         <source>Umschalten</source>
         <translation type="unfinished"></translation>
     </message>

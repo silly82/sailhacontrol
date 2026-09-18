@@ -2,6 +2,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import QtWebSockets 1.0
 import Nemo.Configuration 1.0
+import Nemo.Notifications 1.0
 import "../lib/HaApi.js" as HaApi
 import "../components"
 
@@ -27,6 +28,14 @@ Item {
         key: "/apps/harbour-hacontrol/watchedEntities"
         defaultValue: ""
     }
+    // Set by harbour-hacontrol.qml's ensureMobileAppRegistered() once this
+    // device is registered as a mobile_app entry -- used here to open the
+    // real push-notification channel over this same WebSocket connection.
+    ConfigurationValue {
+        id: webhookIdSetting
+        key: "/apps/harbour-hacontrol/webhookId"
+        defaultValue: ""
+    }
 
     property bool configured: baseUrlSetting.value.length > 0 && tokenSetting.value.length > 0
     property string errorText: ""
@@ -34,6 +43,11 @@ Item {
     // the "Live"-Hinweis im PageHeader.
     property bool wsSubscribed: false
     property int wsMessageId: 1
+    // id of the mobile_app/push_notification_channel subscribe message --
+    // incoming push events carry this as their "id" (no event_type field,
+    // unlike state_changed events), used to tell the two apart in
+    // onTextMessageReceived. 0 == not subscribed yet.
+    property int pushChannelMsgId: 0
     readonly property string noRoomLabel: qsTr("Ohne Raum")
     // room name -> bool. Missing key == collapsed (rooms start folded).
     property var expandedRooms: ({})
@@ -382,6 +396,29 @@ Item {
         }
     }
 
+    // Called both right after auth_ok and whenever webhookIdSetting changes
+    // (Connections below) -- registration in harbour-hacontrol.qml is an
+    // async REST call that often hasn't finished by the time auth_ok fires
+    // on a fresh install/reconnect, so subscribing only from auth_ok would
+    // silently miss the push channel for the rest of that connection's
+    // lifetime. Guarded so it only ever sends once per connection.
+    function subscribePushChannelIfReady() {
+        if (!wsSubscribed || pushChannelMsgId > 0 || webhookIdSetting.value.length === 0) {
+            return
+        }
+        pushChannelMsgId = wsMessageId
+        liveSocket.sendTextMessage(JSON.stringify({
+            id: pushChannelMsgId, type: "mobile_app/push_notification_channel",
+            webhook_id: webhookIdSetting.value, support_confirm: false
+        }))
+        wsMessageId += 1
+    }
+
+    Connections {
+        target: webhookIdSetting
+        onValueChanged: subscribePushChannelIfReady()
+    }
+
     WebSocket {
         id: liveSocket
         url: baseUrlSetting.value.length > 0 ? wsUrlFor(baseUrlSetting.value) : ""
@@ -390,6 +427,7 @@ Item {
         onStatusChanged: {
             if (status === WebSocket.Closed || status === WebSocket.Error) {
                 wsSubscribed = false
+                pushChannelMsgId = 0
                 wsReconnectTimer.restart()
             }
         }
@@ -408,6 +446,7 @@ Item {
                 sendTextMessage(JSON.stringify({ id: wsMessageId, type: "subscribe_events", event_type: "state_changed" }))
                 wsMessageId += 1
                 wsSubscribed = true
+                subscribePushChannelIfReady()
             } else if (msg.type === "auth_invalid") {
                 wsSubscribed = false
             } else if (msg.type === "event" && msg.event && msg.event.event_type === "state_changed") {
@@ -415,8 +454,21 @@ Item {
                 if (data && data.new_state) {
                     applyStateChange(data.entity_id, data.new_state)
                 }
+            } else if (msg.type === "event" && pushChannelMsgId > 0 && msg.id === pushChannelMsgId) {
+                showPushNotification(msg.event)
             }
         }
+    }
+
+    // Gleiches Qt.createQmlObject()-Muster wie notifyStateChange() in
+    // harbour-hacontrol.qml, hier lokal statt geteilt -- kein Grund, für eine
+    // einzelne Notification über Dateigrenzen zu koppeln.
+    function showPushNotification(event) {
+        var component = 'import QtQuick 2.0\nimport Nemo.Notifications 1.0\nNotification { appName: "HA Control"; category: "x-nemo.example" }'
+        var notification = Qt.createQmlObject(component, root, "HaControlPushNotification")
+        notification.summary = event.title || qsTr("Home Assistant")
+        notification.body = event.message || ""
+        notification.publish()
     }
 
     // Kein automatisches Reconnect im WebSocket-Typ selbst -- bei

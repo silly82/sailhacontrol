@@ -733,3 +733,127 @@ s. o.), echtes Gerät (aarch64, installiert+startet fehlerfrei, keine
 QML-Fehler im Log). `sfdk check -s harbour`/`-s rpmlint` auf allen
 drei Architekturen sauber bis auf die bereits akzeptierte
 `libkeepalive`-Warnung.
+
+## 20. Update 2026-09-18: Echte mobile_app-Integration (Push + Device-Status), v0.12
+
+Nutzer-Wunsch: "Benachrichtigungsfunktion und Device-Status-Funktion der
+Original-App nachbauen" -- gemeint war explizit nicht der bestehende
+Poll-basierte Ansatz (Ausbaustufe 3/Variante B), sondern die echten
+`mobile_app`-Mechanismen der offiziellen HA-Companion-App: (a) HA kann
+aktiv Push-Nachrichten ans Handy schicken (`notify.mobile_app_...`,
+z.B. aus Automationen), (b) das Handy meldet umgekehrt eigene Sensoren
+(Akkustand, Verbindungsart) an HA zurück. Per Rückfrage (AskUserQuestion)
+bestätigt, bevor mit der Umsetzung begonnen wurde.
+
+**API-Mechanik vorab aus dem echten `home-assistant/core`-Quellcode
+gelesen** (nicht geraten) -- `mobile_app/const.py`, `notify.py`,
+`push_notification.py`, `websocket_api.py`, `webhook.py`, `http_api.py`:
+Registrierung per `POST /api/mobile_app/registrations` (Bearer-Token wie
+die bestehenden REST-Calls); `app_data.push_websocket_channel: true`
+reicht laut `supports_push()` in `util.py` bereits aus, damit HA einen
+echten `notify.mobile_app_<gerät>`-Service anbietet, der über die
+**bereits bestehende, authentifizierte WebSocket-Verbindung** (aus
+Abschnitt 8) zugestellt wird -- kein eigener HTTP-Server, kein
+C++-Bridge-Objekt nötig. Client sendet dafür einmalig
+`{"type": "mobile_app/push_notification_channel", "webhook_id": ..., "support_confirm": false}`,
+HA liefert Pushes danach als reguläre `event`-Nachrichten auf derselben
+Verbindung. Sensor-Updates laufen separat über
+`POST /api/webhook/<webhook_id>` (kein Bearer-Header nötig, die
+Webhook-ID selbst ist das Secret) mit `register_sensor`/
+`update_sensor_states`.
+
+**Device-Status-Sensoren ohne UPower**: SailfishOS nutzt für
+Akkustand/Ladezustand `com.nokia.mce` (`get_battery_level`/
+`get_charger_state`) statt UPower, und `net.connman`
+(`Manager.GetServices()`, erster Eintrag = aktive Verbindung) für die
+Verbindungsart -- beides direkt gegen den laufenden SDK-Emulator per
+`dbus-send --system` verifiziert (`org.freedesktop.UPower` ist auf
+SailfishOS schlicht nicht vorhanden), bevor `qml/components/DeviceStatusProbe.qml`
+geschrieben wurde. Die exakte `Nemo.DBus`-QML-API (`getProperty`/`call`/
+`typedCall`, keine `plugins.qmltypes` für dieses Plugin vorhanden) wurde
+per `strings` auf der Plugin-`.so` im SDK-Target verifiziert statt aus
+Erinnerung übernommen.
+
+**Zwei echte Bugs beim End-to-End-Test gegen die reale, 1500+-Entity-
+Instanz des Nutzers gefunden+gefixt** (nicht im Emulator allein
+aufgefallen -- Debugging lief per curl direkt gegen die echte HA-Instanz,
+da dieser Rechner sie im lokalen Netz erreicht):
+
+1. **`os_version` ist trotz "optional" in HAs eigenem Schema faktisch
+   erforderlich.** Ohne dieses Feld crasht `mobile_app`s eigenes
+   `async_setup_entry()` (direkter Dict-Zugriff ohne Fallback) NACH
+   Erzeugung der `webhook_id`, aber VOR ihrer Registrierung beim
+   generischen Webhook-Dispatcher. Symptom war tückisch: die
+   REST-Registrierung meldet trotzdem Erfolg (HTTP 201 + scheinbar
+   gültige `webhook_id`), aber jeder folgende Aufruf gegen diese ID
+   (`register_sensor`, Push, sogar `get_config`) bekommt für immer
+   HAs Leer-200-Antwort für unbekannte Webhooks -- das generische
+   Anti-Enumeration-Verhalten des Webhook-Dispatchers. Erst per
+   `curl` mit/ohne `os_version` gegenübergestellt gefunden. Fix: immer
+   einen statischen `os_version`-Wert mitschicken (kein natives
+   Auslesen der echten SailfishOS-Version -- bräuchte C++, HA zeigt
+   den Wert ohnehin nur an).
+2. **Push-Kanal-Abo hatte eine Race Condition**: wurde nur im
+   `auth_ok`-Handler des WebSockets gesendet, aber die Registrierung
+   (asynchroner REST-Call in `harbour-hacontrol.qml`) war zu dem
+   Zeitpunkt bei einem Neustart oft noch nicht fertig -- damit blieb
+   der Push für den Rest dieser Verbindung unabonniert. Fix: eigene
+   `subscribePushChannelIfReady()`-Funktion, zusätzlich an
+   `webhookIdSetting`s `onValueChanged` gehängt.
+
+**Verifiziert Ende-zu-Ende gegen die echte Instanz** (Emulator, i486):
+Registrierung erzeugt ein neues, sauberes `mobile_app`-Gerät "SailfishOS
+Phone" in HA (per WebSocket-Admin-Query bestätigt: genau ein
+`state: "loaded"`-Eintrag, keine Karteileichen trotz mehrerer
+Test-Registrierungsläufe -- HAs Config-Entry-Dedup nach
+`unique_id = app_id-device_id` greift wie erwartet). `notify.send_message`
+(Ziel-Entity `notify.sailfishos_phone`) aus HAs Dev-Tools ausgelöst -->
+Push-Banner erscheint sofort auf dem Emulator, per Screenshot bestätigt.
+Alle drei Device-Status-Sensoren (`sensor.sailfishos_phone_akkustand`,
+`binary_sensor.sailfishos_phone_ladt`, `sensor.sailfishos_phone_verbindungsart`)
+erscheinen mit für den Emulator plausiblen Werten (kein echter Akku -->
+`-1`, korrekt herausgefiltert statt als Sensorwert gesendet; `ladt: on`
+und `verbindungsart: ethernet` passend zum Emulator-Setup). Kein
+einziger QML-Fehler im Journal über die gesamte Testsession.
+
+**Nachtrag, selbe Session -- echtes Gerät angeschlossen**: aarch64-RPM
+auf die reale Jolla Phone installiert (`192.168.2.15`, s.
+sailtalerwallet-Workflow für devel-su/pkcon). Zwei Cross-Arch-Stolperfallen
+dabei erneut bestätigt (bereits aus sailtalerwallet bekannt, hier zum
+ersten Mal live erlebt): (1) `sfdk build` für i486 dann aarch64
+nacheinander im selben Arbeitsverzeichnis (kein Shadow-Build) relinkt
+stillschweigend die stehen gebliebene i486-`.o`/Binary in die
+aarch64-RPM -- sichtbar am `warning: Binaries arch (1) not matching the
+package arch (2)` beim Build, geführt zu `nothing provides
+libQt5Core.so.5` beim Installationsversuch auf dem echten Gerät (obwohl
+dieselbe Lib dort für die schon laufende v0.10 längst vorhanden ist).
+Fix: `rm -f harbour-hacontrol harbour-hacontrol.o Makefile moc_*` vor
+jedem Architekturwechsel. (2) `pkcon install-local` über `ssh -tt`
+produzierte wie dokumentiert Runaway-Output -- Fix war, wie schon
+bekannt, kein PTY zu erzwingen.
+
+Ausserdem eine dritte, kleinere Falle beim Aufräumen alter
+App-Instanzen: `devel-su killall harbour-hacontrol firejail invoker`
+sollte nur die eigene App treffen, hat aber (Prozessname-Kollision)
+gleich noch die gerade laufende Kamera-, E-Mail- und Browser-App des
+Nutzers mitbeendet, da die ebenfalls unter `firejail`/`invoker` laufen.
+Kein Datenverlust, aber ein Warnzeichen: `killall` nie mit einem so
+generischen Namen wie `firejail`/`invoker` auf einem Gerät mit anderen
+laufenden Fremd-Apps.
+
+**Auf echter Hardware verifiziert**: Registrierung erzeugte automatisch
+ein zweites, sauberes `mobile_app`-Gerät (andere `deviceId` als der
+Emulator, daher `_2`-Entity-Suffix in HA) mit realen Werten -- Akkustand
+tatsächlich `55`/`56` (kein `-1` wie im Emulator, echte
+`get_battery_level()` funktioniert), `ladt: on` (Handy hing zum
+Testzeitpunkt am USB-Kabel, korrekt erkannt), `verbindungsart` kurz
+`offline` direkt beim allerersten App-Start (`GetServices()` lief
+offenbar, bevor ConnMan seine Service-Liste nach dem Verbindungsaufbau
+neu sortiert hatte), danach beim nächsten Update korrekt `wifi` --
+selbstheilend über den nächsten 10-Minuten-Poll, kein Code-Bug (per
+Debug-`console.log` der rohen `GetServices()`-Antwort verifiziert, dann
+wieder entfernt). Echter Push (`notify.send_message` auf
+`notify.sailfishos_phone_2`) vom Nutzer direkt auf dem Gerät bestätigt
+("ja"). `sfdk check -s harbour`/`-s rpmlint` auf allen drei
+Architekturen sauber bis auf die bereits akzeptierte
+`libkeepalive`-Warnung.

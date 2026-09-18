@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.11
+Version:    0.12
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -31,7 +31,10 @@ der Installation. Live-Updates per WebSocket, erweiterte Lichtsteuerung
 Thermostat-Steuerung (Zieltemperatur/Modus). Periodischer
 Background-Poll (BackgroundJob) mit lokaler Benachrichtigung bei
 Zustandsänderung beobachteter Entities -- die Benachrichtigung hat einen
-Umschalten-Button, direkt vom Sperrbildschirm aus bedienbar.
+Umschalten-Button, direkt vom Sperrbildschirm aus bedienbar. Echte
+mobile_app-Integration: Push-Benachrichtigungen aus HA-Automationen
+(notify.mobile_app_...) per WebSocket, sowie drei Device-Status-Sensoren
+(Akkustand, Lädt, Verbindungsart) zurück an HA.
 
 
 %prep
@@ -63,6 +66,34 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.12-1
+- Real mobile_app integration, nachgebaut aus der offiziellen HA-Companion-App:
+  Registrierung (POST /api/mobile_app/registrations) mit
+  app_data.push_websocket_channel, wodurch HA einen echten
+  notify.mobile_app_<gerät>-Service anbietet, der über die bereits
+  bestehende WebSocket-Verbindung zugestellt wird (kein eigener HTTP-Server,
+  kein C++ nötig -- Mechanik verifiziert direkt im home-assistant/core-
+  Quellcode statt geraten). Ausserdem drei Device-Status-Sensoren
+  (Akkustand, Lädt, Verbindungsart) via register_sensor/
+  update_sensor_states, gelesen über com.nokia.mce (Akku/Ladezustand) und
+  net.connman (Verbindungsart) per Nemo.DBus -- Dienst-/Pfadnamen gegen die
+  laufende Instanz verifiziert (SailfishOS nutzt kein UPower). Sensor-Update
+  huckepack auf dem bestehenden 10-Minuten-BackgroundJob. Neues
+  "Gerätename"-Feld + "Gerät neu registrieren"-Button in den Settings.
+- Echter Bug gefunden+gefixt beim Testen gegen die reale Instanz: HAs
+  Registrierungs-API dokumentiert/schemaisiert os_version als optional,
+  aber mobile_app's async_setup_entry() liest es intern ohne Fallback --
+  fehlt es, crasht das Setup NACH dem Erzeugen der webhook_id, aber VOR
+  ihrer eigentlichen Registrierung. Das REST-Ergebnis sieht dabei
+  trotzdem nach Erfolg aus (webhook_id kommt zurück) -- jeder folgende
+  Aufruf gegen diese webhook_id landet aber für immer auf HAs
+  Leer-200-Antwort für unbekannte Webhooks. Fix: os_version immer
+  mitschicken. Zweiter, kleinerer Bug: der Push-Kanal wurde nur im
+  WebSocket-auth_ok-Handler abonniert, die Registrierung (asynchroner
+  REST-Call) war zu dem Zeitpunkt oft noch nicht fertig -- Push blieb
+  für den Rest der Verbindung unbeobachtet. Fix: zusätzlicher Versuch,
+  sobald die webhookId nachträglich gesetzt wird.
+
 * Tue Sep 08 2026 silly82 <siliwalker@gmail.com> - 0.11-1
 - UI polish: color swatch next to light rows (real rgb_color, or a
   Tanner-Helland approximation from color_temp_kelvin when only that

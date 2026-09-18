@@ -19,6 +19,7 @@ SOURCES += src/harbour-hacontrol.cpp
 DISTFILES += qml/harbour-hacontrol.qml \
     qml/cover/CoverPage.qml \
     qml/components/ScrollingLabel.qml \
+    qml/components/DeviceStatusProbe.qml \
     qml/lib/HaApi.js \
     qml/pages/FirstPage.qml \
     qml/pages/SettingsPage.qml \
