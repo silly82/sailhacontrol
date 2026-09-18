@@ -1,8 +1,8 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
-Version:    0.51
-Release:    2
+Version:    0.52
+Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
 Source0:    %{name}-%{version}.tar.bz2
@@ -76,6 +76,18 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.52-1
+- Cover-Nachbesserung nach den offiziellen UI-Guidelines
+  (docs.sailfishos.org/Develop/Apps/UI/): CoverPage.qml zeigte bisher nur
+  einen statischen "HA Control"-Schriftzug, obwohl Covers laut Guideline
+  "key information" zeigen und "Cover Actions for quick tasks without
+  opening apps" anbieten sollen. Zeigt jetzt zusätzlich die Anzahl
+  eingeschalteter Lichter ("3 Lichter an" / "Alle Lichter aus") und bietet
+  eine CoverAction zum Umschalten des zuletzt bedienten Lichts, ohne die
+  App zu öffnen. Beides wird von RoomsView.qml über ConfigurationValues
+  nachgeführt (gleiches Muster wie webhookIdSetting), damit der Cover
+  selbst keine eigene HA-Abfrage im Hintergrund braucht.
+
 * Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.51-2
 - Pull-down-"Refresh" aktualisiert jetzt alle drei Sub-Views statt nur der
   sichtbaren: die drei Views liegen gleichzeitig nebeneinander in einer Row

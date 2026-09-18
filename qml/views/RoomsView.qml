@@ -31,6 +31,25 @@ Item {
         key: "/apps/harbour-hacontrol/webhookId"
         defaultValue: ""
     }
+    // Read by CoverPage.qml (separate ConfigurationValue instances on the
+    // same keys, same pattern as webhookIdSetting above) so the cover can
+    // show "key information" and offer a Cover Action without needing its
+    // own HA query while minimized.
+    ConfigurationValue {
+        id: coverLightsOnCountSetting
+        key: "/apps/harbour-hacontrol/coverLightsOnCount"
+        defaultValue: 0
+    }
+    ConfigurationValue {
+        id: coverLastLightIdSetting
+        key: "/apps/harbour-hacontrol/coverLastLightId"
+        defaultValue: ""
+    }
+    ConfigurationValue {
+        id: coverLastLightNameSetting
+        key: "/apps/harbour-hacontrol/coverLastLightName"
+        defaultValue: ""
+    }
 
     property bool configured: Credentials.baseUrl.length > 0 && Credentials.token.length > 0
     property string errorText: ""
@@ -158,6 +177,20 @@ Item {
         }
     }
 
+    // Für CoverPage.qml -- gezählt statt live über HA abgefragt, da der
+    // Cover kein eigenes Polling anstossen soll, während die App im
+    // Hintergrund ist.
+    function updateCoverLightsOnCount() {
+        var count = 0
+        for (var i = 0; i < entriesModel.count; i++) {
+            var row = entriesModel.get(i)
+            if (row.rowType === "entity" && row.kind === "toggle" && row.domain === "light" && row.isOn === true) {
+                count++
+            }
+        }
+        coverLightsOnCountSetting.value = count
+    }
+
     function toggleRoom(room) {
         var next = {}
         for (var key in expandedRooms) {
@@ -254,6 +287,7 @@ Item {
                 entriesModel.append(e)
             }
         }
+        updateCoverLightsOnCount()
     }
 
     function openLightDetail(index) {
@@ -339,7 +373,16 @@ Item {
         var entry = entriesModel.get(index)
         HaApi.callService(Credentials.baseUrl, Credentials.token,
             entry.domain, "toggle", { entity_id: entry.entityId },
-            function () { postToggleRefreshTimer.restart() },
+            function () {
+                postToggleRefreshTimer.restart()
+                // Merkt sich das zuletzt umgeschaltete Licht für die
+                // CoverAction in CoverPage.qml -- andere Domains (switch/
+                // fan/cover) haben dort keinen sinnvollen Anwendungsfall.
+                if (entry.domain === "light") {
+                    coverLastLightIdSetting.value = entry.entityId
+                    coverLastLightNameSetting.value = entry.friendlyName
+                }
+            },
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
     }
 
@@ -374,6 +417,7 @@ Item {
                 // nachzieht, statt erst beim nächsten Pull-to-refresh.
                 if (row.domain === "light") {
                     entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                    updateCoverLightsOnCount()
                 }
             } else if (row.kind === "sensor") {
                 entriesModel.setProperty(i, "value", newState.state)
