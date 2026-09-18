@@ -2,7 +2,7 @@ Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
 Version:    0.52
-Release:    2
+Release:    3
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
 Source0:    %{name}-%{version}.tar.bz2
@@ -76,6 +76,19 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.52-3
+- Seitenwechsel per Wischgeste war zu empfindlich: ein etwas kräftigerer
+  Flick liess die Flickable frei weitergleiten, und die Snap-Logik rastete
+  dann auf der übernächsten Seite ein (Räume -> direkt Updates, Sensoren
+  übersprungen). Ein Wisch bewegt jetzt höchstens eine Seite weit, indem
+  das Ziel auf +/-1 Seite gegenüber der Startseite der Geste begrenzt wird.
+- Behebt ein ANR beim Refresh: die Lichter-an-Zählung für den Cover machte
+  einen vollen Scan über alle Listenzeilen -- einmal pro Refresh und
+  zusätzlich bei jedem einzelnen Licht-Update über den WebSocket. Bei ~1500
+  Entities und hoher Systemlast blockierte das den Render-Thread dauerhaft.
+  Wird jetzt beim Aufbau der Liste mitgezählt und bei Live-Updates nur noch
+  inkrementell (+1/-1) nachgeführt.
+
 * Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.52-2
 - Fix: Räume/Sensoren/Updates blieben nach App-Start leer, bis man manuell
   pull-to-refresh gemacht hat. Ursache: Component.onCompleted: refresh()
