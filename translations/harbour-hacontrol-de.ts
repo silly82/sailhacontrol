@@ -180,27 +180,47 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="570"/>
-        <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
+        <location filename="../qml/views/RoomsView.qml" line="573"/>
+        <source>Noch nicht konfiguriert</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="622"/>
+        <location filename="../qml/views/RoomsView.qml" line="574"/>
+        <source>Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/RoomsView.qml" line="579"/>
+        <source>Keine Verbindung</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/RoomsView.qml" line="585"/>
+        <source>Keine Geräte</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/RoomsView.qml" line="586"/>
+        <source>Home Assistant meldet keine steuerbaren Entities. Nach unten ziehen zum Aktualisieren.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/RoomsView.qml" line="628"/>
         <source>Benachrichtigung deaktivieren</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="622"/>
+        <location filename="../qml/views/RoomsView.qml" line="628"/>
         <source>Bei Änderung benachrichtigen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="685"/>
+        <location filename="../qml/views/RoomsView.qml" line="691"/>
         <source>benachrichtigt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="768"/>
+        <location filename="../qml/views/RoomsView.qml" line="774"/>
         <source>Aktivieren</source>
         <translation type="unfinished"></translation>
     </message>
@@ -208,38 +228,53 @@
 <context>
     <name>SensorsView</name>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="21"/>
+        <location filename="../qml/views/SensorsView.qml" line="25"/>
         <source>Ohne Raum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="104"/>
-        <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/views/SensorsView.qml" line="126"/>
+        <location filename="../qml/views/SensorsView.qml" line="129"/>
         <source>Unbekannter Fehler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="151"/>
+        <location filename="../qml/views/SensorsView.qml" line="150"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="155"/>
+        <location filename="../qml/views/SensorsView.qml" line="154"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="161"/>
+        <location filename="../qml/views/SensorsView.qml" line="160"/>
         <source>Sensor-Übersicht</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="170"/>
+        <location filename="../qml/views/SensorsView.qml" line="167"/>
         <source>Noch nicht konfiguriert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="168"/>
+        <source>Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="173"/>
+        <source>Keine Verbindung</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="179"/>
+        <source>Keine Sensoren</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/SensorsView.qml" line="180"/>
+        <source>Kein Sensor liefert gerade einen Messwert. Nach unten ziehen zum Aktualisieren.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -373,44 +408,54 @@
 <context>
     <name>UpdatesView</name>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="78"/>
-        <source>Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/views/UpdatesView.qml" line="90"/>
-        <location filename="../qml/views/UpdatesView.qml" line="113"/>
+        <location filename="../qml/views/UpdatesView.qml" line="93"/>
+        <location filename="../qml/views/UpdatesView.qml" line="116"/>
         <source>Unbekannter Fehler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="137"/>
+        <location filename="../qml/views/UpdatesView.qml" line="136"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="141"/>
+        <location filename="../qml/views/UpdatesView.qml" line="140"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="147"/>
+        <location filename="../qml/views/UpdatesView.qml" line="146"/>
         <source>Updates (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="147"/>
+        <location filename="../qml/views/UpdatesView.qml" line="146"/>
         <source>Updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="156"/>
+        <location filename="../qml/views/UpdatesView.qml" line="153"/>
         <source>Noch nicht konfiguriert</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="164"/>
-        <source>Alle Geräte sind aktuell.</source>
+        <location filename="../qml/views/UpdatesView.qml" line="154"/>
+        <source>Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="159"/>
+        <source>Keine Verbindung</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="165"/>
+        <source>Alles aktuell</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="166"/>
+        <source>Kein Gerät hat ein anstehendes Update. Nach unten ziehen zum Aktualisieren.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

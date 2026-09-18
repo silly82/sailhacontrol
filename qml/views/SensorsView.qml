@@ -17,6 +17,10 @@ Item {
     // sichtbaren würde die anderen mit alten Daten stehen lassen.
     signal refreshRequested()
 
+    // errorText steht nur noch für echte Fehler. "Noch nicht konfiguriert"
+    // lief früher auch darüber und wurde per Textvergleich wieder
+    // herausgefiltert -- das wäre spätestens beim Übersetzen gebrochen.
+    property bool configured: Credentials.baseUrl.length > 0 && Credentials.token.length > 0
     property string errorText: ""
     readonly property string noRoomLabel: qsTr("Ohne Raum")
     // room name -> bool. Missing key == collapsed (rooms start folded) --
@@ -100,8 +104,7 @@ Item {
     }
 
     function refresh() {
-        if (Credentials.baseUrl.length === 0 || Credentials.token.length === 0) {
-            errorText = qsTr("Noch nicht konfiguriert -- unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.")
+        if (!configured) {
             return
         }
         errorText = ""
@@ -129,14 +132,10 @@ Item {
 
     Component.onCompleted: refresh()
     // Component.onCompleted feuert oft, bevor Credentials' asynchroner
-    // Secrets-Request fertig ist -- der obige refresh() zeigt dann nur
-    // "Noch nicht konfiguriert" und nichts holt ihn automatisch nach, bis
-    // man manuell pull-to-refresh gemacht hat (s. RoomsView.qml).
-    Connections {
-        target: Credentials
-        onBaseUrlChanged: refresh()
-        onTokenChanged: refresh()
-    }
+    // Secrets-Request fertig ist -- der obige refresh() läuft dann ins
+    // Leere und nichts holt ihn automatisch nach, bis man manuell
+    // pull-to-refresh gemacht hat (s. RoomsView.qml).
+    onConfiguredChanged: if (configured) refresh()
 
     SilicaListView {
         id: listView
@@ -160,15 +159,25 @@ Item {
             PageHeader {
                 title: qsTr("Sensor-Übersicht")
             }
+        }
 
-            Label {
-                visible: errorText.length > 0
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: errorText
-                color: errorText.indexOf(qsTr("Noch nicht konfiguriert")) === 0 ? Theme.secondaryHighlightColor : Theme.errorColor
-            }
+        ViewPlaceholder {
+            flickable: listView
+            enabled: !configured
+            text: qsTr("Noch nicht konfiguriert")
+            hintText: qsTr("Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.")
+        }
+        ViewPlaceholder {
+            flickable: listView
+            enabled: configured && errorText.length > 0
+            text: qsTr("Keine Verbindung")
+            hintText: errorText
+        }
+        ViewPlaceholder {
+            flickable: listView
+            enabled: configured && errorText.length === 0 && entriesModel.count === 0 && !busyIndicator.running
+            text: qsTr("Keine Sensoren")
+            hintText: qsTr("Kein Sensor liefert gerade einen Messwert. Nach unten ziehen zum Aktualisieren.")
         }
 
         delegate: ListItem {
