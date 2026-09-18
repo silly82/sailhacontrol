@@ -2,11 +2,16 @@ Steuere deine lokale Home-Assistant-Instanz von SailfishOS aus -- ohne Cloud-Abh
 
 FUNKTIONEN
 
-- Entity-Liste (Lichter, Schalter), gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar.
+- Entity-Liste (Lichter, Schalter, Ventilatoren, Storen), gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar. Lichter mit bekannter Farbe zeigen einen kleinen Farb-Punkt neben dem Switch.
 - Tap auf den Namen eines Lichts öffnet Helligkeit-, Farb- und Farbtemperatur-Regler -- nur was das jeweilige Licht tatsächlich unterstützt wird angezeigt.
-- Raumübergreifende Sensor-Übersicht: Temperatur, Feuchtigkeit, Luftdruck auf einen Blick.
-- Wischen zwischen Raumansicht und Sensor-Übersicht -- keine Menü-Navigation nötig.
+- Tap auf den Namen eines Thermostats öffnet einen Zieltemperatur-Regler und die Modus-Auswahl.
+- Tap auf den Namen eines Media Players öffnet Play/Pause/Vor/Zurück und einen Lautstärke-Regler.
+- Szenen erscheinen als Zeile zum direkten Aktivieren per Tap.
+- Sensor-Übersicht (Temperatur, Feuchtigkeit, Luftdruck, Batterie, Energie, Leistung), gruppiert nach Raum und ein-/ausklappbar, gleich wie die Raumansicht.
+- Update-Übersicht: nur Geräte mit tatsächlich anstehendem Update, mit Installieren-Button per Tap und einem Fortschrittsbalken während der Installation.
 - Live-Updates per WebSocket: Änderungen von anderswo (HA-Weboberfläche, physischer Schalter, Automatisierung) erscheinen sofort, kein manuelles Refresh.
+- Echte Push-Benachrichtigungen: registriert sich als echtes Home-Assistant-"mobile_app"-Gerät und empfängt notify.mobile_app_<gerät>-Nachrichten aus deinen eigenen Automationen, sofort zugestellt solange die App läuft -- ohne Google-/Apple-Push-Dienst.
+- Geräte-Status wird an Home Assistant zurückgemeldet: Akkustand, Ladezustand und Verbindungsart erscheinen in Home Assistant als normale Sensoren für dieses Gerät.
 - Hintergrund-Benachrichtigungen bei Zustandsänderung einer beobachteten Entity, mit einem Umschalten-Button direkt vom Sperrbildschirm aus bedienbar.
 
 VORAUSSETZUNGEN

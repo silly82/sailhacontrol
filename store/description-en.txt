@@ -2,11 +2,16 @@ Control your local Home Assistant instance from SailfishOS -- no cloud dependenc
 
 FEATURES
 
-- Entity list (lights, switches) grouped by Home Assistant Area/Room, collapsible per room.
+- Entity list (lights, switches, fans, covers) grouped by Home Assistant Area/Room, collapsible per room. Lights with a known color show a small color swatch next to the switch.
 - Tap a light's name to open brightness, color and color-temperature controls -- only the controls that light actually supports are shown.
-- Cross-room sensor overview: temperature, humidity, atmospheric pressure at a glance.
-- Swipe between the room view and the sensor overview -- no menu navigation needed.
+- Tap a thermostat's name to open a target-temperature slider and HVAC mode selection.
+- Tap a media player's name to open play/pause/skip controls and a volume slider.
+- Scenes show up as a one-tap "Activate" row.
+- Sensor overview (temperature, humidity, pressure, battery, energy, power) grouped by room and collapsible, same as the room view.
+- Updates overview: only devices with an actually pending update, with a one-tap install action and a live progress bar while installing.
 - Live updates via WebSocket: changes made elsewhere (Home Assistant web UI, a physical switch, an automation) show up immediately, no manual refresh.
+- Real push notifications: register as a genuine Home Assistant "mobile_app" device and receive notify.mobile_app_<device> pushes from your own automations, delivered instantly while the app is running -- no Google/Apple push service involved.
+- Device status reported back to Home Assistant: battery level, charging state and connection type appear in Home Assistant as regular sensors for this device.
 - Background notifications when a watched entity changes state, with a toggle button usable directly from the lock screen.
 
 REQUIREMENTS

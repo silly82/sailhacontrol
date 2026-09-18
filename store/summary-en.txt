@@ -1,1 +1,1 @@
-Control your local Home Assistant instance — lights, sensors, live updates and lock-screen notifications, no cloud required.
+Control your local Home Assistant instance — lights, sensors, thermostats, real push notifications and device status, no cloud required.
