@@ -2,7 +2,7 @@ Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS (Prototyp)
 Version:    0.52
-Release:    1
+Release:    2
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
 Source0:    %{name}-%{version}.tar.bz2
@@ -76,6 +76,15 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.52-2
+- Fix: Räume/Sensoren/Updates blieben nach App-Start leer, bis man manuell
+  pull-to-refresh gemacht hat. Ursache: Component.onCompleted: refresh()
+  feuert oft, bevor Credentials' asynchroner Sailfish-Secrets-Request
+  fertig ist (baseUrl/token dann noch leer) -- der erste refresh()-Versuch
+  lief ins Leere und nichts hat ihn danach automatisch nachgeholt. Jetzt
+  reagieren alle drei Sub-Views zusätzlich auf Credentials.baseUrl/token,
+  sobald die echten Werte eintreffen.
+
 * Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.52-1
 - Cover-Nachbesserung nach den offiziellen UI-Guidelines
   (docs.sailfishos.org/Develop/Apps/UI/): CoverPage.qml zeigte bisher nur

@@ -526,6 +526,13 @@ Item {
     }
 
     Component.onCompleted: refresh()
+    // Component.onCompleted feuert oft, bevor Credentials' asynchroner
+    // Sailfish-Secrets-Request fertig ist (baseUrl/token dann noch leer,
+    // s. Credentials-Log beim Start) -- der obige refresh() lief dann ins
+    // Leere und nichts hat ihn danach automatisch nachgeholt, bis man
+    // manuell pull-to-refresh gemacht hat. configured wird reaktiv wahr,
+    // sobald die echten Werte eintreffen -- dann einmalig nachholen.
+    onConfiguredChanged: if (configured) refresh()
 
     SilicaListView {
         id: listView
