@@ -177,20 +177,6 @@ Item {
         }
     }
 
-    // Für CoverPage.qml -- gezählt statt live über HA abgefragt, da der
-    // Cover kein eigenes Polling anstossen soll, während die App im
-    // Hintergrund ist.
-    function updateCoverLightsOnCount() {
-        var count = 0
-        for (var i = 0; i < entriesModel.count; i++) {
-            var row = entriesModel.get(i)
-            if (row.rowType === "entity" && row.kind === "toggle" && row.domain === "light" && row.isOn === true) {
-                count++
-            }
-        }
-        coverLightsOnCountSetting.value = count
-    }
-
     function toggleRoom(room) {
         var next = {}
         for (var key in expandedRooms) {
@@ -208,6 +194,11 @@ Item {
 
         var watched = watchedIds()
         var rooms = {}
+        // Für CoverPage.qml -- im selben Durchlauf mitgezählt statt per
+        // separatem O(n)-Scan über das fertig gebaute entriesModel danach
+        // (das kostete auf einem Gerät mit ~700+ Zeilen und schon hoher
+        // Systemlast spürbar Zeit auf dem GUI-Thread -- ANR beim Refresh).
+        var lightsOnCount = 0
 
         for (var j = 0; j < states.length; j++) {
             var s = states[j]
@@ -233,12 +224,16 @@ Item {
             if (!rooms[room]) {
                 rooms[room] = []
             }
+            var isOnValue = isEntityOn(domain, s.state)
+            if (kind === "toggle" && domain === "light" && isOnValue) {
+                lightsOnCount++
+            }
             rooms[room].push({
                 entityId: s.entity_id,
                 domain: domain,
                 kind: kind,
                 friendlyName: s.attributes.friendly_name || s.entity_id,
-                isOn: isEntityOn(domain, s.state),
+                isOn: isOnValue,
                 notify: watched.indexOf(s.entity_id) >= 0,
                 // Bei Thermostaten: Zieltemperatur statt hvac_mode-state
                 // in der Zeile anzeigen, mit "°C" statt der (meist
@@ -287,7 +282,7 @@ Item {
                 entriesModel.append(e)
             }
         }
-        updateCoverLightsOnCount()
+        coverLightsOnCountSetting.value = lightsOnCount
     }
 
     function openLightDetail(index) {
@@ -410,14 +405,23 @@ Item {
                 continue
             }
             if (row.kind === "toggle") {
-                entriesModel.setProperty(i, "isOn", isEntityOn(row.domain, newState.state))
+                var wasOn = row.isOn === true
+                var nowOn = isEntityOn(row.domain, newState.state)
+                entriesModel.setProperty(i, "isOn", nowOn)
                 // Nur für Lichter tatsächlich befüllt (s. buildEntries()) --
                 // hier trotzdem generisch mitgeführt, damit der Farb-Swatch
                 // auch bei externen Änderungen (Live-Update) sofort
                 // nachzieht, statt erst beim nächsten Pull-to-refresh.
                 if (row.domain === "light") {
                     entriesModel.setProperty(i, "attributes", newState.attributes || {})
-                    updateCoverLightsOnCount()
+                    // O(1) nachführen statt eines vollen Rescans über
+                    // entriesModel bei jedem einzelnen Live-Update -- ein
+                    // Rescan pro Event kostete auf einem Gerät mit ~700+
+                    // Zeilen und schon hoher Systemlast spürbar GUI-Thread-
+                    // Zeit (ANR).
+                    if (wasOn !== nowOn) {
+                        coverLightsOnCountSetting.value += nowOn ? 1 : -1
+                    }
                 }
             } else if (row.kind === "sensor") {
                 entriesModel.setProperty(i, "value", newState.state)
