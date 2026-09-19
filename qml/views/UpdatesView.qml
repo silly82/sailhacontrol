@@ -77,18 +77,38 @@ Item {
         onTriggered: refresh()
     }
 
+    // Ist Home Assistant nicht erreichbar, feuert bei QMLs XMLHttpRequest
+    // weder der Erfolgs- noch der Fehler-Callback (das TCP-Timeout des
+    // Systems dauert Minuten) -- der BusyIndicator drehte dann endlos und
+    // die App wirkte eingefroren. Ein Timer begrenzt das: er wird bei jedem
+    // Ladeversuch neu gestartet und von jedem Callback gestoppt; läuft er
+    // ab, gilt der Versuch als gescheitert. Eine später doch noch
+    // eintreffende Antwort überschreibt das wieder -- selbstheilend.
+    Timer {
+        id: requestTimeout
+        interval: 15000
+        repeat: false
+        onTriggered: {
+            busyIndicator.running = false
+            errorText = qsTr("Home Assistant antwortet nicht.")
+        }
+    }
+
     function refresh() {
         if (!configured) {
             return
         }
         errorText = ""
         busyIndicator.running = true
+        requestTimeout.restart()
         HaApi.getStates(Credentials.baseUrl, Credentials.token,
             function (states) {
+                requestTimeout.stop()
                 busyIndicator.running = false
                 buildEntries(states)
             },
             function (error) {
+                requestTimeout.stop()
                 busyIndicator.running = false
                 errorText = error.hint || qsTr("Unbekannter Fehler")
             })

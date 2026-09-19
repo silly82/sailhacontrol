@@ -103,16 +103,30 @@ Item {
         }
     }
 
+    // S. RoomsView.qml: ohne diese Schranke dreht der BusyIndicator endlos
+    // weiter, wenn Home Assistant nicht erreichbar ist.
+    Timer {
+        id: requestTimeout
+        interval: 15000
+        repeat: false
+        onTriggered: {
+            busyIndicator.running = false
+            errorText = qsTr("Home Assistant antwortet nicht.")
+        }
+    }
+
     function refresh() {
         if (!configured) {
             return
         }
         errorText = ""
         busyIndicator.running = true
+        requestTimeout.restart()
         HaApi.getStates(Credentials.baseUrl, Credentials.token,
             function (states) {
                 HaApi.getAreaMap(Credentials.baseUrl, Credentials.token,
                     function (areaPairs) {
+                        requestTimeout.stop()
                         busyIndicator.running = false
                         buildEntries(states, areaPairs)
                     },
@@ -120,11 +134,13 @@ Item {
                         // Area-Zuordnung ist ein Komfort-Feature, kein Muss --
                         // bei Fehlschlag landet einfach alles unter "Ohne
                         // Raum" statt die Seite zu blockieren.
+                        requestTimeout.stop()
                         busyIndicator.running = false
                         buildEntries(states, [])
                     })
             },
             function (error) {
+                requestTimeout.stop()
                 busyIndicator.running = false
                 errorText = error.hint || qsTr("Unbekannter Fehler")
             })

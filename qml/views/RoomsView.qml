@@ -325,16 +325,63 @@ Item {
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
     }
 
+    // Nach einem WebSocket-(Re)Connect die per REST geladene Struktur
+    // nachziehen, aber nur wenn gerade nichts Brauchbares dasteht: war HA
+    // kurz weg, blieb sonst "Keine Verbindung" stehen, obwohl die Live-
+    // Verbindung längst wieder läuft (der WS bringt nur Deltas, keine
+    // Struktur). Die Bedingung verhindert zugleich einen überflüssigen
+    // zweiten Ladevorgang beim normalen Start, wo onConfiguredChanged schon
+    // geladen hat. refresh() berührt wsSubscribed nicht -- keine Schleife.
+    // Entprellt: nach einer längeren Störung kommen mehrere pending
+    // Reconnects fast gleichzeitig durch, wsSubscribed wechselt mehrfach
+    // hintereinander. Ungebremst lief refreshAll() dadurch dreimal in
+    // derselben Sekunde (gemessen) -- dreimal getStates über ~1500 Entities,
+    // genau die Lastspitze, die auf dem Gerät schon zu einem ANR geführt hat.
+    // Ein `!busyIndicator.running`-Guard allein reichte nicht (immer noch
+    // zweimal), der Timer schon: jeder weitere Wechsel startet ihn neu, es
+    // feuert nur einer, eine Sekunde nach dem letzten Reconnect.
+    Timer {
+        id: reconnectRefresh
+        interval: 1000
+        repeat: false
+        onTriggered: {
+            if (errorText.length > 0 || entriesModel.count === 0) {
+                refreshRequested()
+            }
+        }
+    }
+
+    onWsSubscribedChanged: if (wsSubscribed) reconnectRefresh.restart()
+
+    // Ist Home Assistant nicht erreichbar, feuert bei QMLs XMLHttpRequest
+    // weder der Erfolgs- noch der Fehler-Callback (bis das TCP-Timeout des
+    // Systems zuschlägt, vergehen Minuten) -- der BusyIndicator drehte dann
+    // endlos und die App wirkte eingefroren, statt den "Keine
+    // Verbindung"-Platzhalter zu zeigen. Dieser Timer begrenzt das: bei
+    // jedem Ladeversuch neu gestartet, von jedem Callback gestoppt. Trifft
+    // die Antwort später doch noch ein, überschreibt sie den Fehler wieder.
+    Timer {
+        id: requestTimeout
+        interval: 15000
+        repeat: false
+        onTriggered: {
+            busyIndicator.running = false
+            errorText = qsTr("Home Assistant antwortet nicht.")
+        }
+    }
+
     function refresh() {
         if (!configured) {
             return
         }
         errorText = ""
         busyIndicator.running = true
+        requestTimeout.restart()
         HaApi.getStates(Credentials.baseUrl, Credentials.token,
             function (states) {
                 HaApi.getAreaMap(Credentials.baseUrl, Credentials.token,
                     function (areaPairs) {
+                        requestTimeout.stop()
                         busyIndicator.running = false
                         buildEntries(states, areaPairs)
                     },
@@ -343,11 +390,13 @@ Item {
                         // bei Fehlschlag (z.B. zu alte HA-Version) landet
                         // einfach alles unter "Ohne Raum" statt die Seite zu
                         // blockieren.
+                        requestTimeout.stop()
                         busyIndicator.running = false
                         buildEntries(states, [])
                     })
             },
             function (error) {
+                requestTimeout.stop()
                 busyIndicator.running = false
                 errorText = error.hint || qsTr("Unbekannter Fehler")
             })
