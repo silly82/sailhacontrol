@@ -2,7 +2,7 @@
 
 A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home Assistant](https://www.home-assistant.io/) instance from a SailfishOS phone — no cloud dependency, no Companion App.
 
-See [`KONZEPT.md`](KONZEPT.md) (German) for the full design concept and dated development log.
+See [`KONZEPT.md`](KONZEPT.md) for the full design concept and dated development log. ([`KONZEPT_DE.md`](KONZEPT_DE.md) holds the original German text up to section 24; it is no longer updated.)
 
 ## Status: v0.53, ready for use
 
@@ -65,7 +65,7 @@ Local network only — no Nabu Casa / reverse-proxy support yet.
 
 Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer lokalen [Home-Assistant](https://www.home-assistant.io/)-Instanz von einem SailfishOS-Telefon aus — ohne Cloud-Abhängigkeit, ohne Companion-App.
 
-Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md).
+Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md) (Englisch). Die ursprüngliche deutsche Fassung bis Abschnitt 24 steht in [`KONZEPT_DE.md`](KONZEPT_DE.md) und wird nicht mehr fortgeschrieben.
 
 ## Status: v0.53, einsatzbereit
 

@@ -1,1143 +1,1074 @@
-# Konzept: Home-Assistant-Steuerung für SailfishOS
+# Concept: Home Assistant control for SailfishOS
 
-Stand: 2026-08-28
+Started: 2026-08-28
 
-## 1. Ziel
+> This is the English version of the design concept and the dated development
+> log. The original German text up to and including section 24 is kept in
+> [`KONZEPT_DE.md`](KONZEPT_DE.md) as a historical record; from section 25
+> onwards, new entries are written here in English only.
 
-Native SailfishOS-App (Silica-QML), die eine lokale Home-Assistant-Instanz
-steuert. Kein Companion-App-Klon, sondern ein schlanker, auf das Nötigste
-reduzierter Client -- Fokus auf schnellem Zugriff auf ein paar Entities statt
-auf Vollständigkeit gegenüber der offiziellen Android/iOS-App.
+## 1. Goal
 
-**Verbindung:** nur lokales Netz (REST/WebSocket direkt gegen die HA-Instanz,
-kein Nabu Casa/Reverse-Proxy). Remote-Zugriff ist explizit auf Ausbaustufe 3
-verschoben und dort optional -- vermeidet TLS/Proxy-Setup, bevor der
-Kernclient überhaupt funktioniert.
+A native SailfishOS app (Silica QML) that controls a local Home Assistant
+instance. Not a clone of the Companion app, but a lean client cut down to the
+essentials -- the focus is quick access to a handful of entities rather than
+feature parity with the official Android/iOS app.
 
-**Auth:** Long-Lived Access Token (in HA unter Profil → Sicherheit erzeugt),
-als `Authorization: Bearer <token>` Header. Kein OAuth-Flow -- für einen
-Single-User-Client auf einem eigenen Gerät ist das ausreichend und deutlich
-einfacher als HA's vollen OAuth2-Login-Flow nativ nachzubauen.
+**Connection:** local network only (REST/WebSocket straight against the HA
+instance, no Nabu Casa or reverse proxy). Remote access is deliberately
+deferred to stage 3 and optional even there -- that avoids a TLS/proxy setup
+before the core client works at all.
 
-## 2. Ausbaustufen
+**Auth:** a long-lived access token (created in HA under Profile → Security),
+sent as an `Authorization: Bearer <token>` header. No OAuth flow -- for a
+single-user client on your own device that is sufficient, and far simpler than
+reimplementing HA's full OAuth2 login flow natively.
 
-### Stufe 1 -- Basis-Client (lokal, manuell) -- **Scaffold steht, s. Abschnitt 3**
-- Config-Seite: HA-URL + Long-Lived Access Token
-- Liste aller `light`/`switch`-Entities (REST `GET /api/states`)
-- Toggle per Service-Call (`POST /api/services/<domain>/toggle`)
-- Manuelles Pull-to-refresh, kein Push
+## 2. Stages
 
-### Stufe 2 -- Dashboard & Echtzeit
-- WebSocket-API statt Polling → Live-State-Updates
-- Gruppierung nach HA-Areas/Rooms (Area Registry)
-- Weitere Domains: Climate (Ziel-Temp), Cover, Media Player (Basic-Controls)
-- Szenen/Skripte als Favoriten-Kacheln
-- Lokaler SQLite-Cache für Offline-Ansicht (letzter bekannter Zustand)
+### Stage 1 -- basic client (local, manual) -- **scaffold in place, see section 3**
+- Config page: HA URL + long-lived access token
+- List of all `light`/`switch` entities (REST `GET /api/states`)
+- Toggle via service call (`POST /api/services/<domain>/toggle`)
+- Manual pull-to-refresh, no push
 
-### Stufe 3 -- Systemintegration & Remote
-- Lockscreen/Events-View-Widget für 1-2 Lieblings-Entities
-- Push-Benachrichtigungen von HA → Sailfish. Zwei Varianten abgewogen:
-  - **Variante A** (eigener Relay-Server + natives Background, dauerhafte
-    Verbindung): niedrige Latenz, aber hoher Aufwand -- braucht ein RPM
-    außerhalb der Sailjail-Sandbox (nicht Store-kompatibel).
-  - **Variante B** (periodischer Background-Sync via Nemo Keepalive,
-    `BackgroundActivity`): kein echtes Push, Verzögerung im Bereich des
-    Poll-Intervalls, aber Store-kompatibel und baut direkt auf dem
-    Stufe-1-REST-Client auf.
-  - **Entscheidung 2026-08-28: mit Variante B begonnen** (s. Abschnitt 4) --
-    Variante A bleibt Option für später, falls sich Sekunden- statt
-    Minuten-Latenz als nötig erweist.
-- Optional: Device-Tracker (Standort an HA melden, Presence Detection)
-- Remote-Zugriff außerhalb des lokalen Netzes (Nabu Casa oder eigener
-  Reverse-Proxy mit TLS)
+### Stage 2 -- dashboard & real time
+- WebSocket API instead of polling → live state updates
+- Grouping by HA areas/rooms (area registry)
+- More domains: climate (target temperature), cover, media player (basic controls)
+- Scenes/scripts as favourite tiles
+- Local SQLite cache for an offline view (last known state)
 
-## 3. Update 2026-08-28: Projekt-Scaffold angelegt
+### Stage 3 -- system integration & remote
+- Lock screen / events view widget for one or two favourite entities
+- Push notifications from HA → Sailfish. Two options weighed up:
+  - **Option A** (own relay server + native background service, permanent
+    connection): low latency, but a lot of work -- it needs an RPM outside the
+    Sailjail sandbox (not store-compatible).
+  - **Option B** (periodic background sync via Nemo Keepalive,
+    `BackgroundActivity`): not real push, delay on the order of the poll
+    interval, but store-compatible and builds directly on the stage 1 REST
+    client.
+  - **Decision 2026-08-28: started with option B** (see section 4) -- option A
+    stays available later should seconds-rather-than-minutes latency turn out
+    to be necessary.
+- Optional: device tracker (report location to HA, presence detection)
+- Remote access from outside the local network (Nabu Casa or an own reverse
+  proxy with TLS)
 
-Grundgerüst unter `/home/silly/sailhacontrol` erstellt, analog zum Aufbau von
-`sailtalerwallet` (`.pro`/`.desktop`/`rpm/*.spec` nach Standard-SFOS-Template,
-`org.nemomobile.configuration` für Settings-Persistenz).
+## 3. Update 2026-08-28: project scaffold created
 
-**Architektur-Unterschied zu sailtalerwallet:** kein natives C++-Bridge-Objekt
-nötig -- Home Assistants REST-API ist reines HTTP+JSON, das QML-eigene
-`XMLHttpRequest` reicht (`qml/lib/HaApi.js`). `main.cpp` lädt daher nur die
-QML-Root-View, ohne `qmlRegisterType`/Context-Properties.
+Skeleton created under `/home/silly/sailhacontrol`, along the same lines as
+`sailtalerwallet` (`.pro`/`.desktop`/`rpm/*.spec` following the standard SFOS
+template, `org.nemomobile.configuration` for settings persistence).
 
-**Stand der Dateien:**
-- `harbour-hacontrol.pro`, `.desktop` (Permissions=Internet, kein
-  Camera/Location), `src/harbour-hacontrol.cpp` -- Boilerplate, ungetestet
-- `qml/pages/SettingsPage.qml` -- HA-URL + Token, per `ConfigurationValue`
-  gespeichert (Klartext -- ausreichend für lokalen Prototyp, siehe TODO)
-- `qml/pages/FirstPage.qml` -- Entity-Liste (light/switch) mit Toggle-Switch,
-  Pull-to-refresh, Fehleranzeige
+**Architectural difference to sailtalerwallet:** no native C++ bridge object is
+needed -- Home Assistant's REST API is plain HTTP+JSON, so QML's own
+`XMLHttpRequest` suffices (`qml/lib/HaApi.js`). `main.cpp` therefore only loads
+the QML root view, without `qmlRegisterType`/context properties.
+
+**State of the files:**
+- `harbour-hacontrol.pro`, `.desktop` (Permissions=Internet, no
+  camera/location), `src/harbour-hacontrol.cpp` -- boilerplate, untested
+- `qml/pages/SettingsPage.qml` -- HA URL + token, stored via
+  `ConfigurationValue` (plaintext -- good enough for a local prototype, see TODO)
+- `qml/pages/FirstPage.qml` -- entity list (light/switch) with toggle switch,
+  pull-to-refresh, error display
 - `qml/lib/HaApi.js` -- `getStates()`, `callService()`
-- `rpm/harbour-hacontrol.spec` -- Version 0.1
+- `rpm/harbour-hacontrol.spec` -- version 0.1
 
-**Noch offen / nicht verifiziert:**
-- **Kein App-Icon** -- `SAILFISHAPP_ICONS` in der `.pro` referenziert
-  `icons/<size>/harbour-hacontrol.png`, die Dateien existieren noch nicht.
-  Muss vor dem ersten `sfdk build`/Packaging ergänzt werden (oder die Zeile
-  vorübergehend auskommentieren).
-- **Noch nicht gebaut/getestet** -- anders als sailtalerwallet gibt es noch
-  kein reales Testgerät-Setup für dieses Projekt. Nächster Schritt: mit
-  `sfdk` gegen ein SailfishOS-Target bauen und gegen eine echte
-  HA-Instanz im lokalen Netz verifizieren (URL + Token in Settings eintragen,
-  Refresh auslösen, Toggle prüfen).
-- Token-Speicherung per `org.nemomobile.configuration` ist Klartext in
-  `~/.config/harbour-hacontrol/`. Für Stufe 1 akzeptiert; falls das Gerät
-  geteilt wird, auf Sailfish Secrets API umstellen.
-- Kein Git-Repo initialisiert -- bewusst offen gelassen, bis der erste Build
-  gegen echte Hardware verifiziert ist.
+**Still open / unverified:**
+- **No app icon** -- `SAILFISHAPP_ICONS` in the `.pro` references
+  `icons/<size>/harbour-hacontrol.png`, and those files do not exist yet. Must
+  be added before the first `sfdk build`/packaging (or the line commented out
+  temporarily).
+- **Not built or tested yet** -- unlike sailtalerwallet there is no real test
+  device setup for this project yet. Next step: build against a SailfishOS
+  target with `sfdk` and verify against a real HA instance on the local network
+  (enter URL + token in settings, trigger a refresh, check a toggle).
+- Token storage via `org.nemomobile.configuration` is plaintext under
+  `~/.config/harbour-hacontrol/`. Accepted for stage 1; if the device is
+  shared, switch to the Sailfish Secrets API.
+- No git repo initialised -- deliberately left open until the first build is
+  verified against real hardware.
 
-## 4. Update 2026-08-28: Stufe 3 / Variante B (Background-Poll + Notification) implementiert
+## 4. Update 2026-08-28: stage 3 / option B (background poll + notification) implemented
 
-Begonnen ohne dass Stufe 1 bereits auf Hardware verifiziert wurde -- explizit
-so gewünscht. Umgesetzt:
+Started before stage 1 had been verified on hardware -- explicitly requested
+that way. Implemented:
 
-- **`qml/pages/FirstPage.qml`**: jede Entity hat jetzt ein Kontextmenü
-  ("Bei Änderung benachrichtigen" / "Benachrichtigung deaktivieren"), das die
-  Entity-ID in `ConfigurationValue` `/apps/harbour-hacontrol/watchedEntities`
-  (kommagetrennt) auf-/abnimmt. Beobachtete Entities zeigen ein kleines
-  "benachrichtigt"-Label neben dem Switch.
-- **`qml/harbour-hacontrol.qml`**: `BackgroundJob` (aus `Nemo.KeepAlive`, s.
-  Abschnitt 5 -- ursprünglich als `BackgroundActivity`/`org.nemomobile.keepalive`
-  geschrieben, das war falsch) mit `frequency: TenMinutes`, `enabled: true`.
-  Bei jedem `onTriggered`: `HaApi.getStates()` gegen alle beobachteten
-  Entities, Vergleich mit zuletzt bekanntem Zustand (persistiert als JSON in
-  `ConfigurationValue` `/apps/harbour-hacontrol/lastKnownStates`, damit ein
-  App-Neustart nicht bei jeder beobachteten Entity erneut "Änderung" meldet).
-  Bei tatsächlicher Änderung: dynamisch erzeugtes `Notification`-Objekt
-  (`org.nemomobile.notifications`) via `Qt.createQmlObject()`, `.publish()`.
-- **`rpm/harbour-hacontrol.spec`**: `Requires: nemo-qml-plugin-notifications-qt5,
-  libkeepalive` ergänzt (reine QML-Plugins, keine BuildRequires nötig, da
-  nicht gegen sie gelinkt wird).
+- **`qml/pages/FirstPage.qml`**: every entity now has a context menu ("notify
+  on change" / "disable notification") which adds or removes the entity ID in
+  the `ConfigurationValue` `/apps/harbour-hacontrol/watchedEntities`
+  (comma-separated). Watched entities show a small "notified" label next to the
+  switch.
+- **`qml/harbour-hacontrol.qml`**: `BackgroundJob` (from `Nemo.KeepAlive`, see
+  section 5 -- originally written as `BackgroundActivity`/
+  `org.nemomobile.keepalive`, which was wrong) with `frequency: TenMinutes`,
+  `enabled: true`. On every `onTriggered`: `HaApi.getStates()` against all
+  watched entities, compared with the last known state (persisted as JSON in
+  the `ConfigurationValue` `/apps/harbour-hacontrol/lastKnownStates`, so that
+  an app restart does not report a "change" for every watched entity again). On
+  an actual change: a dynamically created `Notification` object
+  (`org.nemomobile.notifications`) via `Qt.createQmlObject()`, then
+  `.publish()`.
+- **`rpm/harbour-hacontrol.spec`**: added `Requires:
+  nemo-qml-plugin-notifications-qt5, libkeepalive` (pure QML plugins, no
+  BuildRequires needed since nothing links against them).
 
-**Noch offen / nicht verifiziert (zusätzlich zu Abschnitt 3):**
-- **Kernrisiko, auf Hardware zu prüfen**: `BackgroundActivity` hält den
-  Prozess nur wach, solange er ohnehin resident ist (Vordergrund oder
-  kürzlich minimiert) -- ein vollständig vom System beendeter App-Prozess
-  wird dadurch **nicht** neu gestartet. Für "wirklich im Hintergrund, App nie
-  geöffnet" bräuchte es einen separaten Daemon mit Autostart/D-Bus-Aktivierung
-  (das wäre dann praktisch Variante A). Muss auf dem echten Testgerät beobachtet
-  werden: bleibt der Prozess nach "App schließen" (Home-Geste) lange genug
-  resident, damit 10-Minuten-Polls überhaupt ankommen?
-- Unklar, ob der asynchrone `XMLHttpRequest`-Call zuverlässig innerhalb des
-  IPHB-Wachfensters abschließt, bevor die CPU wieder in Suspend geht --
-  bekannte Unsicherheit bei `BackgroundActivity` + Netzwerk-I/O, nicht anhand
-  von Dokumentation abschließend geklärt.
-- Modulnamen (`org.nemomobile.keepalive`, `org.nemomobile.notifications`)
-  passen zum bereits bei sailtalerwallet bestätigten Legacy-Namespace-Stil
-  (`org.nemomobile.configuration`), aber die exakte QML-API (`run()`/`wait()`-
-  Zustandsmaschine von `BackgroundActivity`) ist aus Erinnerung geschrieben,
-  nicht gegen SDK-Doku verifiziert -- erster Build wird das aufdecken.
-- Kein Picker für "welche Entity beobachten" außerhalb von FirstPage -- man
-  muss die Entity vorher schon in der Liste sehen (Light/Switch), um sie per
-  Kontextmenü zu markieren.
+**Still open / unverified (in addition to section 3):**
+- **Core risk, to be checked on hardware**: `BackgroundActivity` only keeps the
+  process awake while it is resident anyway (foreground or recently minimised)
+  -- an app process fully terminated by the system is **not** restarted by it.
+  For "really in the background, app never opened" you would need a separate
+  daemon with autostart/D-Bus activation (which would effectively be option A).
+  Has to be observed on the real test device: does the process stay resident
+  long enough after "close app" (home gesture) for ten-minute polls to arrive
+  at all?
+- Unclear whether the asynchronous `XMLHttpRequest` call reliably finishes
+  within the IPHB wakeup window before the CPU suspends again -- a known
+  uncertainty with `BackgroundActivity` + network I/O, not conclusively settled
+  from documentation.
+- The module names (`org.nemomobile.keepalive`, `org.nemomobile.notifications`)
+  match the legacy namespace style already confirmed in sailtalerwallet
+  (`org.nemomobile.configuration`), but the exact QML API (`run()`/`wait()`
+  state machine of `BackgroundActivity`) was written from memory, not verified
+  against SDK docs -- the first build will expose that.
+- No picker for "which entity to watch" outside FirstPage -- you have to see
+  the entity in the list already (light/switch) to mark it via the context menu.
 
-## 5. Update 2026-08-28 (Teil 2): SDK installiert, erster Build + Emulator-Test
+## 5. Update 2026-08-28 (part 2): SDK installed, first build + emulator test
 
-SailfishOS-SDK 3.13.5 lokal installiert unter `/home/silly/SailfishOS`
-(`sfdk` unter `/home/silly/SailfishOS/bin/sfdk`, nicht im PATH). Verfügbare
-Targets: `SailfishOS-5.1.0.11-{aarch64,armv7hl,i486}` und
-`SailfishOS-5.0.0.62-aarch64`. Emulator (`SailfishOS-5.1.0.11`) ist i486 --
-für Emulator-Tests muss gegen das **i486-Target** gebaut werden, nicht
-aarch64 (das RPM für die reale Jolla Phone bleibt aarch64, s.
-sailtalerwallet-Workflow).
+SailfishOS SDK 3.13.5 installed locally under `/home/silly/SailfishOS` (`sfdk`
+at `/home/silly/SailfishOS/bin/sfdk`, not in PATH). Available targets:
+`SailfishOS-5.1.0.11-{aarch64,armv7hl,i486}` and `SailfishOS-5.0.0.62-aarch64`.
+The emulator (`SailfishOS-5.1.0.11`) is i486 -- emulator tests must be built
+against the **i486 target**, not aarch64 (the RPM for the real Jolla Phone
+stays aarch64, see the sailtalerwallet workflow).
 
-**Placeholder-Icons erzeugt** (`icons/<size>/harbour-hacontrol.png`, per
-ImageMagick, blauer Hintergrund + "HA"-Schriftzug) -- nur Platzhalter, kein
-echtes App-Icon-Design.
+**Placeholder icons generated** (`icons/<size>/harbour-hacontrol.png`, via
+ImageMagick, blue background + "HA" lettering) -- placeholders only, not a real
+app icon design.
 
-**Build- und Deploy-Workflow, der funktioniert hat:**
+**Build and deploy workflow that worked:**
 ```
 sfdk config target=SailfishOS-5.1.0.11-i486
 sfdk config specfile=rpm/harbour-hacontrol.spec
 sfdk build
 sfdk config device="Sailfish OS Emulator 5.1.0.11"
-sfdk deploy --sdk          # baut, rsynct RPMS/ auf den Emulator, installiert
+sfdk deploy --sdk          # builds, rsyncs RPMS/ to the emulator, installs
 ```
-Wichtig: `sfdk config <var>=<value>` setzt nur "Session-Scope", der **nicht**
-über separate Shell-Aufrufe hinweg persistiert (jeder Bash-Tool-Call ist eine
-neue Shell) -- alle drei `config`-Zeilen und der eigentliche Befehl müssen in
-derselben Shell-Session laufen (`&&`-verkettet), sonst greift der stehende
-**globale** Default (der hier zufällig auf ein fremdes Projekt
-`harbour-nemoai` zeigte, vermutlich Altlast aus einer früheren Session).
+Important: `sfdk config <var>=<value>` only sets "session scope", which does
+**not** persist across separate shell invocations (every Bash tool call is a
+fresh shell) -- all three `config` lines and the actual command have to run in
+the same shell session (chained with `&&`), otherwise the standing **global**
+default applies (which here happened to point at an unrelated project,
+`harbour-nemoai`, presumably left over from an earlier session).
 
-**Emulator-Zugriff ohne `devel-su`:** anders als auf der Jolla Phone in
-sailtalerwallet gibt es auf diesem Emulator-Image kein `devel-su`-Binary --
-stattdessen funktioniert passwortloses `sudo` als `defaultuser` (z. B.
-`sudo -n journalctl -f`). SSH-Key liegt unter
-`~/SailfishOS/vmshare/ssh/private_keys/sdk`, Port `2223`, Host `127.0.0.1`.
+**Emulator access without `devel-su`:** unlike the Jolla Phone in
+sailtalerwallet, this emulator image has no `devel-su` binary -- passwordless
+`sudo` as `defaultuser` works instead (e.g. `sudo -n journalctl -f`). The SSH
+key is at `~/SailfishOS/vmshare/ssh/private_keys/sdk`, port `2223`, host
+`127.0.0.1`.
 
-**Zwei echte Bugs gefunden und gefixt** (genau der Zweck des Tests -- die
-Stufe-3-QML war "aus Erinnerung" geschrieben, s. Abschnitt 4):
-1. `import org.nemomobile.keepalive 1.0` existiert in SFOS 5.1 **nicht** --
-   nur noch `Nemo.KeepAlive`. Zugehöriges RPM-Paket heißt `libkeepalive`
-   (nicht `nemo-qml-plugin-keepalive-qt5`, das Paket existiert schlicht
-   nicht).
-2. Innerhalb von `Nemo.KeepAlive` heißt der Typ **`BackgroundJob`**, nicht
-   `BackgroundActivity`, und hat eine andere API: `enabled`/`frequency`/
-   `onTriggered`/`finished()` statt `run()`/`wait()`/`onRunning`. Das
-   `run()`/`wait()`-Muster war aus einer älteren/anderen Keepalive-API in
-   Erinnerung, existiert so in dieser Version nicht.
+**Two real bugs found and fixed** (exactly the point of the test -- the stage 3
+QML had been written "from memory", see section 4):
+1. `import org.nemomobile.keepalive 1.0` does **not** exist in SFOS 5.1 -- only
+   `Nemo.KeepAlive` does. The corresponding RPM package is called `libkeepalive`
+   (not `nemo-qml-plugin-keepalive-qt5`, which simply does not exist).
+2. Within `Nemo.KeepAlive` the type is called **`BackgroundJob`**, not
+   `BackgroundActivity`, and it has a different API: `enabled`/`frequency`/
+   `onTriggered`/`finished()` instead of `run()`/`wait()`/`onRunning`. The
+   `run()`/`wait()` pattern was remembered from an older/different keepalive
+   API and does not exist in this version.
 
-Beide Fixes in `qml/harbour-hacontrol.qml` und `rpm/harbour-hacontrol.spec`
-eingespielt, dann erneut gebaut/deployed/gestartet -- Journal zeigt danach
-**keine** Modul- oder QML-Fehler mehr, nur zwei harmlose Deprecation-Warnungen
-(`org.nemomobile.configuration`/`org.nemomobile.notifications` funktionieren
-noch, sind aber als Legacy markiert -- Migration auf `Nemo.Configuration`/
-`Nemo.Notifications` wäre ein sauberer, nicht dringender Folgeschritt).
+Both fixes applied to `qml/harbour-hacontrol.qml` and
+`rpm/harbour-hacontrol.spec`, then rebuilt/redeployed/restarted -- the journal
+then shows **no** module or QML errors any more, only two harmless deprecation
+warnings (`org.nemomobile.configuration`/`org.nemomobile.notifications` still
+work but are marked legacy -- migrating to `Nemo.Configuration`/
+`Nemo.Notifications` would be a clean, non-urgent follow-up).
 
-**Was dieser Test NICHT abgedeckt hat** (weiterhin offen):
-- Keine echte HA-Instanz vorhanden -- `FirstPage` wurde nur im
-  unkonfigurierten Zustand gesehen ("Noch nicht konfiguriert"-Hinweis), nie
-  gegen echte Entities getestet (Refresh, Toggle, Kontextmenü-Interaktion,
-  tatsächliches Feuern einer `Notification`).
-- Keine UI-Interaktion getestet (kein Display/VNC in dieser Umgebung
-  angebunden) -- nur Prozessstart + Journal-Log geprüft. `ContextMenu` in
-  `FirstPage.qml` wird erst bei tatsächlichem Long-Press instanziiert und war
-  damit nicht Teil dieses Tests.
-- Die in Abschnitt 4 genannten Kernrisiken (Prozess-Residency von
-  `BackgroundJob`/Keepalive im Hintergrund, ob der async `XMLHttpRequest`
-  rechtzeitig fertig wird) bleiben ungeklärt -- das lässt sich nur auf
-  echter Hardware über einen längeren Zeitraum beobachten, nicht im Emulator
-  in einer kurzen Testsession.
+**What this test did NOT cover** (still open):
+- No real HA instance available -- `FirstPage` was only seen in its
+  unconfigured state (the "not configured yet" hint), never tested against
+  real entities (refresh, toggle, context menu interaction, an actual
+  `Notification` firing).
+- No UI interaction tested (no display/VNC attached in this environment) --
+  only process startup + journal log checked. `ContextMenu` in `FirstPage.qml`
+  is only instantiated on an actual long press and was therefore not part of
+  this test.
+- The core risks named in section 4 (process residency of
+  `BackgroundJob`/keepalive in the background, whether the async
+  `XMLHttpRequest` finishes in time) remain unsettled -- that can only be
+  observed on real hardware over a longer period, not in the emulator during a
+  short test session.
 
-## 6. Update 2026-08-29: Area-Gruppierung, Sensoren, v0.2-Release
+## 6. Update 2026-08-29: area grouping, sensors, v0.2 release
 
-Gegen die echte HA-Instanz des Nutzers verifiziert (lokales Netz erreichbar,
-sowohl vom Emulator als auch vom echten Gerät aus -- kein NAT-Problem).
-Zwei API-Bugs beim ersten Emulator-Run gefunden und gefixt (`Nemo.KeepAlive`
-statt `org.nemomobile.keepalive`, `BackgroundJob` statt `BackgroundActivity`
--- Details s. Abschnitt 5/Memory). Danach:
+Verified against the user's real HA instance (reachable on the local network
+from both the emulator and the real device -- no NAT problem). Two API bugs
+found and fixed during the first emulator run (`Nemo.KeepAlive` instead of
+`org.nemomobile.keepalive`, `BackgroundJob` instead of `BackgroundActivity` --
+details in section 5). After that:
 
-- **Area/Room-Gruppierung + Sensoren** (Vorgriff auf Stufe 2) über
-  `HaApi.getAreaMap()`: `/api/template`-Endpoint mit Jinja2-`area_name()`
-  statt WebSocket-API, um REST-only zu bleiben. HAs sandboxed Jinja blockt
-  `dict.update()` als "unsafe" -- Workaround ist der `namespace(items=[])`
-  + Listenkonkatenation-Idiom. `sensor`-Entities mit `device_class`
-  `temperature`/`humidity`/`pressure`/`atmospheric_pressure` werden
-  read-only mit Wert (eine Nachkommastelle) + Einheit angezeigt.
-  Ein-/ausklappbar pro Raum über ein flaches `ListModel`
-  (Header-/Entity-Zeilen gemischt) statt nested ListModels, wegen
-  SilicaListView-Virtualisierung bei den teils >100 Entities pro Instanz.
-- **`ScrollingLabel`-Komponente** (`qml/components/ScrollingLabel.qml`) für
-  einmaliges Durchscrollen langer Namen. **Bug gefunden+gefixt**: fehlende
-  `height` (nur `clip:true`) machte den Text komplett unsichtbar --
-  Screenshot-gestützt entdeckt, User meldete "sehe kein Text".
-- **Toggle-Timing-Fix**: `postToggleRefreshTimer` (1s) statt sofortigem
-  Refresh nach `toggle()` -- HAs Service-Response bestätigt nur den
-  angenommenen Befehl, nicht dass Zigbee/Matter-Geräte den neuen Zustand
-  schon zurückgemeldet haben. Vom Nutzer bestätigt: "toggle geht jetzt
-  sauber".
-- **Reales Gerät (Jolla Phone, aarch64)**: erste Installation hing im
-  `sailjail`-Wrapper fest (nie bis zum eigentlichen Binary durchexekt) --
-  Ursache war ein `lipstick-windowprompt`-Berechtigungsdialog
-  (Internetzugriff), der auf dem Gerätebildschirm bestätigt werden musste.
-  Auf dem Emulator taucht dieser Dialog nicht auf (Dev-Mode überspringt
-  ihn). Nach Bestätigung: App läuft sauber, identisches Bild wie im
-  Emulator (Raumliste, Ein-/Ausklappen, Sensoren).
-- **v0.2-Release**: Public-Repo unter `github.com/silly82/sailhacontrol`
-  angelegt, drei RPMs gebaut (i486/Emulator, aarch64/neue Telefone --
-  beide getestet; armv7hl/alte Telefone -- baut sauber, aber **ungetestet**,
-  da keine armv7hl-Hardware zur Verfügung stand). Doku (`README.md`) auf
-  Englisch verfasst, mit Schweizer-Hochdeutsch-Abschnitt danach (kein
-  „ß", `ss` statt).
+- **Area/room grouping + sensors** (jumping ahead to stage 2) via
+  `HaApi.getAreaMap()`: the `/api/template` endpoint with Jinja2 `area_name()`
+  rather than the WebSocket API, to stay REST-only. HA's sandboxed Jinja blocks
+  `dict.update()` as "unsafe" -- the workaround is the `namespace(items=[])` +
+  list concatenation idiom. `sensor` entities with a `device_class` of
+  `temperature`/`humidity`/`pressure`/`atmospheric_pressure` are shown
+  read-only with their value (one decimal) + unit. Collapsible per room via a
+  flat `ListModel` (header and entity rows mixed) instead of nested list
+  models, because of SilicaListView virtualisation with sometimes >100 entities
+  per instance.
+- **`ScrollingLabel` component** (`qml/components/ScrollingLabel.qml`) that
+  scrolls long names through once. **Bug found and fixed**: a missing `height`
+  (only `clip: true`) made the text completely invisible -- spotted with the
+  help of a screenshot, after the user reported "I see no text".
+- **Toggle timing fix**: `postToggleRefreshTimer` (1s) instead of an immediate
+  refresh after `toggle()` -- HA's service response only confirms that the
+  command was accepted, not that Zigbee/Matter devices have already reported
+  the new state back. Confirmed by the user: "toggle works cleanly now".
+- **Real device (Jolla Phone, aarch64)**: the first installation got stuck
+  inside the `sailjail` wrapper (never exec'd through to the actual binary) --
+  the cause was a `lipstick-windowprompt` permission dialog (internet access)
+  that had to be confirmed on the device screen. That dialog does not appear on
+  the emulator (dev mode skips it). After confirming: the app runs cleanly,
+  looking identical to the emulator (room list, expand/collapse, sensors).
+- **v0.2 release**: public repo created at `github.com/silly82/sailhacontrol`,
+  three RPMs built (i486/emulator, aarch64/newer phones -- both tested;
+  armv7hl/older phones -- builds cleanly but **untested**, as no armv7hl
+  hardware was available). Documentation (`README.md`) written in English, with
+  a Swiss Standard German section after it (no "ß", `ss` instead).
 
-## 7. Update 2026-08-29 (Teil 2): Swipe-Navigation, v0.3-Release
+## 7. Update 2026-08-29 (part 2): swipe navigation, v0.3 release
 
-- **Swipe statt Pull-down-Menüpunkt**: Die Sensor-Übersicht war zunächst
-  eine eigene, per Pull-down-Menü gepushte `SensorsPage.qml`. Umgebaut zu
-  zwei nebeneinander liegenden Sub-Views (`qml/views/RoomsView.qml`,
-  `qml/views/SensorsView.qml`), gewechselt per horizontalem Swipe in einer
-  gemeinsamen `SilicaFlickable` (`flickableDirection: HorizontalFlick`,
-  manuelles Snapping auf `contentX` via `NumberAnimation`) innerhalb der
-  jetzt sehr dünnen `FirstPage.qml`. Settings bleibt in beiden Sub-Views
-  über das jeweils eigene Pull-down-Menü erreichbar. Vom Nutzer nach Test
-  auf Emulator UND echtem Gerät bestätigt: "funktioniert gut".
-- **v0.3-Release**: Version in `rpm/harbour-hacontrol.spec` hochgezählt,
-  `License:` von Platzhalter auf `MIT` korrigiert (dazugehörige
-  `LICENSE`-Datei ergänzt), `URL:` auf die echte GitHub-Repo-URL gesetzt
-  (vorher `http://example.org/`-Platzhalter). Alle drei RPMs (i486/
-  aarch64/armv7hl) neu gebaut und über `gh release create` mit Notes
-  veröffentlicht.
+- **Swipe instead of a pull-down menu item**: the sensor overview was initially
+  a separate `SensorsPage.qml` pushed from the pull-down menu. Rebuilt as two
+  side-by-side sub-views (`qml/views/RoomsView.qml`,
+  `qml/views/SensorsView.qml`), switched by a horizontal swipe inside a shared
+  `SilicaFlickable` (`flickableDirection: HorizontalFlick`, manual snapping on
+  `contentX` via `NumberAnimation`) within the now very thin `FirstPage.qml`.
+  Settings stays reachable from both sub-views through their own pull-down
+  menus. Confirmed by the user after testing on the emulator AND the real
+  device: "works well".
+- **v0.3 release**: version bumped in `rpm/harbour-hacontrol.spec`, `License:`
+  corrected from a placeholder to `MIT` (with the corresponding `LICENSE` file
+  added), `URL:` set to the real GitHub repo URL (previously an
+  `http://example.org/` placeholder). All three RPMs (i486/aarch64/armv7hl)
+  rebuilt and published via `gh release create` with notes.
 
-## 8. Update 2026-08-29 (Teil 3): WebSocket-Live-Updates (Rest von Stufe 2)
+## 8. Update 2026-08-29 (part 3): WebSocket live updates (the rest of stage 2)
 
-In eigenem Branch (`feature/websocket-live-updates`) entwickelt, nach Test
-auf Emulator und echtem Gerät zurück nach `master` gemerged.
+Developed in its own branch (`feature/websocket-live-updates`), merged back to
+`master` after testing on the emulator and the real device.
 
-- **Vorab-Verifikation statt Rätselraten**: anders als bei `BackgroundJob`
-  zuvor wurde die exakte QML-API diesmal *vor* dem Schreiben von Code aus
-  dem `plugins.qmltypes` des SDK-Build-Targets ausgelesen (`sfdk tools exec
-  ... cat .../QtWebSockets/plugins.qmltypes`). Typ heisst `WebSocket`
-  (`import QtWebSockets 1.0`), Properties `url`/`status`/`active`, Signals
-  `textMessageReceived`/`statusChanged`, Methode `sendTextMessage()`.
-  **Falle dabei**: das Modul war zwar laut `zypper` im Build-Target
-  installiert, die eigentliche `.so` fehlte trotzdem -- `zypper install
-  --force` hat sie nachgezogen. Pakete: `qt5-qtdeclarative-import-websockets`
-  (QML-Plugin) + `qt5-qtwebsockets` (C++-Lib), beide als `Requires:` im
-  Spec ergänzt -- auf dem echten Gerät hat `pkcon` das QML-Plugin-Paket
-  beim Install korrekt automatisch nachgezogen.
-- **Architektur**: REST (`refresh()`) bleibt die Quelle für Struktur
-  (Räume, Sortierung, initialer Zustand); der WebSocket liefert danach nur
-  noch Deltas (`state_changed`-Events), die per-Zeile in `entriesModel`
-  gepatcht werden (`applyStateChange()`), ohne die Liste neu aufzubauen.
-  Auth-Handshake (`auth_required` → `auth`-Antwort mit Token →
-  `auth_ok` → `subscribe_events`) läuft komplett in
-  `qml/views/RoomsView.qml`. Reconnect nach 5s bei `Closed`/`Error` über
-  `Qt.binding()`-Wiederherstellung von `active`, statt die Bindung an
-  `configured` durch eine reine Wertzuweisung dauerhaft zu brechen.
-- **Bekannte Einschränkung**: HAs `subscribe_events(state_changed)` kennt
-  keine serverseitige Domain-Filterung -- bei der 1499-Entity-Instanz des
-  Nutzers kommen laufend Events für Entities ausserhalb unseres Models
-  (z.B. Energie-Sensoren im Sekundentakt), die per linearem Scan verworfen
-  werden. Für die hier relevanten Listengrössen unkritisch, aber ein
-  möglicher Kandidat für spätere Optimierung (`entityId`→Index-Map), falls
-  Akku-/CPU-Last bei sehr grossen Instanzen auffällt.
-- **Verifiziert**: vom Nutzer auf Emulator UND echtem Gerät bestätigt --
-  externes Schalten eines Lichts (z.B. über die HA-Weboberfläche oder
-  physischen Schalter) erscheint sofort in der App, ohne manuelles
-  Pull-to-refresh.
+- **Verify up front instead of guessing**: unlike the earlier `BackgroundJob`
+  episode, this time the exact QML API was read out of the SDK build target's
+  `plugins.qmltypes` *before* writing any code (`sfdk tools exec ... cat
+  .../QtWebSockets/plugins.qmltypes`). The type is called `WebSocket` (`import
+  QtWebSockets 1.0`), with properties `url`/`status`/`active`, signals
+  `textMessageReceived`/`statusChanged`, and the method `sendTextMessage()`.
+  **A trap along the way**: `zypper` reported the module as installed in the
+  build target, yet the actual `.so` was missing -- `zypper install --force`
+  pulled it in. Packages: `qt5-qtdeclarative-import-websockets` (QML plugin) +
+  `qt5-qtwebsockets` (C++ lib), both added as `Requires:` in the spec -- on the
+  real device `pkcon` correctly pulled the QML plugin package in automatically
+  at install time.
+- **Architecture**: REST (`refresh()`) remains the source for structure (rooms,
+  ordering, initial state); the WebSocket then only delivers deltas
+  (`state_changed` events) which are patched per row into `entriesModel`
+  (`applyStateChange()`), without rebuilding the list. The auth handshake
+  (`auth_required` → `auth` reply with the token → `auth_ok` →
+  `subscribe_events`) runs entirely in `qml/views/RoomsView.qml`. Reconnect
+  after 5s on `Closed`/`Error` by restoring `active` via `Qt.binding()`, rather
+  than permanently breaking the binding to `configured` with a plain value
+  assignment.
+- **Known limitation**: HA's `subscribe_events(state_changed)` has no
+  server-side domain filtering -- on the user's 1499-entity instance, events
+  for entities outside our model arrive constantly (e.g. energy sensors every
+  second) and are discarded by a linear scan. Harmless at the list sizes
+  involved here, but a candidate for later optimisation (an `entityId`→index
+  map) should battery/CPU load become noticeable on very large instances.
+- **Verified**: confirmed by the user on the emulator AND the real device --
+  switching a light externally (via HA's web UI or a physical switch) shows up
+  in the app immediately, without a manual pull-to-refresh.
 
-## 9. Update 2026-08-29 (Teil 4): Erweiterte Lichtsteuerung, v0.4-Release
+## 9. Update 2026-08-29 (part 4): extended light controls, v0.4 release
 
-In eigenem Branch (`feature/light-detail-controls`) entwickelt.
+Developed in its own branch (`feature/light-detail-controls`).
 
-- **Submenu statt Ausbau des Toggles**: Tap auf den Namen einer
-  `light`-Entity (nur Lichter, nicht Switches) öffnet
-  `qml/pages/LightDetailPage.qml` mit Helligkeit-/Farbtemperatur-Slidern
-  und einem Button zum Farbe-Wählen -- der Toggle-Switch bleibt unverändert.
-  `ListItem.onClicked` + `menu:` (Kontextmenü) koexistieren ohne
-  zusätzliche `MouseArea`, da `ListItem` beides gleichzeitig unterstützt;
-  `onClicked` feuert für Taps ausserhalb des Switch-Bereichs (der Switch
-  konsumiert seinen eigenen Tap zuerst).
-- **Capability-Erkennung** über `attributes.supported_color_modes`
-  (Helligkeit: irgendein Modus ausser `onoff`; Farbtemperatur:
-  `color_temp`; Farbe: `hs`/`rgb`/`xy`/`rgbw`/`rgbww`) -- nur tatsächlich
-  unterstützte Regler werden angezeigt.
-- **Kelvin statt Mired verifiziert**: vor dem Schreiben von Code echte
-  Light-Entity-Attribute der HA-Instanz abgefragt (`curl .../api/states`).
-  Diese HA-Version nutzt durchgehend `min_color_temp_kelvin`/
-  `max_color_temp_kelvin`/`color_temp_kelvin` (kein `mireds` mehr) --
-  `light.turn_on` entsprechend mit `color_temp_kelvin` statt `color_temp`
-  aufgerufen.
-- **Farbauswahl über stock Silica-Komponente** `ColorPickerPage`
-  (`import Sailfish.Silica 1.0`, kein eigener Farbwähler gebaut) -- API
-  vorher via `sfdk tools exec ... cat ColorPickerPage.qml` verifiziert
-  (`signal colorClicked(color color)`, gepusht als inline `Component`).
-- **Bug gefunden+gefixt** (Nutzer-Feedback: "state scheint erst nach
-  licht ein zu stimmen"): HA meldet `brightness`/`color_temp_kelvin`/
-  `rgb_color` als `null`, solange die Entity `state: off` ist -- keine
-  Einschränkung unserer App, sondern HAs Datenmodell (viele Integrationen
-  "vergessen" den letzten Wert visuell, auch wenn intern noch vorhanden).
-  Fix: Hinweistext auf der Detail-Seite, sichtbar nur wenn `!entityIsOn`,
-  erklärt dass der Regler dann einen Startwert statt eines gespeicherten
-  Zustands zeigt, und dass Verstellen das Licht mit einschaltet.
-- **v0.4-Release**: Version hochgezählt, Branch nach `master` gemerged,
-  alle drei RPMs neu gebaut und veröffentlicht.
+- **A submenu instead of extending the toggle**: tapping the name of a `light`
+  entity (lights only, not switches) opens
+  `qml/pages/LightDetailPage.qml` with brightness/colour-temperature sliders
+  and a button to pick a colour -- the toggle switch stays unchanged.
+  `ListItem.onClicked` + `menu:` (context menu) coexist without an additional
+  `MouseArea`, since `ListItem` supports both at once; `onClicked` fires for
+  taps outside the switch area (the switch consumes its own tap first).
+- **Capability detection** via `attributes.supported_color_modes` (brightness:
+  any mode other than `onoff`; colour temperature: `color_temp`; colour:
+  `hs`/`rgb`/`xy`/`rgbw`/`rgbww`) -- only controls the light actually supports
+  are shown.
+- **Kelvin instead of mired, verified**: before writing code, the real light
+  entity attributes were queried from the HA instance (`curl
+  .../api/states`). This HA version consistently uses
+  `min_color_temp_kelvin`/`max_color_temp_kelvin`/`color_temp_kelvin` (no more
+  `mireds`) -- so `light.turn_on` is called with `color_temp_kelvin` rather
+  than `color_temp`.
+- **Colour picking via the stock Silica component** `ColorPickerPage` (`import
+  Sailfish.Silica 1.0`, no hand-built colour picker) -- its API verified
+  beforehand via `sfdk tools exec ... cat ColorPickerPage.qml` (`signal
+  colorClicked(color color)`, pushed as an inline `Component`).
+- **Bug found and fixed** (user feedback: "the state only seems right after the
+  light is on"): HA reports `brightness`/`color_temp_kelvin`/`rgb_color` as
+  `null` while the entity is `state: off` -- not a limitation of this app but
+  HA's data model (many integrations visually "forget" the last value even when
+  it still exists internally). Fix: a hint on the detail page, visible only
+  when `!entityIsOn`, explaining that the slider then shows a starting value
+  rather than a stored setting, and that moving it switches the light on.
+- **v0.4 release**: version bumped, branch merged to `master`, all three RPMs
+  rebuilt and published.
 
-## 10. Update 2026-08-31: Lockscreen-Widget geprüft -- nicht möglich, Notification-Action stattdessen
+## 10. Update 2026-08-31: lock screen widget investigated -- not possible, notification action instead
 
-**Rechercheergebnis vor dem Bauen**: ein echtes Lockscreen-Widget wie unter
-Android existiert für Sailjail-sandboxte Drittanbieter-Apps nicht. Der
-gesamte Lockscreen-QML-Code (`LockScreen.qml`,
-`LockscreenBackground.qml`, ...) liegt unter `lipstick-jolla-home-qt5`,
-also im System selbst -- keine `Loader`/Plugin-Erweiterungsstelle für
-Drittanbieter-Inhalte gefunden (`grep` nach `loader|plugin|thirdparty` in
-`LockScreen.qml` ergab nichts). Damit war die ursprüngliche
-Konzept-Formulierung "Lockscreen-Widget" nicht wörtlich umsetzbar --
-mit dem Nutzer abgestimmt: stattdessen **Notification mit
-Action-Button**, der direkt vom Sperrbildschirm aus (aufgeklappte
-Benachrichtigung) eine beobachtete Entity umschaltet, ohne die App zu
-öffnen.
+**Research result before building anything**: a real lock screen widget as on
+Android does not exist for Sailjail-sandboxed third-party apps. The entire lock
+screen QML (`LockScreen.qml`, `LockscreenBackground.qml`, ...) lives in
+`lipstick-jolla-home-qt5`, i.e. in the system itself -- no `Loader`/plugin
+extension point for third-party content was found (`grep` for
+`loader|plugin|thirdparty` in `LockScreen.qml` turned up nothing). So the
+original concept wording "lock screen widget" was not literally implementable
+-- agreed with the user: a **notification with an action button** instead,
+which toggles a watched entity straight from the lock screen (expanded
+notification) without opening the app.
 
-- **Technischer Weg**: `Nemo.Notifications`' `Notification.remoteActions`
-  (Property, Array von `remoteAction(name, displayName, service, path,
-  iface, method, arguments)`-Deskriptoren) plus `Nemo.DBus`'
-  `DBusAdaptor` -- Letzteres erlaubt, einen D-Bus-Dienst **komplett aus
-  QML heraus** anzubieten (keine C++-Erweiterung nötig). Muster
-  (Funktionsnamen im `DBusAdaptor`-Block werden automatisch zu
-  D-Bus-Methoden) verifiziert anhand von `jolla-settings/settings.qml`
-  im SDK-Target, nicht geraten.
-- **Umsetzung** in `qml/harbour-hacontrol.qml`: `DBusAdaptor` mit
-  `service/path/iface = org.example.hacontrol` (ergibt sich aus dem
-  bereits von Sailjail vergebenen eigenen Bus-Namen, s.
-  `[X-Sailjail]` in der `.desktop`-Datei) und einer `toggleEntity(entityId)`-
-  Funktion, die den bestehenden `HaApi.callService(...toggle...)`-Call
-  aufruft. `notifyStateChange()` hängt jetzt `remoteActions` mit einer
-  "Umschalten"-Aktion an jede Benachrichtigung.
-- **Gleiche Einschränkung wie der Background-Poll selbst**: funktioniert
-  nur, während der App-Prozess resident ist (kein D-Bus-Activation-
-  `.service`-File vorhanden) -- keine neue Einschränkung, sondern
-  dieselbe wie bei Ausbaustufe 3/Variante B insgesamt.
-- **Verifiziert in zwei Schritten**: (1) `toggleEntity` manuell per
-  `dbus-send` gegen eine echte Entity (`light.wohnen`) aufgerufen --
-  Licht ging real an, per REST-API-Abfrage bestätigt, danach zurück
-  ausgeschaltet. (2) Kompletter Weg End-to-End über einen echten
-  Background-Poll-Zyklus: `watchedEntities`/`lastKnownStates` in dconf
-  vorbereitet, Nutzer hat die Entity extern umgeschaltet, nach dem
-  nächsten Poll zeigte `lastKnownStates` den neuen Wert und
-  `NotificationActionRow.qml` (die Lipstick-Komponente fürs Rendern von
-  Action-Buttons auf Benachrichtigungen) tauchte exakt zum Poll-Zeitpunkt
-  im Journal auf -- Nachweis, dass die Benachrichtigung mit sichtbarem
-  Button tatsächlich publiziert wurde.
-- **Neues `Requires:`**: `nemo-qml-plugin-dbus-qt5` im Spec ergänzt.
+- **Technical route**: `Nemo.Notifications`' `Notification.remoteActions`
+  (a property holding an array of `remoteAction(name, displayName, service,
+  path, iface, method, arguments)` descriptors) plus `Nemo.DBus`'
+  `DBusAdaptor` -- the latter allows offering a D-Bus service **entirely from
+  QML** (no C++ extension needed). The pattern (function names inside the
+  `DBusAdaptor` block automatically become D-Bus methods) was verified against
+  `jolla-settings/settings.qml` in the SDK target, not guessed.
+- **Implementation** in `qml/harbour-hacontrol.qml`: a `DBusAdaptor` with
+  `service/path/iface = org.example.hacontrol` (which follows from the bus name
+  Sailjail already assigns the app, see `[X-Sailjail]` in the `.desktop` file)
+  and a `toggleEntity(entityId)` function that calls the existing
+  `HaApi.callService(...toggle...)`. `notifyStateChange()` now attaches
+  `remoteActions` with a "toggle" action to every notification.
+- **Same constraint as the background poll itself**: this only works while the
+  app process is resident (there is no D-Bus activation `.service` file) -- not
+  a new limitation, but the same one that applies to stage 3 / option B overall.
+- **Verified in two steps**: (1) `toggleEntity` called manually via `dbus-send`
+  against a real entity (`light.wohnen`) -- the light really came on, confirmed
+  via a REST API query, then switched back off. (2) The complete path
+  end-to-end through a real background poll cycle:
+  `watchedEntities`/`lastKnownStates` prepared in dconf, the user toggled the
+  entity externally, and after the next poll `lastKnownStates` showed the new
+  value while `NotificationActionRow.qml` (the Lipstick component that renders
+  action buttons on notifications) appeared in the journal at exactly the poll
+  timestamp -- proof that the notification with its visible button really was
+  published.
+- **New `Requires:`**: `nemo-qml-plugin-dbus-qt5` added to the spec.
 
-## 11. Update 2026-08-31 (Teil 2): Verbleibender Konzept-Punkt zurückgestellt
+## 11. Update 2026-08-31 (part 2): remaining concept item deferred
 
-Damit sind alle Konzept-Punkte aus Ausbaustufe 1-3 umgesetzt bis auf einen:
+That covers every concept item from stages 1-3 except one:
 
-- **Remote-Zugriff** (Zugriff ausserhalb des lokalen Netzes, z. B. via
-  Nabu Casa oder eigener Reverse-Proxy, s. Abschnitt 1/2). **Als
-  Future-TODO ohne Priorität zurückgestellt** -- explizit auf Wunsch des
-  Nutzers nicht jetzt angegangen. Kein technischer Blocker bekannt, nur
-  bewusst nicht priorisiert.
+- **Remote access** (access from outside the local network, e.g. via Nabu Casa
+  or an own reverse proxy, see sections 1/2). **Deferred as a future TODO
+  without priority** -- explicitly not tackled now at the user's request. No
+  technical blocker known, just deliberately not prioritised.
 
-## 12. Update 2026-08-31 (Teil 3): Echtes App-Icon statt Platzhalter, v0.6
+## 12. Update 2026-08-31 (part 3): a real app icon instead of the placeholder, v0.6
 
-Bisher nur ein ImageMagick-Platzhalter (blaues Quadrat + "HA"-Schriftzug,
-s. Abschnitt 5). Nutzer hat die offiziellen Sailfish-Icon-Design-Ressourcen
-verlinkt (`Sailfish-Apps-icon-template.zip`,
-sailfishos.org/design/icons/, "App icon story"-PDF) mit dem Hinweis, dass
-die Icon-Silhouette bewusst **keine einfache Rounded-Rect/Squircle** ist,
-sondern eine Familie organischer Formen, definiert im offiziellen Template
--- nicht selbst schätzen.
+Until now just an ImageMagick placeholder (blue square + "HA" lettering, see
+section 5). The user linked the official Sailfish icon design resources
+(`Sailfish-Apps-icon-template.zip`, sailfishos.org/design/icons/, the "App icon
+story" PDF), pointing out that the icon silhouette is deliberately **not a
+simple rounded rect/squircle** but a family of organic shapes defined in the
+official template -- not something to estimate by eye.
 
-- **Exakten Pfad aus dem Template übernommen**: `icon-launcher-template.svg`
-  (86x86-Space) heruntergeladen und den Silhouette-Pfad 1:1 extrahiert --
-  zwei gegenüberliegende Ecken mit grossem organischem Viertelkreis-Radius
-  (~42.7px), die anderen beiden mit normalem kleinem Rundungsradius
-  (~1.4px).
-- **Rendering-Stolperstein**: ImageMagicks eingebauter SVG-Parser (MSVG)
-  unterstützt `<linearGradient>` nicht zuverlässig -- Hintergrund kam
-  einfarbig schwarz statt als Verlauf heraus. `rsvg-convert` (CLI) war
-  nicht installiert, nur die Library. Kein `pip`/`cairosvg` verfügbar.
-  Lösung: `python3-cairo` (pycairo) war als System-Paket bereits
-  vorhanden -- Pfad, Gradient und Motiv direkt per pycairo-API gezeichnet
-  statt über einen SVG-Parser, umgeht das Problem komplett.
-- **Design**: Navy-zu-HA-Blau-Diagonalverlauf (`#1B3A57` → `#41BDF5`),
-  weisses Haus-Silhouetten-Motiv, zentriert. Bei 86px (kleinste
-  Launcher-Grösse) noch klar lesbar getestet.
-- **Reproduzierbar**: Generator-Skript unter `icons/source/generate-icon.py`
-  committed (`python3 icons/source/generate-icon.py` regeneriert alle vier
-  Grössen direkt in `icons/<size>x<size>/`), statt nur die fertigen PNGs
-  ohne Herkunft abzulegen.
-- Vorschlag dem Nutzer per Artifact-losem Bildvergleich (Read-Tool-Vorschau)
-  gezeigt und direkt bestätigt bekommen, dann übernommen.
-- **Nachtrag**: Datei auf der Platte/im Paket war sofort korrekt (auch via
-  `raw.githubusercontent.com` verifiziert), trotzdem zeigte der
-  Launcher auf beiden Geräten weiter das alte "HA"-Quadrat -- Ursache war
-  ein In-Memory-Pixmap-Cache im lange laufenden `lipstick`-Prozess (auf
-  dem Emulator seit dem allerersten Install vor Tagen aktiv), der beim
-  Überschreiben derselben Datei nie invalidiert wurde. Fix:
-  `systemctl --user restart lipstick` auf beiden Geräten (auf dem
-  Emulator ohne `devel-su`, auf dem Handy ebenfalls ohne -- User-Session-
-  systemd braucht dafür keine Root-Rechte).
+- **Exact path taken from the template**: downloaded
+  `icon-launcher-template.svg` (86x86 space) and extracted the silhouette path
+  verbatim -- two opposite corners with a large organic quarter-circle radius
+  (~42.7px), the other two with a normal small rounding radius (~1.4px).
+- **Rendering pitfall**: ImageMagick's built-in SVG parser (MSVG) does not
+  handle `<linearGradient>` reliably -- the background came out solid black
+  instead of a gradient. `rsvg-convert` (the CLI) was not installed, only the
+  library, and no `pip`/`cairosvg` was available. Solution: `python3-cairo`
+  (pycairo) was already present as a system package -- path, gradient and motif
+  drawn directly through the pycairo API instead of going through an SVG
+  parser, which sidesteps the problem entirely.
+- **Design**: navy-to-HA-blue diagonal gradient (`#1B3A57` → `#41BDF5`), white
+  house silhouette motif, centred. Checked to still read clearly at 86px (the
+  smallest launcher size).
+- **Reproducible**: the generator script is committed at
+  `icons/source/generate-icon.py` (`python3 icons/source/generate-icon.py`
+  regenerates all four sizes straight into `icons/<size>x<size>/`), rather than
+  just dropping finished PNGs with no provenance.
+- The proposal was shown to the user as an image preview and confirmed
+  directly, then adopted.
+- **Addendum**: the file on disk and in the package was correct immediately
+  (verified via `raw.githubusercontent.com` too), yet the launcher on both
+  devices kept showing the old "HA" square -- the cause was an in-memory pixmap
+  cache in the long-running `lipstick` process (active on the emulator since
+  the very first install days earlier) which is never invalidated when the same
+  file is overwritten. Fix: `systemctl --user restart lipstick` on both devices
+  (no `devel-su` needed on either -- the user session's systemd does not
+  require root for this).
 
-## 13. Update 2026-08-31 (Teil 4): Vorbereitung für Jolla-Store/Harbour-Einreichung
+## 13. Update 2026-08-31 (part 4): preparing for Jolla Store/Harbour submission
 
-Nutzer hat auf die offiziellen Harbour-Richtlinien verwiesen. Recherchiert
-via `docs.sailfishos.org/Develop/Apps/Harbour/` (Allowed APIs, Allowed
-Permissions) -- und, entscheidend, den **offiziellen Validator lokal
-laufen lassen** statt nur die Doku zu lesen:
+The user pointed at the official Harbour guidelines. Researched via
+`docs.sailfishos.org/Develop/Apps/Harbour/` (allowed APIs, allowed permissions)
+-- and, crucially, **ran the official validator locally** rather than only
+reading the docs:
 ```
-sfdk check -s harbour <rpm-datei>
-sfdk check -s rpmlint <rpm-datei>
+sfdk check -s harbour <rpm-file>
+sfdk check -s rpmlint <rpm-file>
 ```
-Das deckte konkrete, vorher unbekannte Probleme auf:
+That surfaced concrete problems that had been invisible until then:
 
-- **Blockierender Fehler**: `Nemo.KeepAlive 1.1` ist laut Harbours
-  Allowed-APIs-Liste **nicht erlaubt** -- nur `Nemo.KeepAlive 1.2`. Import
-  in `harbour-hacontrol.qml` entsprechend gehoben.
-- **Deprecation-Warnungen bereinigt**: `org.nemomobile.configuration` →
-  `Nemo.Configuration` (5 Dateien), `org.nemomobile.notifications` →
-  `Nemo.Notifications` -- das waren bisher nur kosmetische Log-Zeilen,
-  jetzt als echte Harbour-Warnungen bestätigt und behoben. Nach dem Fix
-  auf dem Emulator verifiziert: keine Deprecation-Zeilen mehr im Journal.
-- **rpmlint-Fehler behoben**: `no-changelogname-tag` (fehlender
-  `%changelog`-Abschnitt -- ergänzt) und `explicit-lib-dependency
-  libkeepalive` (rpmlint will soname-Form `Requires: libkeepalive.so.1`
-  statt Paketname). **Soname-Form wieder zurückgedreht**: bestand lokale
-  Checks genauso gut, brach aber die echte Installation auf dem Handy
-  ("nothing provides libkeepalive.so.1" -- zypper dort wollte die
-  `()(64bit)`-qualifizierte Form). Paketname-`Requires: libkeepalive`
-  bleibt, rpmlint-Warnung bewusst in Kauf genommen (ohnehin nur
-  `TreatErrorsAsWarnings`, kein harter Blocker).
-- **`%license`-Versuch verworfen**: `%license LICENSE` (Fedora-Konvention,
-  installiert nach `/usr/share/licenses/...`) wurde vom Harbour-Validator
-  mit "Installation not allowed in this location" abgelehnt -- Harbours
-  Pfad-Whitelist ist enger als allgemeine Fedora-Regeln. `License:`-Tag im
-  Spec-Header reicht, keine separate Datei installiert.
-- **Unstripped-Binary-Warning behoben**: `sfdk build` (Dev-Workflow) setzt
-  beim qmake-Aufruf `QMAKE_STRIP=:` (No-op) für schnellere Iteration --
-  explizites `%{__strip}` im `%install`-Abschnitt ergänzt statt sich auf
-  automatisches Stripping zu verlassen.
-- **Ergebnis**: `sfdk check -s harbour` UND `-s rpmlint` laufen für alle
-  drei Architekturen (i486/aarch64/armv7hl) sauber durch (0 Fehler,
-  0 Warnungen bei rpmlint bis auf die bewusst akzeptierte
-  `explicit-lib-dependency`). Auf Emulator und echtem Gerät installiert
-  und gestartet, keine neuen Laufzeitfehler.
-- **Noch offen für eine tatsächliche Einreichung** (nicht Teil dieser
-  Vorbereitung): Jolla-Account + Harbour-Zugang einrichten, und die
-  Store-typische Frage klären (z. B. ob eine App, die primär eine
-  private/lokale HA-Instanz steuert, für den Store überhaupt sinnvoll
-  ist, oder ob GitHub-Releases das bessere Vertriebsmodell bleiben --
-  diese Entscheidung liegt beim Nutzer).
+- **Blocking error**: `Nemo.KeepAlive 1.1` is **not allowed** according to
+  Harbour's allowed-APIs list -- only `Nemo.KeepAlive 1.2` is. The import in
+  `harbour-hacontrol.qml` was raised accordingly.
+- **Deprecation warnings cleaned up**: `org.nemomobile.configuration` →
+  `Nemo.Configuration` (5 files), `org.nemomobile.notifications` →
+  `Nemo.Notifications` -- previously just cosmetic log lines, now confirmed as
+  real Harbour warnings and fixed. Verified on the emulator afterwards: no more
+  deprecation lines in the journal.
+- **rpmlint errors fixed**: `no-changelogname-tag` (missing `%changelog`
+  section -- added) and `explicit-lib-dependency libkeepalive` (rpmlint wants
+  the soname form `Requires: libkeepalive.so.1` instead of the package name).
+  **The soname form was reverted**: it passed the local checks just as well but
+  broke the real installation on the phone ("nothing provides
+  libkeepalive.so.1" -- zypper there wanted the `()(64bit)`-qualified form).
+  The package-name `Requires: libkeepalive` stays, and the rpmlint warning is
+  deliberately accepted (it is only `TreatErrorsAsWarnings` anyway, not a hard
+  blocker).
+- **`%license` attempt discarded**: `%license LICENSE` (the Fedora convention,
+  installing into `/usr/share/licenses/...`) was rejected by the Harbour
+  validator with "Installation not allowed in this location" -- Harbour's path
+  whitelist is narrower than general Fedora rules. The `License:` tag in the
+  spec header is enough; no separate file is installed.
+- **Unstripped-binary warning fixed**: `sfdk build` (a dev workflow) sets
+  `QMAKE_STRIP=:` (a no-op) on the qmake call for faster iteration -- an
+  explicit `%{__strip}` was added to the `%install` section rather than relying
+  on automatic stripping.
+- **Result**: `sfdk check -s harbour` AND `-s rpmlint` pass cleanly for all
+  three architectures (i486/aarch64/armv7hl) -- zero errors, zero rpmlint
+  warnings apart from the deliberately accepted `explicit-lib-dependency`.
+  Installed and started on both the emulator and the real device, no new
+  runtime errors.
+- **Still open for an actual submission** (not part of this preparation):
+  setting up a Jolla account + Harbour access, and settling the store question
+  itself (e.g. whether an app that primarily controls a private/local HA
+  instance belongs in the store at all, or whether GitHub releases remain the
+  better distribution model -- that decision is the user's).
 
-## 14. Update 2026-08-31 (Teil 5): Store-Listing-Assets vorbereitet
+## 14. Update 2026-08-31 (part 5): store listing assets prepared
 
-Neuer Ordner `store/` (kein Code, nicht Teil des RPM-Pakets): drei
-Screenshots vom SDK-Emulator (Raumliste, Sensor-Übersicht,
-Licht-Detail-Regler -- letztere zwei erforderten manuelle Navigation
-durch den Nutzer, da kein Touch-Input simuliert werden kann),
-Beschreibungstext für die Store-Auflistung auf Englisch und Deutsch.
+New `store/` folder (no code, not part of the RPM): three screenshots from the
+SDK emulator (room list, sensor overview, light detail sliders -- the latter
+two required manual navigation by the user, since touch input cannot be
+simulated), plus listing description text in English and German.
 
-- **Datenschutz-Rückfrage vorab**: die Screenshots zeigen die echten
-  Raum-/Gerätenamen der HA-Instanz des Nutzers (u. a. ein Personenname
-  als Zimmerbezeichnung). Vor dem Committen explizit nachgefragt statt
-  einfach zu veröffentlichen -- vom Nutzer bestätigt: "so wie es ist,
-  passt schon".
-- Harbours FAQ dokumentiert keine festen Screenshot-Masse/-Formate oder
-  eine Kategorie-Liste (anders als die RPM/API-Regeln gibt es dafür
-  keinen automatisierten Validator) -- `store/README.md` hält das
-  explizit als unverifiziert fest, statt Zahlen zu erfinden.
+- **Privacy question asked up front**: the screenshots show the real room and
+  device names of the user's HA instance (including a person's name as a room
+  label). Explicitly asked before committing rather than just publishing --
+  confirmed by the user: "as it is, that's fine".
+- Harbour's FAQ documents no fixed screenshot dimensions/formats or category
+  list (unlike the RPM/API rules, there is no automated validator for this) --
+  `store/README.md` records that explicitly as unverified rather than inventing
+  numbers.
 
-## 15. Update 2026-09-03: Store-Assets gegen das echte Formular verfeinert
+## 15. Update 2026-09-03: store assets refined against the real form
 
-Nutzer hat das tatsächliche Harbour-Einreichungsformular gepostet
-(Title/Details/Categorization/Binaries/Compatibility/Visual
-assets/Contact details/Publish settings). Damit ließ sich raten durch
-Wissen ersetzen:
+The user posted the actual Harbour submission form (Title/Details/
+Categorization/Binaries/Compatibility/Visual assets/Contact details/Publish
+settings), which replaced guesswork with knowledge:
 
-- **Summary-Feld entdeckt**: eigenes Feld, getrennt von Description,
-  200-Zeichen-Limit -- vorher übersehen, `summary-en/de.txt` ergänzt.
-- **Screenshots neu**: echtes Gerät statt Emulator (1032x2272 nativ),
-  auf 1080x2378 hochskaliert, weil das Formular "at least 1080px wide"
-  verlangt und die native Handybreite knapp darunter liegt.
-- **Description bereinigt**: Titel-Zeile ("HA Control") und
-  GitHub-Link am Ende entfernt, da beides schon eigene Formularfelder
-  hat (Title, Open source project URL) -- keine Doppelung.
-- **Kategorie bleibt offen**: Dropdown-Optionen nie gesehen, Nutzer
-  trägt selbst ein.
-- Account existiert bereits, **Einreichung macht der Nutzer manuell
-  selbst** im Web-UI -- das ist kein Automatisierungs-Kandidat.
+- **Summary field discovered**: a separate field from Description, with a
+  200-character limit -- previously missed, `summary-en/de.txt` added.
+- **New screenshots**: real device instead of emulator (1032x2272 native),
+  upscaled to 1080x2378 because the form demands "at least 1080px wide" and the
+  phone's native width falls just short.
+- **Description cleaned up**: the title line ("HA Control") and the GitHub link
+  at the end were removed, since both have their own form fields (Title, Open
+  source project URL) -- no duplication.
+- **Category left open**: the dropdown options were never seen; the user fills
+  that in.
+- The account already exists, and the **user submits manually** through the web
+  UI -- not an automation candidate.
 
-## 16. Update 2026-09-07: Thermostat-Steuerung (climate-Domain)
+## 16. Update 2026-09-07: thermostat control (climate domain)
 
-Analog zur Lichtsteuerung: Tap auf den Namen einer `climate`-Entity
-öffnet `qml/pages/ThermostatDetailPage.qml` mit Zieltemperatur-Regler
-(`min_temp`/`max_temp`/`target_temp_step` aus den Attributen) und
-Modus-Auswahl (`ComboBox` + `ContextMenu`+`Repeater` über
-`hvac_modes`). Vor dem Schreiben echte Climate-Attribute der
-HA-Instanz per curl geprüft (6 Thermostate, `hvac_modes` reicht von
-`["off","heat"]` bis `["auto","heat","off"]`, `target_temp_step` nicht
-immer vorhanden -- Fallback 0.5).
+Analogous to the light controls: tapping the name of a `climate` entity opens
+`qml/pages/ThermostatDetailPage.qml` with a target-temperature slider
+(`min_temp`/`max_temp`/`target_temp_step` from the attributes) and a mode
+selector (`ComboBox` + `ContextMenu` + `Repeater` over `hvac_modes`). Before
+writing anything, the real climate attributes were checked against the HA
+instance via curl (6 thermostats, `hvac_modes` ranging from `["off","heat"]` to
+`["auto","heat","off"]`, `target_temp_step` not always present -- fallback
+0.5).
 
-**Zwei echte Bugs beim Testen gefunden+gefixt** (Nutzer-Feedback
-"Mode fehlt noch Off Heat", dann per Screenshot verifiziert):
+**Two real bugs found and fixed during testing** (user feedback "Mode is still
+missing, Off Heat", then verified by screenshot):
 
-1. QML-`ListModel`-Rollen sind **typgebunden** (der erste Wert legt
-   den Typ fest) -- die `value`-Rolle war durch Toggle-/Sensor-Zeilen
-   bereits als String festgelegt; die Zieltemperatur einer
-   Climate-Zeile kam aber als Number rein (`s.attributes.temperature`)
-   und produzierte `Can't assign to existing role 'value' of
-   different type [Number -> String]`-Warnungen im Journal, mit
-   falscher/fehlender Anzeige als Symptom. Fix: Zieltemperatur immer
-   via `String(...)` in die Zeile schreiben.
-2. **Modus-Anzeige blieb leer**, obwohl "Modus" als Label sichtbar
-   war: `ThermostatDetailPage.qml` las `attributes.state`, aber HAs
-   `state` (bei climate == aktueller hvac_mode) liegt als
-   **Geschwisterfeld neben** `attributes`, nicht darin -- war also
-   immer `undefined`. Fix: eigenes `hvacMode`-Feld in `RoomsView.qml`s
-   Zeilen-Objekten, separat von `attributes` durchgereicht als
-   `entityHvacMode`-Property.
-- Verifiziert auf Emulator (Screenshot: "Modus Aus" korrekt) und
-  echtem Gerät (Nutzer: "geht, temperatur setzen funktioniert").
-  `sfdk check -s harbour`/`-s rpmlint` weiterhin sauber bis auf die
-  bereits akzeptierte `libkeepalive`-Warnung.
+1. QML `ListModel` roles are **type-locked** (the first value fixes the type)
+   -- the `value` role had already been fixed as String by the toggle/sensor
+   rows, but a climate row's target temperature came in as a Number
+   (`s.attributes.temperature`), producing `Can't assign to existing role
+   'value' of different type [Number -> String]` warnings in the journal, with
+   a wrong/missing display as the symptom. Fix: always write the target
+   temperature into the row via `String(...)`.
+2. **The mode display stayed empty** even though the "Mode" label was visible:
+   `ThermostatDetailPage.qml` read `attributes.state`, but HA's `state` (for
+   climate == the current hvac_mode) sits as a **sibling field next to**
+   `attributes`, not inside it -- so it was always `undefined`. Fix: a separate
+   `hvacMode` field in `RoomsView.qml`'s row objects, passed through separately
+   as the `entityHvacMode` property.
+- Verified on the emulator (screenshot: "Mode Off" correct) and the real device
+  (user: "works, setting the temperature works"). `sfdk check -s harbour`/`-s
+  rpmlint` still clean apart from the already-accepted `libkeepalive` warning.
 
-## 17. Update 2026-09-07 (Teil 2): Domain-Abdeckung erweitert (media_player/cover/fan/scene, weitere Sensor-Klassen), v0.9
+## 17. Update 2026-09-07 (part 2): wider domain coverage (media_player/cover/fan/scene, more sensor classes), v0.9
 
-Ausgangspunkt: Analyse aller 1517 Entities der echten HA-Instanz nach
-Domain/`device_class` zeigte deutliche Lücken (siehe Gap-Analyse-Antwort
-im Chat). Auf Nachfrage "wichtigste 5 pro Kategorie ergänzen" wollte der
-Nutzer stattdessen **volle Abdeckung ohne künstliches Limit** ("Alle
-Entities zeigen, nicht limitieren") -- eine automatische "wichtigste 5"
-Auswahl (z.B. bei Batterie-Sensoren) ist ohne manuelle Kuratierung nicht
-sinnvoll definierbar.
+Starting point: an analysis of all 1517 entities of the real HA instance by
+domain/`device_class` showed clear gaps. Asked whether to "add the five most
+important per category", the user instead wanted **full coverage with no
+artificial limit** ("show all entities, don't limit them") -- an automatic "top
+five" selection (for battery sensors, say) cannot be meaningfully defined
+without manual curation.
 
-**Neu abgedeckt** (`qml/views/RoomsView.qml`):
-- `fan`/`cover` in die bestehenden `toggle`-Zeilen aufgenommen (nutzen
-  wie `light`/`switch` den generischen `<domain>.toggle`-Service). Einzige
-  Besonderheit: `cover`s "an"-Äquivalent ist `state === "open"`, nicht
-  `"on"` -- zentral in einer neuen `isEntityOn(domain, state)`-Helper-
-  funktion behandelt statt an jeder Stelle einzeln zu unterscheiden.
-- `media_player` als eigener `kind` mit Submenu (Tap auf Namen, analog
-  Licht/Thermostat) -- neue `qml/pages/MediaPlayerDetailPage.qml` mit
-  Play/Pause/Vor/Zurück (`media_play_pause`/`_next_track`/
-  `_previous_track`) und Lautstärke-Regler (`volume_set`), nur sichtbar
-  wenn die Entity `volume_level` überhaupt liefert (viele Chromecasts/
-  Sonos-Entities tun das nicht durchgehend). Titel/Interpret nur
-  angezeigt falls `media_title`/`media_artist` vorhanden (bei keiner der
-  23 realen media_player-Entities zum Testzeitpunkt aktiv befüllt, da
-  nichts lief -- defensiv codiert statt angenommen).
-- `scene` als eigener `kind` **ohne Switch**: Scenes haben laut echten
-  API-Daten (13 Entities geprüft) keinen sinnvollen on/off-Zustand (State
-  ist der Zeitpunkt der letzten Aktivierung, z.B.
-  `"2026-08-20T16:48:58...+00:00"`, oder `"unknown"`) und keinen
-  `toggle`-Service -- nur `scene.turn_on`. UI dafür: Tap auf die ganze
-  Zeile aktiviert sofort (`activateScene()`), rechts nur ein
-  "Aktivieren"-Hinweislabel statt eines Switches. Der Notify-Kontextmenü
-  (`menu:`) bewusst nicht für `scene` angeboten -- "bei Änderung
-  benachrichtigen" ergibt für einen Zeitstempel-State keinen Sinn.
-- Sensor-`device_class`-Liste um `battery`/`energy`/`power` erweitert
-  (waren mit 37/59/44 Entities die größten unabgedeckten Sensor-
-  Kategorien in der Analyse). `qml/views/SensorsView.qml` um die
-  entsprechenden Abschnitte ("Batterie"/"Energie"/"Leistung") ergänzt --
-  gleiches generisches Section-Muster wie Temperatur/Feuchte/Luftdruck,
-  keine Sonderbehandlung nötig.
+**Newly covered** (`qml/views/RoomsView.qml`):
+- `fan`/`cover` folded into the existing `toggle` rows (they use the generic
+  `<domain>.toggle` service just like `light`/`switch`). The one peculiarity:
+  `cover`'s "on" equivalent is `state === "open"`, not `"on"` -- handled
+  centrally in a new `isEntityOn(domain, state)` helper rather than
+  distinguished at every call site.
+- `media_player` as its own `kind` with a submenu (tap the name, as with
+  lights/thermostats) -- a new `qml/pages/MediaPlayerDetailPage.qml` with
+  play/pause/next/previous (`media_play_pause`/`_next_track`/
+  `_previous_track`) and a volume slider (`volume_set`), shown only if the
+  entity reports `volume_level` at all (many Chromecast/Sonos entities do not
+  do so consistently). Title/artist are only displayed if `media_title`/
+  `media_artist` exist (none of the 23 real media_player entities had them
+  populated at test time, since nothing was playing -- coded defensively rather
+  than assumed).
+- `scene` as its own `kind` **without a switch**: according to the real API
+  data (13 entities checked), scenes have no meaningful on/off state (the state
+  is the timestamp of the last activation, e.g.
+  `"2026-08-20T16:48:58...+00:00"`, or `"unknown"`) and no `toggle` service --
+  only `scene.turn_on`. The UI for this: tapping the whole row activates it
+  immediately (`activateScene()`), with just an "Activate" hint label on the
+  right instead of a switch. The notify context menu (`menu:`) is deliberately
+  not offered for `scene` -- "notify on change" makes no sense for a timestamp
+  state.
+- The sensor `device_class` list extended by `battery`/`energy`/`power` (with
+  37/59/44 entities, the largest uncovered sensor categories in the analysis).
+  `qml/views/SensorsView.qml` gained the corresponding sections
+  ("Battery"/"Energy"/"Power") -- the same generic section pattern as
+  temperature/humidity/pressure, no special handling needed.
 
-**Getestet**: i486-Build auf dem Emulator installiert; da für UI-Checks
-auf dem Emulator kein Touchscreen zur Verfügung steht, wurde die
-VirtualBox-Fensterausgabe per `import` gegriffen und Taps/Swipes über
-`xdotool` gegen das Fenster simuliert (einzelner schneller
-Mousedown→Mousemove→Mouseup-Sprung wird als Flick erkannt, mehrstufige
-langsame Bewegung dagegen als Long-Press -- wichtig für zukünftige
-Emulator-UI-Checks). Damit visuell bestätigt: Room-Zählungen stiegen
-sichtbar (z.B. Bastelzimmer 30→57) durch die neu erfassten Entities,
-mehrere Szenen-Zeilen im Wohnzimmer zeigen korrekt Name + "Aktivieren",
-Scroll/Expand/Collapse unverändert funktionsfähig. Kein einziges
-QML-`ListModel`-Rollentyp-Warning im Journal über den vollen Lauf mit
-allen 1517 Entities (die aus der Climate-Arbeit bekannte
-Type-Locking-Falle wurde durchgehend vermieden, u.a. durch `String(...)`
-für alle `value`-Zuweisungen). Auf dem echten Gerät (aarch64) installiert
-und Prozessstart ohne Fehler im Log bestätigt; volle visuelle
-Bestätigung dort nicht möglich (kein Display-Zugriff über die
-SSH-only-Verbindung) und daher noch ausständig, sobald der Nutzer selbst
-schaut.
-`sfdk check -s harbour`/`-s rpmlint` auf allen drei Architekturen weiterhin
-sauber bis auf die bereits akzeptierte `libkeepalive`-Warnung.
+**Tested**: the i486 build was installed on the emulator; since no touchscreen
+is available for UI checks there, the VirtualBox window output was captured
+with `import` and taps/swipes simulated against the window with `xdotool` (a
+single fast mousedown→mousemove→mouseup jump registers as a flick, while a slow
+multi-step movement registers as a long press -- worth remembering for future
+emulator UI checks). That visually confirmed: room counts rose noticeably (e.g.
+Bastelzimmer 30→57) thanks to the newly covered entities, several scene rows in
+the living room correctly show name + "Activate", and scroll/expand/collapse
+still work. Not a single QML `ListModel` role-type warning in the journal across
+the full run with all 1517 entities (the type-locking trap known from the
+climate work was avoided throughout, among other things by using `String(...)`
+for all `value` assignments). Installed on the real device (aarch64) with a
+clean process start in the log; full visual confirmation there was not possible
+(no display access over the SSH-only connection) and therefore still pending
+until the user looks himself. `sfdk check -s harbour`/`-s rpmlint` still clean
+on all three architectures apart from the already-accepted `libkeepalive`
+warning.
 
-## 18. Update 2026-09-08: update-Domain (zu aktualisierende Geräte), v0.10
+## 18. Update 2026-09-08: update domain (devices with pending updates), v0.10
 
-Aus der ursprünglichen Gap-Analyse noch offen: `update`-Domain (107
-Entities in der echten Instanz, aber zum Prüfzeitpunkt nur 3 mit
-`state === "on"`, d.h. Update verfügbar -- die meisten Entities sind die
-meiste Zeit "off"/aktuell). Auf Nachfrage "was braucht [es] für die
-Anzeige von zu updatenden Geräten" kurz die relevanten Attribute genannt
-(`installed_version`/`latest_version`/`title`, `supported_features`-Bit 0
-== `UpdateEntityFeature.INSTALL`) und empfohlen, das **nicht** pro Raum
-in `RoomsView.qml` einzuhängen, sondern als eigene, raumübergreifende
-dritte Sub-View analog `SensorsView.qml` -- Updates sind naturgemäss
-nicht raumgebunden interessant, und ungefiltert wären es 107 grössten-
-teils irrelevante Zeilen für typischerweise eine Handvoll echte Treffer.
-Nutzer hat zugestimmt ("ja, umsetzen").
+Still open from the original gap analysis: the `update` domain (107 entities in
+the real instance, but only 3 with `state === "on"` at the time of checking,
+i.e. an update available -- most entities are "off"/current most of the time).
+Asked "what does it take to show devices with pending updates", the relevant
+attributes were named briefly (`installed_version`/`latest_version`/`title`,
+`supported_features` bit 0 == `UpdateEntityFeature.INSTALL`) along with the
+recommendation **not** to hang this per room in `RoomsView.qml` but to make it
+a separate, cross-room third sub-view like `SensorsView.qml` -- updates are by
+nature not interesting per room, and unfiltered they would be 107 mostly
+irrelevant rows for typically a handful of real hits. The user agreed ("yes,
+implement it").
 
-**Neu**: `qml/views/UpdatesView.qml` -- flache (keine Sections, anders
-als bei den Sensoren) Liste, gefiltert auf `state === "on"`. Pro Zeile:
-Name (`title` bevorzugt vor `friendly_name`, HA befüllt `title` bei
-`update`-Entities meist mit dem eigentlichen Produktnamen statt der
-technischen Entity-Bezeichnung) + zweite Zeile mit
-`installed_version → latest_version`, rechts ein "Installieren"-Label
-(gleiches Tap-zum-Aktivieren-Muster wie bei `scene` in v0.9 -- kein
-Submenu nötig für einen einzelnen Install-Trigger). Ruft
-`update.install` auf; danach (wie bei `toggle()`/`activateScene()`)
-kurzer Timer + Refresh, da der Service-Call nur die Annahme bestätigt,
-nicht den Abschluss. Zeilen mit `in_progress === true` zeigen
-"Installiert…" statt "Installieren" und sind nicht mehr antippbar;
-Entities ohne das `INSTALL`-Feature-Bit ebenfalls nicht antippbar
-(seltener Fall, aber `supported_features` variiert real zwischen 5/15/27
-je nach Integration).
+**New**: `qml/views/UpdatesView.qml` -- a flat list (no sections, unlike the
+sensors), filtered to `state === "on"`. Per row: the name (`title` preferred
+over `friendly_name`; HA usually fills `title` on `update` entities with the
+actual product name rather than the technical entity label) + a second line
+with `installed_version → latest_version`, and an "Install" label on the right
+(the same tap-to-activate pattern as `scene` in v0.9 -- no submenu needed for a
+single install trigger). It calls `update.install`; afterwards (as with
+`toggle()`/`activateScene()`) a short timer + refresh, since the service call
+only confirms acceptance, not completion. Rows with `in_progress === true` show
+"Installing…" instead of "Install" and are no longer tappable; entities without
+the `INSTALL` feature bit are likewise not tappable (a rare case, but
+`supported_features` really does vary between 5/15/27 depending on the
+integration).
 
-`FirstPage.qml`s Swipe-Snap-Logik war bisher hart auf zwei Seiten
-(0/`page.width`) codiert -- verallgemeinert auf
-`Math.round(contentX / page.width) * page.width`, geclampt auf
-`[0, viewRow.width - page.width]`, damit sie mit einer dritten Sub-View
-(und potenziell weiteren) weiterhin sauber einrastet statt zwischen
-Seiten hängen zu bleiben.
+`FirstPage.qml`'s swipe snap logic had been hard-coded to two pages
+(0/`page.width`) -- generalised to `Math.round(contentX / page.width) *
+page.width`, clamped to `[0, viewRow.width - page.width]`, so that it keeps
+snapping cleanly with a third sub-view (and potentially more) instead of
+getting stuck between pages.
 
-**Getestet**: auf dem Emulator (i486) installiert, `xdotool`-Swipe (s.
-[[sailfishos-sdk-workflow]] für die Geste) zur dritten Seite bestätigt
-korrektes Rendering mit den drei echten anstehenden Updates der
-Instanz (u. a. zwei ESPHome-Taster-Firmware-Updates). Kein
-QML-Rollentyp- oder Referenzfehler im Journal. Auf dem echten Gerät
-(aarch64) installiert, gestartet und vom Nutzer visuell bestätigt
-("sieht gut aus auf handy"). `sfdk check -s harbour`/`-s rpmlint` auf
-allen drei Architekturen sauber bis auf die bereits akzeptierte
-`libkeepalive`-Warnung.
+**Tested**: installed on the emulator (i486); an `xdotool` swipe to the third
+page confirmed correct rendering with the instance's three real pending updates
+(including two ESPHome button firmware updates). No QML role-type or reference
+errors in the journal. Installed and started on the real device (aarch64) and
+visually confirmed by the user ("looks good on the phone"). `sfdk check -s
+harbour`/`-s rpmlint` clean on all three architectures apart from the
+already-accepted `libkeepalive` warning.
 
-## 19. Update 2026-09-08 (Teil 2): UI-Politur -- Farb-Swatch bei Lichtern, Fortschrittsbalken bei Updates, v0.11
+## 19. Update 2026-09-08 (part 2): UI polish -- colour swatch on lights, progress bar on updates, v0.11
 
-Auf Nachfrage "Vorschlag für etwas fancy shiny UI, immer noch minimal"
-mehrere Optionen genannt (Domain-Icons, Live-Flash bei WS-Updates,
-Farb-Swatch bei Lichtern, Fortschrittsbalken bei Updates,
-CoverPage-Quick-Action); Nutzer wählte die beiden datengetriebenen
-Optionen -- beide brauchen keinen neuen API-Call, nur Attribute, die
-schon abgefragt werden.
+Asked for "a suggestion for something fancy and shiny, still minimal", several
+options were put forward (domain icons, a live flash on WS updates, a colour
+swatch on lights, a progress bar on updates, a cover page quick action); the
+user picked the two data-driven ones -- neither needs a new API call, only
+attributes that are already fetched.
 
-**Farb-Swatch bei Lichtern** (`qml/views/RoomsView.qml`): kleiner
-farbiger Kreis zwischen Name und Switch bei `light`-Entities mit
-bekannter Farbe. Bevorzugt echtes `rgb_color`; falls nicht vorhanden,
-Näherung aus `color_temp_kelvin` per Tanner-Helland-Approximation
-(`kelvinToRgb()` -- kein exaktes Farbmodell, aber für einen kleinen
-Vorschau-Kreis ausreichend). `null` (Swatch unsichtbar) wenn das Licht
-aus ist oder keins von beidem liefert -- HA meldet beide Attribute als
-`null` solange aus (bekannte Einschränkung, s. README). `attributes`
-wurde bisher nur für climate/media_player-Zeilen per WebSocket
-live nachgezogen (`applyStateChange()`) -- jetzt auch für
-`light`-Toggle-Zeilen, damit der Swatch bei externen Änderungen sofort
-nachzieht statt erst beim nächsten Pull-to-refresh.
+**Colour swatch on lights** (`qml/views/RoomsView.qml`): a small coloured
+circle between the name and the switch for `light` entities with a known
+colour. Real `rgb_color` is preferred; if absent, an approximation from
+`color_temp_kelvin` via the Tanner-Helland approximation (`kelvinToRgb()` -- not
+an exact colour model, but good enough for a small preview dot). `null` (swatch
+invisible) when the light is off or neither attribute is available -- HA reports
+both as `null` while off (a known limitation, see README). `attributes` had so
+far only been kept live over the WebSocket for climate/media_player rows
+(`applyStateChange()`) -- now for `light` toggle rows too, so the swatch follows
+external changes immediately rather than waiting for the next pull-to-refresh.
 
-**Fortschrittsbalken bei laufenden Updates** (`qml/views/UpdatesView.qml`):
-ersetzt die Versions-Zeile ("X → Y") durch einen schmalen, abgerundeten
-Balken in `Theme.highlightColor`, solange `in_progress === true`. Manche
-Integrationen liefern `update_percentage` (Balken füllt sich passend,
-Prozentzahl daneben), andere nicht -- dort läuft stattdessen ein
-wanderndes Highlight (`SequentialAnimation on x`, hin und her) als
-unbestimmter Fortschritt. `updatePercentage` wird als `-1` statt
-`null`/`undefined` gespeichert, wenn unbekannt -- sonst dieselbe
-ListModel-Rollentyp-Falle wie beim `value`-Feld in RoomsView.qml
-(Number/null-Mix auf derselben Rolle). Ein neuer `Timer`
-(`progressPollTimer`, 3s, läuft nur solange `anyInProgress`) pollt
-während einer laufenden Installation automatisch nach, damit der
-Balken tatsächlich mitwächst statt nur einmal beim initialen
-Tap-Refresh stehen zu bleiben.
+**Progress bar for running updates** (`qml/views/UpdatesView.qml`): replaces
+the version line ("X → Y") with a slim, rounded bar in `Theme.highlightColor`
+while `in_progress === true`. Some integrations report `update_percentage` (the
+bar fills accordingly, with the percentage next to it), others do not -- there a
+travelling highlight runs instead (`SequentialAnimation on x`, back and forth)
+as indeterminate progress. `updatePercentage` is stored as `-1` rather than
+`null`/`undefined` when unknown -- otherwise the same ListModel role-type trap as
+with the `value` field in RoomsView.qml (a Number/null mix on the same role). A
+new `Timer` (`progressPollTimer`, 3s, running only while `anyInProgress`) polls
+during a running installation so the bar actually grows instead of freezing at
+whatever the initial tap-refresh showed.
 
-**Debugging-Hinweis**: die erste Version des Balkens sass sichtbar zu
-eng an der Namenszeile (wirkte wie eine Unterstreichung statt einer
-zweiten Zeile) -- Ursache war schlicht eine zu knapp bemessene Höhe
-für das Balken-`Item` (`Theme.paddingMedium`, dann versuchsweise
-`Theme.fontSizeExtraSmall + Theme.paddingSmall`, beides noch zu
-knapp). Fix: Item-Höhe auf `Theme.paddingLarge`, Balkendicke von
-`Theme.paddingSmall/2` auf volles `Theme.paddingSmall` erhöht (klar
-sichtbarer "Pill"-Balken statt Haarlinie), UND `contentHeight` der
-`ListItem`-Delegate selbst für `in_progress`-Zeilen um
-`Theme.paddingSmall` vergrössert, damit die zusätzliche Höhe nicht mit
-der nächsten Zeile kollidiert. Erst nach dieser dritten Iteration sah
-es im Screenshot tatsächlich wie ein sauberer Balken aus statt wie ein
-Rendering-Fehler.
+**Debugging note**: the first version of the bar sat visibly too close to the
+name line (it looked like an underline rather than a second line) -- the cause
+was simply too little height for the bar `Item` (`Theme.paddingMedium`, then
+`Theme.fontSizeExtraSmall + Theme.paddingSmall` as an attempt, both still too
+tight). Fix: item height raised to `Theme.paddingLarge`, bar thickness raised
+from `Theme.paddingSmall/2` to a full `Theme.paddingSmall` (a clearly visible
+"pill" rather than a hairline), AND the `ListItem` delegate's own
+`contentHeight` enlarged by `Theme.paddingSmall` for `in_progress` rows so the
+extra height does not collide with the next row. Only after this third
+iteration did it actually look like a clean bar in the screenshot rather than a
+rendering glitch.
 
-Für die visuelle Prüfung auf dem Emulator wurden testweise zwei
-Fake-Zeilen (`in_progress: true`, eine mit/eine ohne Prozentwert) am
-Anfang von `buildEntries()` eingefügt (`matches.unshift(...)`), um
-den Balken ohne ein echtes `update.install` gegen die reale
-HA-Instanz auszulösen zu können -- ein echter Install-Trigger hätte
-tatsächlich Geräte-Firmware auf der Hardware des Nutzers angestossen,
-das wollte ich nicht ungefragt riskieren. Die Fake-Zeilen wurden vor
-dem Commit wieder entfernt.
+For the visual check on the emulator, two fake rows (`in_progress: true`, one
+with and one without a percentage) were temporarily inserted at the start of
+`buildEntries()` (`matches.unshift(...)`) so the bar could be triggered without
+a real `update.install` against the live HA instance -- a real install trigger
+would have started actual device firmware updates on the user's hardware, which
+was not something to risk unasked. The fake rows were removed again before
+committing.
 
-**Getestet**: Emulator (Farb-Swatch mit "Küche Tisch Lampe", reale
-`rgb_color: [255, 167, 88]`, korrekt als warmer Orange-Punkt
-gerendert; Fortschrittsbalken mit den Fake-Test-Zeilen verifiziert,
-s. o.), echtes Gerät (aarch64, installiert+startet fehlerfrei, keine
-QML-Fehler im Log). `sfdk check -s harbour`/`-s rpmlint` auf allen
-drei Architekturen sauber bis auf die bereits akzeptierte
-`libkeepalive`-Warnung.
+**Tested**: emulator (colour swatch with "Küche Tisch Lampe", real `rgb_color:
+[255, 167, 88]`, correctly rendered as a warm orange dot; progress bar verified
+with the fake test rows, see above), real device (aarch64, installs and starts
+without errors, no QML errors in the log). `sfdk check -s harbour`/`-s rpmlint`
+clean on all three architectures apart from the already-accepted `libkeepalive`
+warning.
 
-## 20. Update 2026-09-18: Echte mobile_app-Integration (Push + Device-Status), v0.12
+## 20. Update 2026-09-18: real mobile_app integration (push + device status), v0.12
 
-Nutzer-Wunsch: "Benachrichtigungsfunktion und Device-Status-Funktion der
-Original-App nachbauen" -- gemeint war explizit nicht der bestehende
-Poll-basierte Ansatz (Ausbaustufe 3/Variante B), sondern die echten
-`mobile_app`-Mechanismen der offiziellen HA-Companion-App: (a) HA kann
-aktiv Push-Nachrichten ans Handy schicken (`notify.mobile_app_...`,
-z.B. aus Automationen), (b) das Handy meldet umgekehrt eigene Sensoren
-(Akkustand, Verbindungsart) an HA zurück. Per Rückfrage (AskUserQuestion)
-bestätigt, bevor mit der Umsetzung begonnen wurde.
+User request: "rebuild the notification and device-status functionality of the
+original app" -- explicitly not the existing poll-based approach (stage 3 /
+option B), but the real `mobile_app` mechanisms of the official HA Companion
+app: (a) HA can actively push messages to the phone (`notify.mobile_app_...`,
+e.g. from automations), and (b) the phone reports its own sensors (battery
+level, connection type) back to HA. Confirmed by asking before implementation
+started.
 
-**API-Mechanik vorab aus dem echten `home-assistant/core`-Quellcode
-gelesen** (nicht geraten) -- `mobile_app/const.py`, `notify.py`,
-`push_notification.py`, `websocket_api.py`, `webhook.py`, `http_api.py`:
-Registrierung per `POST /api/mobile_app/registrations` (Bearer-Token wie
-die bestehenden REST-Calls); `app_data.push_websocket_channel: true`
-reicht laut `supports_push()` in `util.py` bereits aus, damit HA einen
-echten `notify.mobile_app_<gerät>`-Service anbietet, der über die
-**bereits bestehende, authentifizierte WebSocket-Verbindung** (aus
-Abschnitt 8) zugestellt wird -- kein eigener HTTP-Server, kein
-C++-Bridge-Objekt nötig. Client sendet dafür einmalig
-`{"type": "mobile_app/push_notification_channel", "webhook_id": ..., "support_confirm": false}`,
-HA liefert Pushes danach als reguläre `event`-Nachrichten auf derselben
-Verbindung. Sensor-Updates laufen separat über
-`POST /api/webhook/<webhook_id>` (kein Bearer-Header nötig, die
-Webhook-ID selbst ist das Secret) mit `register_sensor`/
-`update_sensor_states`.
+**API mechanics read up front from the real `home-assistant/core` source** (not
+guessed) -- `mobile_app/const.py`, `notify.py`, `push_notification.py`,
+`websocket_api.py`, `webhook.py`, `http_api.py`: registration via `POST
+/api/mobile_app/registrations` (bearer token like the existing REST calls);
+`app_data.push_websocket_channel: true` is already enough according to
+`supports_push()` in `util.py` for HA to offer a genuine
+`notify.mobile_app_<device>` service, delivered over the **WebSocket connection
+that already exists** (from section 8) -- no own HTTP server and no C++ bridge
+object needed. The client sends `{"type":
+"mobile_app/push_notification_channel", "webhook_id": ..., "support_confirm":
+false}` once, and HA then delivers pushes as regular `event` messages on the
+same connection. Sensor updates run separately via `POST
+/api/webhook/<webhook_id>` (no bearer header needed -- the webhook ID itself is
+the secret) with `register_sensor`/`update_sensor_states`.
 
-**Device-Status-Sensoren ohne UPower**: SailfishOS nutzt für
-Akkustand/Ladezustand `com.nokia.mce` (`get_battery_level`/
-`get_charger_state`) statt UPower, und `net.connman`
-(`Manager.GetServices()`, erster Eintrag = aktive Verbindung) für die
-Verbindungsart -- beides direkt gegen den laufenden SDK-Emulator per
-`dbus-send --system` verifiziert (`org.freedesktop.UPower` ist auf
-SailfishOS schlicht nicht vorhanden), bevor `qml/components/DeviceStatusProbe.qml`
-geschrieben wurde. Die exakte `Nemo.DBus`-QML-API (`getProperty`/`call`/
-`typedCall`, keine `plugins.qmltypes` für dieses Plugin vorhanden) wurde
-per `strings` auf der Plugin-`.so` im SDK-Target verifiziert statt aus
-Erinnerung übernommen.
+**Device-status sensors without UPower**: SailfishOS uses `com.nokia.mce`
+(`get_battery_level`/`get_charger_state`) for battery level and charging state
+rather than UPower, and `net.connman` (`Manager.GetServices()`, first entry =
+the active connection) for the connection type -- both verified directly against
+the running SDK emulator with `dbus-send --system` (`org.freedesktop.UPower`
+simply does not exist on SailfishOS) before
+`qml/components/DeviceStatusProbe.qml` was written. The exact `Nemo.DBus` QML
+API (`getProperty`/`call`/`typedCall`; no `plugins.qmltypes` exists for this
+plugin) was verified with `strings` on the plugin `.so` in the SDK target
+instead of relying on memory.
 
-**Zwei echte Bugs beim End-to-End-Test gegen die reale, 1500+-Entity-
-Instanz des Nutzers gefunden+gefixt** (nicht im Emulator allein
-aufgefallen -- Debugging lief per curl direkt gegen die echte HA-Instanz,
-da dieser Rechner sie im lokalen Netz erreicht):
+**Two real bugs found and fixed during the end-to-end test against the user's
+real 1500+ entity instance** (they did not show up in the emulator alone --
+debugging ran via curl straight against the real HA instance, since this
+machine can reach it on the local network):
 
-1. **`os_version` ist trotz "optional" in HAs eigenem Schema faktisch
-   erforderlich.** Ohne dieses Feld crasht `mobile_app`s eigenes
-   `async_setup_entry()` (direkter Dict-Zugriff ohne Fallback) NACH
-   Erzeugung der `webhook_id`, aber VOR ihrer Registrierung beim
-   generischen Webhook-Dispatcher. Symptom war tückisch: die
-   REST-Registrierung meldet trotzdem Erfolg (HTTP 201 + scheinbar
-   gültige `webhook_id`), aber jeder folgende Aufruf gegen diese ID
-   (`register_sensor`, Push, sogar `get_config`) bekommt für immer
-   HAs Leer-200-Antwort für unbekannte Webhooks -- das generische
-   Anti-Enumeration-Verhalten des Webhook-Dispatchers. Erst per
-   `curl` mit/ohne `os_version` gegenübergestellt gefunden. Fix: immer
-   einen statischen `os_version`-Wert mitschicken (kein natives
-   Auslesen der echten SailfishOS-Version -- bräuchte C++, HA zeigt
-   den Wert ohnehin nur an).
-2. **Push-Kanal-Abo hatte eine Race Condition**: wurde nur im
-   `auth_ok`-Handler des WebSockets gesendet, aber die Registrierung
-   (asynchroner REST-Call in `harbour-hacontrol.qml`) war zu dem
-   Zeitpunkt bei einem Neustart oft noch nicht fertig -- damit blieb
-   der Push für den Rest dieser Verbindung unabonniert. Fix: eigene
-   `subscribePushChannelIfReady()`-Funktion, zusätzlich an
-   `webhookIdSetting`s `onValueChanged` gehängt.
+1. **`os_version` is effectively required despite being "optional" in HA's own
+   schema.** Without that field, `mobile_app`'s own `async_setup_entry()`
+   crashes (a direct dict access with no fallback) AFTER the `webhook_id` has
+   been created but BEFORE it is registered with the generic webhook
+   dispatcher. The symptom was insidious: the REST registration still reports
+   success (HTTP 201 + an apparently valid `webhook_id`), but every subsequent
+   call against that ID (`register_sensor`, push, even `get_config`) gets HA's
+   empty-200 response for unknown webhooks forever -- the webhook dispatcher's
+   generic anti-enumeration behaviour. Only found by diffing `curl` calls with
+   and without `os_version`. Fix: always send a static `os_version` value (no
+   native read of the real SailfishOS version -- that would need C++, and HA
+   only displays the value anyway).
+2. **The push channel subscription had a race condition**: it was only sent
+   from the WebSocket's `auth_ok` handler, but at that point the registration
+   (an asynchronous REST call in `harbour-hacontrol.qml`) was often not
+   finished yet on a restart -- leaving push unsubscribed for the rest of that
+   connection. Fix: a dedicated `subscribePushChannelIfReady()` function,
+   additionally hooked to `webhookIdSetting`'s `onValueChanged`.
 
-**Verifiziert Ende-zu-Ende gegen die echte Instanz** (Emulator, i486):
-Registrierung erzeugt ein neues, sauberes `mobile_app`-Gerät "SailfishOS
-Phone" in HA (per WebSocket-Admin-Query bestätigt: genau ein
-`state: "loaded"`-Eintrag, keine Karteileichen trotz mehrerer
-Test-Registrierungsläufe -- HAs Config-Entry-Dedup nach
-`unique_id = app_id-device_id` greift wie erwartet). `notify.send_message`
-(Ziel-Entity `notify.sailfishos_phone`) aus HAs Dev-Tools ausgelöst -->
-Push-Banner erscheint sofort auf dem Emulator, per Screenshot bestätigt.
-Alle drei Device-Status-Sensoren (`sensor.sailfishos_phone_akkustand`,
-`binary_sensor.sailfishos_phone_ladt`, `sensor.sailfishos_phone_verbindungsart`)
-erscheinen mit für den Emulator plausiblen Werten (kein echter Akku -->
-`-1`, korrekt herausgefiltert statt als Sensorwert gesendet; `ladt: on`
-und `verbindungsart: ethernet` passend zum Emulator-Setup). Kein
-einziger QML-Fehler im Journal über die gesamte Testsession.
+**Verified end-to-end against the real instance** (emulator, i486):
+registration creates a new, clean `mobile_app` device "SailfishOS Phone" in HA
+(confirmed by a WebSocket admin query: exactly one `state: "loaded"` entry, no
+leftovers despite several test registration runs -- HA's config-entry dedup by
+`unique_id = app_id-device_id` works as expected). `notify.send_message`
+(target entity `notify.sailfishos_phone`) triggered from HA's dev tools --> the
+push banner appears on the emulator immediately, confirmed by screenshot. All
+three device-status sensors (`sensor.sailfishos_phone_akkustand`,
+`binary_sensor.sailfishos_phone_ladt`,
+`sensor.sailfishos_phone_verbindungsart`) show up with values plausible for the
+emulator (no real battery --> `-1`, correctly filtered out instead of being
+sent as a sensor value; `ladt: on` and `verbindungsart: ethernet` matching the
+emulator setup). Not a single QML error in the journal across the whole test
+session.
 
-**Nachtrag, selbe Session -- echtes Gerät angeschlossen**: aarch64-RPM
-auf die reale Jolla Phone installiert (`192.168.2.15`, s.
-sailtalerwallet-Workflow für devel-su/pkcon). Zwei Cross-Arch-Stolperfallen
-dabei erneut bestätigt (bereits aus sailtalerwallet bekannt, hier zum
-ersten Mal live erlebt): (1) `sfdk build` für i486 dann aarch64
-nacheinander im selben Arbeitsverzeichnis (kein Shadow-Build) relinkt
-stillschweigend die stehen gebliebene i486-`.o`/Binary in die
-aarch64-RPM -- sichtbar am `warning: Binaries arch (1) not matching the
-package arch (2)` beim Build, geführt zu `nothing provides
-libQt5Core.so.5` beim Installationsversuch auf dem echten Gerät (obwohl
-dieselbe Lib dort für die schon laufende v0.10 längst vorhanden ist).
-Fix: `rm -f harbour-hacontrol harbour-hacontrol.o Makefile moc_*` vor
-jedem Architekturwechsel. (2) `pkcon install-local` über `ssh -tt`
-produzierte wie dokumentiert Runaway-Output -- Fix war, wie schon
-bekannt, kein PTY zu erzwingen.
+**Addendum, same session -- real device attached**: the aarch64 RPM was
+installed on the real Jolla Phone (`192.168.2.15`). Two cross-arch traps were
+confirmed again in the process (already known from sailtalerwallet, experienced
+first-hand here for the first time): (1) running `sfdk build` for i486 and then
+aarch64 in the same working directory (no shadow build) silently relinks the
+leftover i486 `.o`/binary into the aarch64 RPM -- visible as `warning: Binaries
+arch (1) not matching the package arch (2)` during the build, and leading to
+`nothing provides libQt5Core.so.5` when installing on the real device (even
+though that same library is obviously present there for the already-running
+v0.10). Fix: `rm -f harbour-hacontrol harbour-hacontrol.o Makefile moc_*` before
+every architecture switch. (2) `pkcon install-local` over `ssh -tt` produced
+runaway output as documented -- the fix, as already known, is not to force a
+PTY.
 
-Ausserdem eine dritte, kleinere Falle beim Aufräumen alter
-App-Instanzen: `devel-su killall harbour-hacontrol firejail invoker`
-sollte nur die eigene App treffen, hat aber (Prozessname-Kollision)
-gleich noch die gerade laufende Kamera-, E-Mail- und Browser-App des
-Nutzers mitbeendet, da die ebenfalls unter `firejail`/`invoker` laufen.
-Kein Datenverlust, aber ein Warnzeichen: `killall` nie mit einem so
-generischen Namen wie `firejail`/`invoker` auf einem Gerät mit anderen
-laufenden Fremd-Apps.
+There was also a third, smaller trap while cleaning up old app instances:
+`devel-su killall harbour-hacontrol firejail invoker` was meant to hit only this
+app, but (process name collision) also terminated the user's running camera,
+email and browser apps, since those run under `firejail`/`invoker` too. No data
+lost, but a warning sign: never `killall` a name as generic as
+`firejail`/`invoker` on a device with other apps running.
 
-**Auf echter Hardware verifiziert**: Registrierung erzeugte automatisch
-ein zweites, sauberes `mobile_app`-Gerät (andere `deviceId` als der
-Emulator, daher `_2`-Entity-Suffix in HA) mit realen Werten -- Akkustand
-tatsächlich `55`/`56` (kein `-1` wie im Emulator, echte
-`get_battery_level()` funktioniert), `ladt: on` (Handy hing zum
-Testzeitpunkt am USB-Kabel, korrekt erkannt), `verbindungsart` kurz
-`offline` direkt beim allerersten App-Start (`GetServices()` lief
-offenbar, bevor ConnMan seine Service-Liste nach dem Verbindungsaufbau
-neu sortiert hatte), danach beim nächsten Update korrekt `wifi` --
-selbstheilend über den nächsten 10-Minuten-Poll, kein Code-Bug (per
-Debug-`console.log` der rohen `GetServices()`-Antwort verifiziert, dann
-wieder entfernt). Echter Push (`notify.send_message` auf
-`notify.sailfishos_phone_2`) vom Nutzer direkt auf dem Gerät bestätigt
-("ja"). `sfdk check -s harbour`/`-s rpmlint` auf allen drei
-Architekturen sauber bis auf die bereits akzeptierte
-`libkeepalive`-Warnung.
+**Verified on real hardware**: registration automatically created a second,
+clean `mobile_app` device (a different `deviceId` than the emulator, hence the
+`_2` entity suffix in HA) with real values -- battery level actually `55`/`56`
+(not `-1` as in the emulator, so the real `get_battery_level()` works), `ladt:
+on` (the phone was on the USB cable at test time, correctly detected),
+`verbindungsart` briefly `offline` right at the very first app start
+(`GetServices()` evidently ran before ConnMan had re-sorted its service list
+after the connection came up), then correctly `wifi` at the next update --
+self-healing via the next ten-minute poll, not a code bug (verified with a
+debug `console.log` of the raw `GetServices()` response, then removed again).
+A real push (`notify.send_message` on `notify.sailfishos_phone_2`) was confirmed
+by the user directly on the device ("yes"). `sfdk check -s harbour`/`-s
+rpmlint` clean on all three architectures apart from the already-accepted
+`libkeepalive` warning.
 
-## 21. Update 2026-09-18 (Teil 2): SensorsView nach Raum gruppiert, v0.50
+## 21. Update 2026-09-18 (part 2): SensorsView grouped by room, v0.50
 
-Nutzerwunsch: "Sensor Page auch nach Raum aufteilen und ausklappbar
-machen" -- `qml/views/SensorsView.qml` gruppierte Sensoren bisher nach
-Messgrösse (Temperatur/Batterie/...), nicht nach Raum. Umgebaut auf
-exakt das gleiche Muster wie `RoomsView.qml`: `HaApi.getAreaMap()` für
-die Raumzuordnung, `expandedRooms`/`toggleRoom()` fürs Ein-/Ausklappen
-(Räume starten eingeklappt), gleicher Header-Zeilen-Stil (▸/▾ +
-Raumname + Anzahl). Ein Raum kann jetzt gemischte Sensor-Typen
-enthalten (z.B. Temperatur+Energie+Luftdruck im selben Raum
-hintereinander) -- Wert+Einheit-Format unverändert. Die
-Kategorie-Header (Temperatur/Batterie/...) sind entfallen.
+User request: "split the sensor page by room too and make it collapsible" --
+`qml/views/SensorsView.qml` had so far grouped sensors by quantity
+(temperature/battery/...), not by room. Rebuilt to exactly the same pattern as
+`RoomsView.qml`: `HaApi.getAreaMap()` for the room assignment,
+`expandedRooms`/`toggleRoom()` for expand/collapse (rooms start collapsed), the
+same header row style (▸/▾ + room name + count). A room can now contain mixed
+sensor types (e.g. temperature + energy + pressure one after another in the
+same room) -- the value+unit format is unchanged. The category headers
+(Temperature/Battery/...) are gone.
 
-**Swipe-Simulation war diese Session unzuverlässig** (anders als in
-früheren Sessions, s. [[sailfishos-sdk-workflow]]) -- mehrere Versuche
-mit dem sonst funktionierenden Einzelsprung-Muster landeten inkonsistent
-(mal gar keine Bewegung, mal zwei Seiten übersprungen). Statt blind der
-Code-Analogie zu RoomsView.qml zu vertrauen, kurzzeitig
-`FirstPage.qml`s `SilicaFlickable` um `Component.onCompleted: contentX = page.width`
-ergänzt, um direkt auf der Sensor-Seite zu landen, per Screenshot
-verifiziert (Räume mit Zähler, Ausklappen funktioniert, gemischte
-Sensor-Typen korrekt), Debug-Zeile danach wieder entfernt.
+**Swipe simulation was unreliable this session** (unlike earlier sessions) --
+several attempts with the otherwise working single-jump pattern landed
+inconsistently (sometimes no movement at all, sometimes two pages skipped).
+Rather than trusting the code analogy to RoomsView.qml blindly,
+`FirstPage.qml`'s `SilicaFlickable` briefly got a `Component.onCompleted:
+contentX = page.width` so as to land directly on the sensor page, verified by
+screenshot (rooms with counts, expanding works, mixed sensor types correct),
+then the debug line was removed again.
 
-Auf Nutzerrückfrage ("hat jede Seite ein Titel...?") aufgefallen:
-`RoomsView.qml`s `PageHeader` zeigte "HA Control" (den App-Namen) statt
-eines Seitentitels -- als einzige der drei Sub-Views ohne eigenen Titel
-(Sensor-Übersicht/Updates hatten schon einen). Auf "Räume" geändert.
+Noticed thanks to a question from the user ("does every page have a title...?"):
+`RoomsView.qml`'s `PageHeader` showed "HA Control" (the app name) instead of a
+page title -- the only one of the three sub-views without its own title (the
+sensor overview and updates already had one). Changed to "Räume".
 
-**Versionssprung 0.13 → 0.50**: nach Rückfrage (per AskUserQuestion, da
-"0.5" als Wunsch unklar war -- Rücksprung oder Tippfehler für die
-fortlaufende Zählung) hat der Nutzer den Sprung auf 0.50 explizit
-bestätigt, kein Fortsetzen der fortlaufenden 0.1x-Zählung.
+**Version jump 0.13 → 0.50**: after asking (since a wish for "0.5" was
+ambiguous -- a step back, or a typo for the running count), the user explicitly
+confirmed the jump to 0.50 rather than continuing the running 0.1x numbering.
 
-## 22. Update 2026-09-18 (Teil 3): Zugangsdaten verschlüsselt in Sailfish Secrets, v0.51
+## 22. Update 2026-09-18 (part 3): credentials encrypted in Sailfish Secrets, v0.51
 
-Ziel: HA-URL und Long-Lived Access Token nicht mehr im Klartext in dconf
-(`ConfigurationValue`) ablegen, sondern über Sailfish Secrets verschlüsselt,
-an die Gerätesperre gebunden, mit der Sailjail-Berechtigung `Secrets`.
-Nutzerauftrag war ausdrücklich "auf dem Handy testen" -- das Ergebnis vorweg:
-**läuft auf der realen Jolla Phone**, Details und Belege unten.
+Goal: stop storing the HA URL and long-lived access token in plaintext in dconf
+(`ConfigurationValue`) and put them into Sailfish Secrets instead -- encrypted,
+tied to the device lock, with the Sailjail `Secrets` permission. The user's
+instruction was explicitly "test it on the phone" -- result first: **it runs on
+the real Jolla Phone**, details and evidence below.
 
-**Der erste, rein in QML gebaute Anlauf war nicht reparierbar** (v0.50-3 auf
-dem Gerät installiert, Journal-Mitschnitt per `devel-su journalctl -f`):
+**The first attempt, built purely in QML, turned out to be unfixable** (v0.50-3
+installed on the device, journal captured via `devel-su journalctl -f`):
 
 - `Credentials.qml:125: Error: Cannot assign QJSValue to
-  Sailfish::Secrets::Secret::Identifier` -- das JS-Objektliteral, das den
-  Identifier für `StoredSecretRequest` setzen sollte. Grund (in den Quellen
-  von `sailfish-secrets` nachgelesen, nicht geraten): `Secret::Identifier`
-  ist in `lib/Secrets/secret.h` eine einfache C++-Klasse ohne
-  `Q_OBJECT`/`Q_GADGET`, und `qml/Secrets/main.cpp` registriert sie
-  nirgends -- sie ist in QML damit weder konstruierbar noch zuweisbar. Der
-  Lese-Pfad ist über die QML-API also gar nicht bedienbar.
-- `Credentials.qml:64: Error: Cannot assign int to an unregistered type`
-  (bei jedem Speicherversuch) -- `StoreSecretRequest.secretStorageType` ist
-  ein Enum ohne `Q_ENUM`; auch die (im Dateikommentar als funktionierend
-  dokumentierte) imperative Zuweisung aus JS scheitert.
-- Gegenprobe: in
-  `~/.local/share/system/privileged/Secrets/.../secrets.db` kein Treffer für
-  `harbour-hacontrol`, WAL-Zeitstempel unverändert -- es wurde nichts
-  gespeichert. Die App war nach manueller Eingabe nur im RAM konfiguriert
-  (ein Neustart hätte die Werte verloren).
+  Sailfish::Secrets::Secret::Identifier` -- from the JS object literal meant to
+  set the identifier for `StoredSecretRequest`. The reason (read in the
+  `sailfish-secrets` sources, not guessed): `Secret::Identifier` is a plain C++
+  class in `lib/Secrets/secret.h` without `Q_OBJECT`/`Q_GADGET`, and
+  `qml/Secrets/main.cpp` never registers it -- so it is neither constructible
+  nor assignable from QML. The read path is therefore simply not usable through
+  the QML API.
+- `Credentials.qml:64: Error: Cannot assign int to an unregistered type` (on
+  every save attempt) -- `StoreSecretRequest.secretStorageType` is an enum
+  without `Q_ENUM`; even the imperative assignment from JS (documented as
+  working in the file's own comment) fails.
+- Cross-check: no match for `harbour-hacontrol` in
+  `~/.local/share/system/privileged/Secrets/.../secrets.db`, WAL timestamps
+  unchanged -- nothing had been stored. After manual entry the app was
+  configured in RAM only (a restart would have lost the values).
 
-**Umgesetzt: C++-Kapselung** (`src/credentials.{h,cpp}`, erstes natives
-Objekt in diesem Projekt -- das README warb bisher explizit mit "kein
-C++-Bridge-Objekt"):
+**Implemented: a C++ wrapper** (`src/credentials.{h,cpp}`, the first native
+object in this project -- the README had explicitly advertised "no C++ bridge
+object" until then):
 
-- Klasse `Credentials : QObject` mit `baseUrl`/`token`/`loaded`/`lastError`/
-  `saveBusy`/`lastSaveOk` als Properties und `save(url, token)`/`reload()`;
-  in `main()` als Context-Property `Credentials` gesetzt, dadurch bleiben
-  alle QML-Aufrufstellen unverändert (nur die `import "../lib"`-Zeilen
-  fielen weg). Das QML-Singleton `qml/lib/Credentials.qml` und `qmldir`
-  wurden gelöscht -- damit verschwand auch die Build-Warnung
-  `qmldeps: no valid module definition`.
-- Requests laufen asynchron (`statusChanged`), nie `waitForFinished()` im
-  UI-Thread. Speichern ist ein Upsert: erst `DeleteSecretRequest`, dann
-  `StoreSecretRequest` (`SecretAlreadyExistsError` sonst).
-- **Plugin-Wahl zur Laufzeit statt fest verdrahtet**: `PluginInfoRequest`
-  fragt beim Start beim Daemon, welche Plugins er kennt. Zwei auf dem Gerät
-  verifizierte Stolperfallen: (1) `StandaloneDeviceLockSecret` mit dem
-  *encrypted storage*-Plugin scheiterte -- `No such storage plugin exists:
-  org.sailfishos.secrets.plugin.encryptedstorage.sqlcipher`, obwohl die
-  `.so` installiert ist und der Daemon das Plugin in
-  `encryptedStoragePlugins` auch auflistet; er akzeptiert es nur nicht als
-  *Storage*-Plugin. (2) Ohne `encryptionPluginName` scheitert der Store mit
-  `No such encryption plugin exists: ` (leerer Name). Funktionierende
-  Kombination auf der Jolla Phone:
+- A `Credentials : QObject` class with `baseUrl`/`token`/`loaded`/`lastError`/
+  `saveBusy`/`lastSaveOk` as properties plus `save(url, token)`/`reload()`; set
+  as the context property `Credentials` in `main()`, which leaves every QML
+  call site unchanged (only the `import "../lib"` lines disappeared). The QML
+  singleton `qml/lib/Credentials.qml` and its `qmldir` were deleted -- which
+  also got rid of the build warning `qmldeps: no valid module definition`.
+- Requests run asynchronously (`statusChanged`), never `waitForFinished()` on
+  the UI thread. Saving is an upsert: first `DeleteSecretRequest`, then
+  `StoreSecretRequest` (otherwise `SecretAlreadyExistsError`).
+- **Plugin choice at runtime instead of hardcoded**: `PluginInfoRequest` asks
+  the daemon at startup which plugins it knows. Two traps verified on the
+  device: (1) `StandaloneDeviceLockSecret` with the *encrypted storage* plugin
+  failed -- `No such storage plugin exists:
+  org.sailfishos.secrets.plugin.encryptedstorage.sqlcipher`, even though the
+  `.so` is installed and the daemon does list the plugin under
+  `encryptedStoragePlugins`; it just does not accept it as a *storage* plugin.
+  (2) Without `encryptionPluginName` the store fails with `No such encryption
+  plugin exists: ` (empty name). The working combination on the Jolla Phone:
   `org.sailfishos.secrets.plugin.storage.sqlite` +
   `org.sailfishos.secrets.plugin.encryption.openssl`.
-- **Einmalige Migration** (`qml/harbour-hacontrol.qml`): vorhandene
-  Klartextwerte werden beim Start automatisch nach Secrets übernommen,
-  danach werden die dconf-Kopien geleert -- aber **erst nach bestätigtem
-  Store** (`saveBusy`/`lastSaveOk`). Erste Fassung löschte unbedingt und
-  hätte bei fehlgeschlagenem Store die Zugangsdaten vernichtet (ist beim
-  ersten Testlauf genau so passiert; die Werte wurden für den weiteren Test
-  per `dconf load` aus dem Backup wiederhergestellt).
-- SettingsPage schreibt bei Fokusverlust/Seitenwechsel statt bei jedem
-  Tastendruck, nur wenn beide Felder vollständig sind und sich geändert
-  haben, und zeigt `lastError` des Daemons an.
+- **One-time migration** (`qml/harbour-hacontrol.qml`): existing plaintext
+  values are copied into Secrets automatically at startup, after which the
+  dconf copies are cleared -- but **only after a confirmed store**
+  (`saveBusy`/`lastSaveOk`). The first version deleted unconditionally and
+  would have destroyed the credentials if the store failed (which is exactly
+  what happened on the first test run; the values were restored from the backup
+  with `dconf load` for the rest of the test).
+- SettingsPage writes on focus loss / page change rather than on every
+  keystroke, only when both fields are complete and have changed, and displays
+  the daemon's `lastError`.
 
-**Verifiziert auf der realen Jolla Phone (aarch64, 192.168.2.15)**:
+**Verified on the real Jolla Phone (aarch64, 192.168.2.15)**:
 
-- Store + Migration: Journal `Credentials: stored "baseUrl"` /
-  `"token"`, danach sind `baseUrl`/`token` in dconf leer.
-- Persistenz über einen App-Neustart: `Credentials: loaded -- baseUrl 17
-  chars, token 183 chars` (17 = `https://ha.zwx.ch`, 183 = Tokenlänge) --
-  ohne jede Neueingabe.
-- Echte Verbindung: der App-Prozess hat eine ESTABLISHED-TLS-Verbindung zu
-  `109.202.212.70:443`, das ist die aufgelöste `ha.zwx.ch` -- die aus Secrets
-  geladenen Werte werden also tatsächlich gegen die reale Instanz benutzt.
-- Keine QML-Fehler mehr im Journal (die beiden oben genannten sind weg).
-- **Harbour**: `sfdk check -s harbour` läuft sauber durch, nachdem
-  `Requires: libsailfishsecrets` entfernt wurde -- der Validator lehnt den
-  reinen Paketnamen ab ("Dependency not allowed"), während die von rpmbuild
-  automatisch erzeugte Soname-Abhängigkeit `libsailfishsecrets.so.0()(64bit)`
-  (steht in Harbours Allowed-APIs-Liste) akzeptiert wird. Nicht selbst als
-  Soname hinschreiben -- genau das hatte in v0.7 bei `libkeepalive` die
-  echte `pkcon`-Installation zerschossen. `-s rpmlint` weiterhin nur mit der
-  akzeptierten `explicit-lib-dependency libkeepalive`-Meldung.
+- Store + migration: journal shows `Credentials: stored "baseUrl"` / `"token"`,
+  after which `baseUrl`/`token` in dconf are empty.
+- Persistence across an app restart: `Credentials: loaded -- baseUrl 17 chars,
+  token 183 chars` -- without re-entering anything.
+- A real connection: the app process holds an ESTABLISHED TLS connection to the
+  resolved address of the configured host -- so the values loaded from Secrets
+  really are used against the real instance.
+- No more QML errors in the journal (the two above are gone).
+- **Harbour**: `sfdk check -s harbour` passes cleanly once `Requires:
+  libsailfishsecrets` was removed -- the validator rejects the plain package
+  name ("Dependency not allowed"), while the soname dependency rpmbuild
+  generates automatically, `libsailfishsecrets.so.0()(64bit)` (which is on
+  Harbour's allowed APIs list), is accepted. Do not write the soname by hand --
+  that is exactly what broke the real `pkcon` installation for `libkeepalive`
+  back in v0.7. `-s rpmlint` still only reports the accepted
+  `explicit-lib-dependency libkeepalive`.
 
-**Nachtrag, selbe Session -- Pull-down-Refresh + Geräte-Sensoren (0.51-2)**:
-Nutzerwunsch "refresh pull down soll refresh auf allen seiten machen" plus
-"teste noch mal ob home sensor daten von phone erhält".
+**Addendum, same session -- pull-down refresh + device sensors (0.51-2)**: user
+requests "pull-down refresh should refresh all pages" plus "test again whether
+home gets sensor data from the phone".
 
-- Die drei Sub-Views liegen gleichzeitig nebeneinander in einer Row und laden
-  ihre Daten selbst; ein Refresh nur der sichtbaren liess die anderen mit
-  veralteten Daten zurück. Jede View hat jetzt ein `refreshRequested()`-Signal,
-  `FirstPage.qml` bündelt das in `refreshAll()` und ruft alle drei `refresh()`
-  auf.
-- **Befund zu den Geräte-Sensoren**: In HA standen `sensor.sailfishos_phone_*_2`
-  seit Stunden still, obwohl die App lief -- der 10-Minuten-`BackgroundJob`
-  feuert nicht, solange die App im Vordergrund ist (nur über den BackgroundJob
-  wurden die Sensoren bisher gemeldet). Darum meldet die App den Geräte-Status
-  jetzt zusätzlich bei jedem App-Start (`onLoadedChanged`) und bei jedem
-  Pull-down-Refresh (`updateDeviceSensors()`), mit Journal-Log
+- The three sub-views sit side by side at the same time and load their own
+  data; refreshing only the visible one left the others with stale data. Each
+  view now has a `refreshRequested()` signal, `FirstPage.qml` bundles that in
+  `refreshAll()` and calls all three `refresh()` functions.
+- **Finding on the device sensors**: in HA, `sensor.sailfishos_phone_*_2` had
+  been stale for hours even though the app was running -- the ten-minute
+  `BackgroundJob` does not fire while the app is in the foreground (and up to
+  then the sensors were only reported from that job). So the app now also
+  reports device status on every app start (`onLoadedChanged`) and on every
+  pull-down refresh (`updateDeviceSensors()`), with a journal log line
   (`DeviceSensors: 3 Sensoren an HA gemeldet`).
-- **Wichtige HA-Eigenschaft, die die Diagnose erst verwirrte**: HAs
-  `mobile_app`-Ablauf schreibt einen Sensorwert nur, wenn er sich tatsächlich
-  ändert -- `last_updated` bleibt also stehen, auch wenn die App erfolgreich
-  meldet (`{"battery_level":{"success":true},...}`). Nachgewiesen per
-  Gegenprobe: der Token-Webhook wurde von aussen mit Akkustand `91` beschickt
-  (HA zeigte 91), danach der App-Neustart -- HA stand auf `90` mit frischem
-  `last_updated`, also dem echten Wert des Handys (`/sys/class/power_supply/
-  battery/capacity`). Die Zustellung Handy → HA ist damit belegt, nicht nur
-  behauptet.
-- Auf der Hardware geprüft: 0.51-2 installiert, Journal ohne QML-Fehler,
-  `Credentials: loaded -- baseUrl 17 chars, token 183 chars`, zweimal
-  `DeviceSensors: 3 Sensoren an HA gemeldet`. Der Pull-down selbst braucht
-  einen Tap aufs Gerät (Touchscreen kann ich nicht bedienen) -- noch vom
-  Nutzer zu bestätigen.
+- **An HA characteristic that confused the diagnosis at first**: HA's
+  `mobile_app` flow only writes a sensor value when it actually changes -- so
+  `last_updated` stays put even when the app reports successfully
+  (`{"battery_level":{"success":true},...}`). Demonstrated by a cross-check:
+  the token webhook was fed a battery level of `91` from outside (HA showed
+  91), then the app was restarted -- HA moved to `90` with a fresh
+  `last_updated`, i.e. the phone's real value
+  (`/sys/class/power_supply/battery/capacity`). Delivery phone → HA is
+  therefore demonstrated, not merely claimed.
+- Checked on hardware: 0.51-2 installed, journal free of QML errors,
+  `Credentials: loaded -- baseUrl 17 chars, token 183 chars`, twice
+  `DeviceSensors: 3 Sensoren an HA gemeldet`. The pull-down itself needs a tap
+  on the device (the touchscreen could not be operated at the time) -- still to
+  be confirmed by the user.
 
-**Noch offen**: Emulator-Test (i486) und `armv7hl`-Build/-Check für v0.51
-(bisher nur aarch64 gebaut und auf Hardware getestet); Bestätigung des
-Pull-down-Refresh durch einen Tap auf dem Gerät; der Zugangsdaten-Backup
-`~/sailhacontrol-credentials-backup.txt` kann nach der Migration gelöscht
-werden.
+**Still open**: emulator test (i486) and the `armv7hl` build/check for v0.51
+(only aarch64 was built and hardware-tested so far); confirmation of the
+pull-down refresh by a tap on the device; the credentials backup
+`~/sailhacontrol-credentials-backup.txt` can be deleted after the migration.
 
-## 23. Update 2026-09-18 (Teil 4): Cover nach UI-Guidelines nachgebessert, drei Bugs dabei gefunden, v0.52
+## 23. Update 2026-09-18 (part 4): cover reworked per the UI guidelines, three bugs found on the way, v0.52
 
-Ausgangspunkt war ein Abgleich der App gegen die offiziellen UI-Guidelines
-(`docs.sailfishos.org/Develop/Apps/UI/`). Das meiste war schon konform: jede
-Sub-View hat einen eigenen `PageHeader` und ein Pull-down-Menü mit nur zwei
-Einträgen (die Guideline empfiehlt unter fünf), der horizontale Seitenwechsel
-hat mit dem `HorizontalScrollDecorator` den Silica-eigenen Gesten-Hinweis, und
-die Detailseiten sind echte gestapelte `Page`s statt Dialoge.
+The starting point was a review of the app against the official UI guidelines
+(`docs.sailfishos.org/Develop/Apps/UI/`). Most of it was already compliant:
+every sub-view has its own `PageHeader` and a pull-down menu with only two
+entries (the guideline recommends fewer than five), the horizontal page change
+carries Silica's own gesture hint via `HorizontalScrollDecorator`, and the
+detail pages are real stacked `Page`s rather than dialogs.
 
-Die eine echte Lücke war `qml/cover/CoverPage.qml`: ein statisches
-"HA Control"-Label, obwohl Covers laut Guideline "key information" zeigen und
-"Cover Actions for quick tasks without opening apps" anbieten sollen.
+The one real gap was `qml/cover/CoverPage.qml`: a static "HA Control" label,
+even though covers are supposed to show "key information" and offer "cover
+actions for quick tasks without opening apps".
 
-**Umgesetzt:**
-- Der Cover zeigt jetzt die Anzahl eingeschalteter Lichter ("4 Lichter an" /
-  "Alle Lichter aus").
-- Eine `CoverAction` schaltet das zuletzt in der App bediente Licht um, ohne
-  die App zu öffnen. Icon ist `icon-cover-favorite` -- im Stock-Theme gibt es
-  kein Lampen-/Power-Icon (per `sfdk tools exec` in der Icon-Liste des
-  Build-Targets geprüft, nicht geraten).
-- Beides wird von `RoomsView.qml` über drei `ConfigurationValue`s nachgeführt
-  (`coverLightsOnCount`, `coverLastLightId`, `coverLastLightName`), gleiches
-  Muster wie `webhookIdSetting`. So braucht der Cover keine eigene HA-Abfrage,
-  während die App im Hintergrund ist.
+**Implemented:**
+- The cover now shows how many lights are on ("4 Lichter an" / "Alle Lichter
+  aus").
+- A `CoverAction` toggles the light last operated from the app, without opening
+  it. The icon is `icon-cover-favorite` -- the stock theme has no bulb/power
+  icon (checked in the build target's icon list via `sfdk tools exec`, not
+  guessed).
+- Both are kept up to date by `RoomsView.qml` through three
+  `ConfigurationValue`s (`coverLightsOnCount`, `coverLastLightId`,
+  `coverLastLightName`), the same pattern as `webhookIdSetting`. That way the
+  cover needs no HA query of its own while the app is in the background.
 
-**Bug 1 -- Listen blieben bis zum manuellen Pull-down leer.** Fiel beim Testen
-auf und war schon länger da, nur als Gewohnheit abgetan ("man muss halt immer
-einmal refreshen"). Ursache: `Component.onCompleted: refresh()` feuert in allen
-drei Sub-Views, bevor der asynchrone Sailfish-Secrets-Request von `Credentials`
-fertig ist -- `baseUrl`/`token` sind dann noch leer, der Versuch läuft ins Leere
-(SensorsView/UpdatesView zeigten sogar sichtbar "Noch nicht konfiguriert"), und
-nichts holte ihn danach nach. Fix: RoomsView reagiert zusätzlich auf
-`onConfiguredChanged`, SensorsView/UpdatesView auf `Credentials`'
+**Bug 1 -- lists stayed empty until a manual pull-down.** Noticed during
+testing; it had been there for a while but was dismissed as habit ("you just
+always have to refresh once"). Cause: `Component.onCompleted: refresh()` fires
+in all three sub-views before `Credentials`' asynchronous Sailfish Secrets
+request has finished -- `baseUrl`/`token` are still empty then, the attempt
+comes to nothing (SensorsView/UpdatesView even visibly showed "not configured
+yet"), and nothing retried afterwards. Fix: RoomsView additionally reacts to
+`onConfiguredChanged`, SensorsView/UpdatesView to `Credentials`'
 `onBaseUrlChanged`/`onTokenChanged`.
 
-**Bug 2 -- ANR beim Refresh (selbst eingebaut).** Die erste Fassung der
-Lichter-Zählung machte einen vollen Scan über `entriesModel` -- einmal pro
-Refresh und zusätzlich bei **jedem einzelnen** `light`-`state_changed`-Event
-über den WebSocket. Bei der echten Instanz (~1500 Entities, 700+ Zeilen im
-Model) und einem Handy unter hoher Last (Android App Support mit mehreren
-residenten Apps, `loadavg` > 15) blockierte das den `QSGRenderThread`
-dauerhaft: die App lief in ein echtes ANR ("HA Control reagiert nicht"), kein
-Absturz. Nachgewiesen per `/proc/<pid>/task/<tid>/stat`-Sampling -- der
-Render-Thread sammelte durchgehend ~8-10 CPU-Ticks pro Sekunde, statt in den
-Leerlauf zurückzufallen. Fix: die Zählung läuft in `buildEntries()` im selben
-Durchlauf mit, der ohnehin über das rohe `states`-Array iteriert, und bei
-Live-Updates wird nur noch inkrementell (+1/-1) nachgeführt.
+**Bug 2 -- ANR on refresh (self-inflicted).** The first version of the
+lights-on count did a full scan over `entriesModel` -- once per refresh and
+additionally on **every single** `light` `state_changed` event over the
+WebSocket. On the real instance (~1500 entities, 700+ rows in the model) and a
+phone under heavy load (Android App Support with several resident apps,
+`loadavg` > 15) that blocked the `QSGRenderThread` permanently: the app ran
+into a genuine ANR ("HA Control reagiert nicht"), not a crash. Demonstrated by
+sampling `/proc/<pid>/task/<tid>/stat` -- the render thread accumulated ~8-10
+CPU ticks per second continuously instead of dropping back to idle. Fix: the
+count is now computed in `buildEntries()` during the pass that already iterates
+the raw `states` array, and live updates only adjust it incrementally (+1/-1).
 
-**Bug 3 -- Seitenwechsel zu empfindlich, und der erste Fix war schlimmer.**
-Ein etwas kräftigerer Flick liess die `SilicaFlickable` frei weitergleiten;
-die Snap-Logik rastete dann auf der nächstgelegenen Seite ein und übersprang
-eine (Räume -> direkt Updates). Das Snap-Ziel wird jetzt auf +/-1 Seite
-gegenüber der Startseite der Geste begrenzt. Der erste Versuch merkte sich die
-Startseite in `onMovementStarted` -- das feuert aber auch bei der
-**programmatischen** Snap-Animation, wodurch die Startseite mitten in der
-Animation neu gesetzt wurde, das geclampte Ziel sich verschob, die nächste
-Animation startete, und so weiter: Endlosschleife, Render-Thread dauerhaft
-belegt, ANR rund eine Sekunde nach dem Start, noch vor dem Datenladen. Merkregel
-für künftige Flickables: Snap-Logik gehört an `onDragStarted` plus ein
-`userGesture`-Flag, nie an die Movement-Signale allein.
+**Bug 3 -- page changes too twitchy, and the first fix was worse.** A slightly
+firmer flick let the `SilicaFlickable` coast freely; the snap logic then landed
+on whatever page was nearest and skipped one (Rooms -> straight to Updates).
+The snap target is now clamped to +/-1 page relative to where the gesture
+started. The first attempt recorded the start page in `onMovementStarted` --
+but that also fires for the **programmatic** snap animation, so the start page
+was re-recorded mid-animation, the clamped target shifted, the next animation
+started, and so on: an endless loop, the render thread permanently busy, an ANR
+about a second after startup and before any data had loaded. Rule of thumb for
+future flickables: snap logic belongs on `onDragStarted` plus a `userGesture`
+flag, never on the movement signals alone.
 
-**Neu dazugelernt: UI-Tests auf dem echten Gerät sind möglich.** Bisher galt
-"über SSH kein Display-Zugriff, visuelle Prüfung nur im Emulator". Tatsächlich
-lassen sich Touch-Events direkt in den Touchscreen einspeisen: `hyn_ts` ist
-`/dev/input/event5`, seine ABS-Range deckt sich 1:1 mit der Display-Auflösung
-(1032x2272), `evemu`-Tools fehlen zwar, aber `python3` ist da und kann rohe
-`struct input_event`s schreiben (Type-B-Multitouch: `ABS_MT_SLOT`,
-`ABS_MT_TRACKING_ID`, `ABS_MT_POSITION_X/Y`, `BTN_TOUCH`, `SYN_REPORT`; das
-Loslassen unbedingt in ein `finally` legen, sonst bleibt der Touchscreen für
-den echten Finger blockiert). Damit wurde v0.52 auf der Hardware geprüft statt
-nur im Emulator: alle drei Seiten laden beim Start von selbst (Räume,
-Sensor-Übersicht, Update-Übersicht je mit echten Daten), ein kräftiger Flick
-bewegt genau eine Seite, der Render-Thread bleibt im Leerlauf (1 CPU-Tick über
-3 Sekunden), und der Cover zeigt live "4 Lichter an".
+**Newly learned: UI tests on the real device are possible.** The assumption so
+far was "SSH only, no display access, visual checks in the emulator only". In
+fact touch events can be injected straight into the touchscreen: `hyn_ts` is
+`/dev/input/event5`, its ABS range matches the display resolution 1:1
+(1032x2272); the `evemu` tools are missing, but `python3` is there and can
+write raw `struct input_event`s (type-B multitouch: `ABS_MT_SLOT`,
+`ABS_MT_TRACKING_ID`, `ABS_MT_POSITION_X/Y`, `BTN_TOUCH`, `SYN_REPORT`; always
+put the release in a `finally`, otherwise the touchscreen stays blocked for the
+real finger). That is how v0.52 was checked on hardware rather than only in the
+emulator: all three pages load their data on startup by themselves (rooms,
+sensor overview, updates overview, each with real data), a firm flick moves
+exactly one page, the render thread stays idle (1 CPU tick over 3 seconds), and
+the cover shows "4 Lichter an" live.
 
-**Noch offen**: Der Cover-Stern erscheint erst, nachdem einmal ein Lichtschalter
-in der App selbst angetippt wurde -- `coverLastLightId` ist bis dahin leer. Das
-ist so gewollt ("zuletzt bedientes Licht"), war beim ersten Test aber
-verwirrend.
+**Still open**: the cover's star only appears once a light switch has been
+tapped in the app itself -- `coverLastLightId` is empty until then. That is by
+design ("last light operated"), but it was confusing on the first test.
 
-## 24. Update 2026-09-19: Definition-of-Done-Abgleich -- leere Zustände und Remorse, v0.53
+## 24. Update 2026-09-19: Definition-of-Done review -- empty states and remorse, v0.53
 
-Der UI-Guide selbst gibt für Detailfragen wenig her; der eigentliche Massstab
-ist seine Unterseite **`docs.sailfishos.org/Develop/Apps/UI/Definition_of_Done/`**
--- eine Checkliste über Pixel-Genauigkeit, Performance, Theme-Ableitung,
-Übersetzungs-Hooks und zwei Punkte, die hier konkret offen waren: "no empty
-views, placeholder data, or temporary development elements remain visible" und
+The UI guide itself gives little away on detail questions; the real yardstick
+is its sub-page **`docs.sailfishos.org/Develop/Apps/UI/Definition_of_Done/`** --
+a checklist covering pixel accuracy, performance, deriving from the theme,
+translation hooks, and two points that were concretely open here: "no empty
+views, placeholder data, or temporary development elements remain visible" and
 "users have clear recovery options for error scenarios".
 
-**Leere Zustände (`ViewPlaceholder`).** Inhaltlich waren sie abgedeckt ("Alle
-Geräte sind aktuell.", "Noch nicht konfiguriert -- ..."), aber als schlichte
-linksbündige `Label` im Listenkopf statt über Silicas `ViewPlaceholder`. Jede
-der drei Sub-Views hat jetzt drei Platzhalter -- nicht konfiguriert, keine
-Verbindung, leeres Ergebnis -- zentriert im oberen Drittel, und ihr `hintText`
-nennt den Ausweg (Settings bzw. nach unten ziehen), was zugleich den
-Recovery-Punkt der Checkliste abdeckt.
+**Empty states (`ViewPlaceholder`).** The content was covered ("Alle Geräte
+sind aktuell.", "Noch nicht konfiguriert -- ...") but rendered as plain
+left-aligned `Label`s in the list header instead of Silica's `ViewPlaceholder`.
+Each of the three sub-views now has three placeholders -- not configured, no
+connection, empty result -- centred in the upper third, and their `hintText`
+names the way out (Settings, or pull down to refresh), which also covers the
+checklist's recovery point.
 
-**Dabei einen Übersetzungs-Fallstrick entschärft.** `SensorsView` und
-`UpdatesView` unterschieden "noch nicht konfiguriert" von einem echten Fehler,
-indem sie `errorText` gegen den übersetzten Meldungstext verglichen
-(`errorText.indexOf(qsTr("Noch nicht konfiguriert")) === 0`, nur um die
-Textfarbe zu wählen). Das hätte beim ersten echten Übersetzen still aufgehört
-zu funktionieren. Beide tragen jetzt dieselbe `configured`-Property wie
-`RoomsView`, `errorText` ist echten Fehlern vorbehalten, und der Start-Refresh
-hängt wie dort an `onConfiguredChanged`.
+**A translation trap defused along the way.** `SensorsView` and `UpdatesView`
+distinguished "not configured yet" from a real error by comparing `errorText`
+against the translated message text (`errorText.indexOf(qsTr("Noch nicht
+konfiguriert")) === 0`, purely to pick the text colour). That would have
+silently stopped working the first time the UI was actually translated. Both
+now carry the same `configured` property as `RoomsView`, `errorText` is
+reserved for real errors, and the startup refresh hangs off
+`onConfiguredChanged` as it does there.
 
-**Remorse vor dem Firmware-Update.** Ein Tap auf eine Zeile der
-Update-Übersicht rief `update.install` sofort auf. Auf echter Hardware ist das
-nicht rücknehmbar -- beim Testen mit injizierten Touch-Events war genau das die
-gefährlichste Stelle auf dem Bildschirm. Die Zeile nutzt jetzt
-`ListItem.remorseAction()`: fünf Sekunden Frist, in denen ein Tap den Auftrag
-zurücknimmt. Wichtiger als der Remorse selbst ist dabei, **was** man sich
-merkt: nicht den Zeilenindex, sondern die `entityId`. In den fünf Sekunden kann
-ein Refresh (Pull-down, `progressPollTimer`, WebSocket-Update) das Modell neu
-aufbauen; ein gemerkter Index hätte das Firmware-Update danach womöglich an ein
-ganz anderes Gerät geschickt.
+**Remorse before a firmware update.** Tapping a row in the updates overview
+called `update.install` immediately. On real hardware that cannot be taken back
+-- while testing with injected touch events it was the single most dangerous
+spot on the screen. The row now uses `ListItem.remorseAction()`: a five-second
+window in which a tap cancels the request. More important than the remorse
+itself is **what** gets remembered: not the row index but the `entityId`.
+During those five seconds a refresh (pull-down, `progressPollTimer`, WebSocket
+update) can rebuild the model, and a stale index might afterwards have sent the
+firmware update to an entirely different device.
 
-**Was beim Verifizieren auffiel und noch offen ist**: Ist Home Assistant nicht
-erreichbar, dreht der `BusyIndicator` endlos weiter -- `errorText` bleibt leer,
-weil die `XMLHttpRequest`s in `HaApi.js` kein Timeout haben und weder
-Erfolgs- noch Fehler-Callback je feuert. Der neue "Keine Verbindung"-Platzhalter
-greift deshalb genau dann nicht, wenn man ihn bräuchte. Ein Request-Timeout ist
-der nächste sinnvolle Schritt; erst damit wird der Platzhalter wirksam.
+**What came up while verifying, and is still open**: if Home Assistant is
+unreachable, the `BusyIndicator` keeps spinning forever -- `errorText` stays
+empty because the `XMLHttpRequest`s in `HaApi.js` have no timeout and neither
+the success nor the error callback ever fires. So the new "no connection"
+placeholder does not appear in exactly the situation it was written for. A
+request timeout is the next sensible step; only then does the placeholder
+become effective.
 
-Bewusst **nicht** angegangen (Entscheidung des Nutzers): die UI mischt weiterhin
-deutsche und englische Beschriftungen ("Settings"/"Refresh"/"Live" neben
-"Räume"/"Sensor-Übersicht"), und die `.ts`-Dateien bleiben ohne Übersetzungen.
+Deliberately **not** addressed (the user's decision): the UI still mixes German
+and English labels ("Settings"/"Refresh"/"Live" next to "Räume"/
+"Sensor-Übersicht"), and the `.ts` files stay without translations.
