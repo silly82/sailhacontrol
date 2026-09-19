@@ -1,8 +1,8 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS
-Version:    0.52
-Release:    3
+Version:    0.53
+Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
 Source0:    %{name}-%{version}.tar.bz2
@@ -76,6 +76,27 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Sat Sep 19 2026 silly82 <siliwalker@gmail.com> - 0.53-1
+- Leere Zustände nutzen jetzt Silicas ViewPlaceholder statt eigener Labels
+  im Listenkopf: zentriert, plattformtypisch, und der Hinweistext nennt den
+  Ausweg (Settings bzw. nach unten ziehen). Je einer für "noch nicht
+  konfiguriert", "keine Verbindung" und das leere Ergebnis, auf allen drei
+  Seiten. Folgt der offiziellen "Definition of Done"-Checkliste des
+  Sailfish-UI-Guides ("no empty views remain visible").
+- "Installieren" in der Update-Übersicht fragt jetzt nach: Silicas
+  Remorse-Frist gibt fünf Sekunden zum Abbrechen, bevor update.install
+  rausgeht. Ein Firmware-Update auf echter Hardware lässt sich nicht
+  zurücknehmen, ein Fehltipp war bisher sofort wirksam. Gemerkt wird dabei
+  die entityId, nicht der Zeilenindex -- in den fünf Sekunden kann ein
+  Refresh die Liste neu aufbauen, und ein veralteter Index hätte das Update
+  an ein anderes Gerät geschickt.
+- SensorsView/UpdatesView unterschieden "noch nicht konfiguriert" von echten
+  Fehlern per Vergleich auf den übersetzten Meldungstext -- das wäre beim
+  ersten echten Übersetzen gebrochen. Beide haben jetzt dieselbe
+  configured-Property wie RoomsView, errorText bleibt echten Fehlern
+  vorbehalten.
+- Paketbeschreibung: der Zusatz "(Prototyp)" ist raus.
+
 * Fri Sep 18 2026 silly82 <siliwalker@gmail.com> - 0.52-3
 - Seitenwechsel per Wischgeste war zu empfindlich: ein etwas kräftigerer
   Flick liess die Flickable frei weitergleiten, und die Snap-Logik rastete

@@ -1093,3 +1093,51 @@ bewegt genau eine Seite, der Render-Thread bleibt im Leerlauf (1 CPU-Tick über
 in der App selbst angetippt wurde -- `coverLastLightId` ist bis dahin leer. Das
 ist so gewollt ("zuletzt bedientes Licht"), war beim ersten Test aber
 verwirrend.
+
+## 24. Update 2026-09-19: Definition-of-Done-Abgleich -- leere Zustände und Remorse, v0.53
+
+Der UI-Guide selbst gibt für Detailfragen wenig her; der eigentliche Massstab
+ist seine Unterseite **`docs.sailfishos.org/Develop/Apps/UI/Definition_of_Done/`**
+-- eine Checkliste über Pixel-Genauigkeit, Performance, Theme-Ableitung,
+Übersetzungs-Hooks und zwei Punkte, die hier konkret offen waren: "no empty
+views, placeholder data, or temporary development elements remain visible" und
+"users have clear recovery options for error scenarios".
+
+**Leere Zustände (`ViewPlaceholder`).** Inhaltlich waren sie abgedeckt ("Alle
+Geräte sind aktuell.", "Noch nicht konfiguriert -- ..."), aber als schlichte
+linksbündige `Label` im Listenkopf statt über Silicas `ViewPlaceholder`. Jede
+der drei Sub-Views hat jetzt drei Platzhalter -- nicht konfiguriert, keine
+Verbindung, leeres Ergebnis -- zentriert im oberen Drittel, und ihr `hintText`
+nennt den Ausweg (Settings bzw. nach unten ziehen), was zugleich den
+Recovery-Punkt der Checkliste abdeckt.
+
+**Dabei einen Übersetzungs-Fallstrick entschärft.** `SensorsView` und
+`UpdatesView` unterschieden "noch nicht konfiguriert" von einem echten Fehler,
+indem sie `errorText` gegen den übersetzten Meldungstext verglichen
+(`errorText.indexOf(qsTr("Noch nicht konfiguriert")) === 0`, nur um die
+Textfarbe zu wählen). Das hätte beim ersten echten Übersetzen still aufgehört
+zu funktionieren. Beide tragen jetzt dieselbe `configured`-Property wie
+`RoomsView`, `errorText` ist echten Fehlern vorbehalten, und der Start-Refresh
+hängt wie dort an `onConfiguredChanged`.
+
+**Remorse vor dem Firmware-Update.** Ein Tap auf eine Zeile der
+Update-Übersicht rief `update.install` sofort auf. Auf echter Hardware ist das
+nicht rücknehmbar -- beim Testen mit injizierten Touch-Events war genau das die
+gefährlichste Stelle auf dem Bildschirm. Die Zeile nutzt jetzt
+`ListItem.remorseAction()`: fünf Sekunden Frist, in denen ein Tap den Auftrag
+zurücknimmt. Wichtiger als der Remorse selbst ist dabei, **was** man sich
+merkt: nicht den Zeilenindex, sondern die `entityId`. In den fünf Sekunden kann
+ein Refresh (Pull-down, `progressPollTimer`, WebSocket-Update) das Modell neu
+aufbauen; ein gemerkter Index hätte das Firmware-Update danach womöglich an ein
+ganz anderes Gerät geschickt.
+
+**Was beim Verifizieren auffiel und noch offen ist**: Ist Home Assistant nicht
+erreichbar, dreht der `BusyIndicator` endlos weiter -- `errorText` bleibt leer,
+weil die `XMLHttpRequest`s in `HaApi.js` kein Timeout haben und weder
+Erfolgs- noch Fehler-Callback je feuert. Der neue "Keine Verbindung"-Platzhalter
+greift deshalb genau dann nicht, wenn man ihn bräuchte. Ein Request-Timeout ist
+der nächste sinnvolle Schritt; erst damit wird der Platzhalter wirksam.
+
+Bewusst **nicht** angegangen (Entscheidung des Nutzers): die UI mischt weiterhin
+deutsche und englische Beschriftungen ("Settings"/"Refresh"/"Live" neben
+"Räume"/"Sensor-Übersicht"), und die `.ts`-Dateien bleiben ohne Übersetzungen.
