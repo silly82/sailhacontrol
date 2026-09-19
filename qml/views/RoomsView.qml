@@ -51,6 +51,11 @@ Item {
         defaultValue: ""
     }
 
+    // Von FirstPage.qml gesetzt: true, sobald diese Seite vorne ist. Geladen
+    // wird erst dann -- s. loadIfNeeded().
+    property bool viewActive: false
+    property bool loadedOnce: false
+
     property bool configured: Credentials.baseUrl.length > 0 && Credentials.token.length > 0
     property string errorText: ""
     // true once HA has confirmed our WS auth + subscribe_events -- drives
@@ -578,14 +583,32 @@ Item {
         }
     }
 
-    Component.onCompleted: refresh()
-    // Component.onCompleted feuert oft, bevor Credentials' asynchroner
-    // Sailfish-Secrets-Request fertig ist (baseUrl/token dann noch leer,
-    // s. Credentials-Log beim Start) -- der obige refresh() lief dann ins
-    // Leere und nichts hat ihn danach automatisch nachgeholt, bis man
-    // manuell pull-to-refresh gemacht hat. configured wird reaktiv wahr,
-    // sobald die echten Werte eintreffen -- dann einmalig nachholen.
-    onConfiguredChanged: if (configured) refresh()
+    // Lädt beim ersten Sichtbarwerden, sobald Zugangsdaten da sind. Beides
+    // kann in beliebiger Reihenfolge eintreten: `configured` wird erst wahr,
+    // wenn Credentials' asynchroner Sailfish-Secrets-Request durch ist (oft
+    // nach dem Erzeugen dieser View), und `viewActive` erst, wenn der Nutzer
+    // hierher wischt. Darum hängt das Laden an beiden Signalen statt an
+    // Component.onCompleted, das früher regelmässig zu früh feuerte.
+    function loadIfNeeded() {
+        if (viewActive && configured && !loadedOnce) {
+            loadedOnce = true
+            refresh()
+        }
+    }
+
+    // Für den Pull-down-Refresh aus FirstPage: Seiten, die noch nie geladen
+    // haben, bleiben ungeladen (sie holen sich ihre Daten beim Hinwischen).
+    function refreshIfLoaded() {
+        if (loadedOnce) {
+            refresh()
+        } else {
+            loadIfNeeded()
+        }
+    }
+
+    Component.onCompleted: loadIfNeeded()
+    onViewActiveChanged: loadIfNeeded()
+    onConfiguredChanged: loadIfNeeded()
 
     SilicaListView {
         id: listView

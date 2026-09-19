@@ -18,10 +18,14 @@ Item {
     // sichtbaren würde die anderen mit alten Daten stehen lassen.
     signal refreshRequested()
 
+    // Von FirstPage.qml gesetzt: true, sobald diese Seite vorne ist.
+    property bool viewActive: false
+    property bool loadedOnce: false
+
+    property bool configured: Credentials.baseUrl.length > 0 && Credentials.token.length > 0
     // errorText steht nur noch für echte Fehler. "Noch nicht konfiguriert"
     // lief früher auch darüber und wurde per Textvergleich wieder
     // herausgefiltert -- das wäre spätestens beim Übersetzen gebrochen.
-    property bool configured: Credentials.baseUrl.length > 0 && Credentials.token.length > 0
     property string errorText: ""
 
     ListModel {
@@ -138,12 +142,26 @@ Item {
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
     }
 
-    Component.onCompleted: refresh()
-    // Component.onCompleted feuert oft, bevor Credentials' asynchroner
-    // Secrets-Request fertig ist -- nichts holt den obigen refresh() dann
-    // automatisch nach, bis man manuell pull-to-refresh gemacht hat
-    // (s. RoomsView.qml).
-    onConfiguredChanged: if (configured) refresh()
+    // Lädt erst beim ersten Sichtbarwerden und erst mit Zugangsdaten --
+    // Begründung s. RoomsView.qml.
+    function loadIfNeeded() {
+        if (viewActive && configured && !loadedOnce) {
+            loadedOnce = true
+            refresh()
+        }
+    }
+
+    function refreshIfLoaded() {
+        if (loadedOnce) {
+            refresh()
+        } else {
+            loadIfNeeded()
+        }
+    }
+
+    Component.onCompleted: loadIfNeeded()
+    onViewActiveChanged: loadIfNeeded()
+    onConfiguredChanged: loadIfNeeded()
 
     SilicaListView {
         id: listView

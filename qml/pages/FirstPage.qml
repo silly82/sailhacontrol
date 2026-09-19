@@ -10,21 +10,34 @@ Page {
 
     allowedOrientations: Orientation.All
 
-    // Alle drei Sub-Views liegen gleichzeitig nebeneinander in der Row, jede
-    // lädt ihre Daten selbst -- ein "Refresh" im Pull-down-Menü nur der gerade
-    // sichtbaren Seite liesse die beiden anderen mit veralteten Daten zurück.
-    // Darum bittet jede Sub-View hier um einen Refresh, und der geht an alle.
-    // Zusätzlich wird die App-Ebene gebeten, den Geräte-Status an HA zu melden
-    // (der 10-Minuten-BackgroundJob feuert nicht, solange die App im
-    // Vordergrund ist -- so gibt es wenigstens einen manuellen Weg).
+    // Ein "Refresh" im Pull-down-Menü nur der gerade sichtbaren Seite liesse
+    // die anderen mit veralteten Daten zurück -- darum bittet jede Sub-View
+    // hier um einen Refresh, und der geht an alle, die ihre Daten schon
+    // einmal geladen haben. Zusätzlich wird die App-Ebene gebeten, den
+    // Geräte-Status an HA zu melden (der 10-Minuten-BackgroundJob feuert
+    // nicht, solange die App im Vordergrund ist -- so gibt es wenigstens
+    // einen manuellen Weg).
     signal deviceStatusRefreshRequested()
 
     function refreshAll() {
-        roomsView.refresh()
-        sensorsView.refresh()
-        updatesView.refresh()
+        roomsView.refreshIfLoaded()
+        sensorsView.refreshIfLoaded()
+        updatesView.refreshIfLoaded()
         deviceStatusRefreshRequested()
     }
+
+    // Welche Seite gerade vorne ist. Jede Sub-View lädt ihre Daten erst,
+    // wenn sie das erste Mal sichtbar wird: beim Start alle drei gleichzeitig
+    // zu laden hiess dreimal parallel die komplette Entity-Liste holen, parsen
+    // und ein Model aufbauen (bei der realen Instanz ~1500 Entities) -- auf
+    // einem Gerät unter Last war das der Grund, warum der Start zäh war.
+    //
+    // Wird bewusst erst beim Einrasten gesetzt, nicht laufend aus contentX
+    // abgeleitet: ein kräftiger Flick gleitet kurz über die Zielseite hinaus,
+    // bevor der Snap zurückholt -- daran hing die übernächste Seite ihr
+    // Laden auf und holte die Entity-Liste unnötig ein zweites Mal
+    // (gemessen: ein Wisch auf die Sensor-Seite lud auch die Update-Seite).
+    property int currentPage: 0
 
     SilicaFlickable {
         id: swipeContainer
@@ -42,18 +55,21 @@ Page {
                 id: roomsView
                 width: page.width
                 height: swipeContainer.height
+                viewActive: page.currentPage === 0
                 onRefreshRequested: page.refreshAll()
             }
             SensorsView {
                 id: sensorsView
                 width: page.width
                 height: swipeContainer.height
+                viewActive: page.currentPage === 1
                 onRefreshRequested: page.refreshAll()
             }
             UpdatesView {
                 id: updatesView
                 width: page.width
                 height: swipeContainer.height
+                viewActive: page.currentPage === 2
                 onRefreshRequested: page.refreshAll()
             }
         }
@@ -96,6 +112,7 @@ Page {
             var targetPage = pageIndexAt(contentX)
             targetPage = Math.max(dragStartPage - 1, Math.min(dragStartPage + 1, targetPage))
             targetPage = Math.max(0, Math.min(targetPage, lastPage))
+            page.currentPage = targetPage
             var target = targetPage * page.width
             if (Math.round(contentX) !== target) {
                 snapAnimation.to = target

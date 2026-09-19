@@ -1072,3 +1072,67 @@ become effective.
 Deliberately **not** addressed (the user's decision): the UI still mixes German
 and English labels ("Settings"/"Refresh"/"Live" next to "Räume"/
 "Sensor-Übersicht"), and the `.ts` files stay without translations.
+
+## 25. Update 2026-09-19 (part 2): request timeouts and lazy per-page loading, v0.54
+
+The user reported "the version on the phone hangs on startup again". Two
+distinct things turned out to look identical from the outside, and only one of
+them was a code problem.
+
+**The red herring: an orphaned firejail wrapper.** Killing the app binary
+leaves its `firejail` parent behind, and Lipstick keeps that dead instance's
+"not responding" dialog on screen -- covering the freshly started, perfectly
+healthy instance. This happened repeatedly during this session's test cycles
+and looked exactly like a new regression each time. The reliable way to tell
+them apart is to sample `/proc/<pid>/task/<tid>/stat` for the *new* process: a
+real hang keeps `QSGRenderThread` accumulating CPU ticks non-stop, whereas a
+merely covered instance shows both the main and render threads idle with their
+counters frozen. The cure is to kill the orphaned wrapper by its exact PID as
+well; never by a generic name like `firejail`, which would take down every
+sandboxed app on the device.
+
+**The real defect: requests with no time limit.** When Home Assistant is
+unreachable, QML's `XMLHttpRequest` fires neither the success nor the error
+callback until the system TCP timeout eventually gives up minutes later. The
+BusyIndicator then span forever, the app looked frozen -- and the "no
+connection" placeholder added in v0.53 never appeared, because `errorText`
+stayed empty. Whether Qt's QML XHR supports `timeout`/`ontimeout` could not be
+established: `strings` on `libQt5Qml.so.5` does not surface even `responseText`,
+and `qmlscene` in the emulator aborts under both `-platform minimal` and
+`offscreen`. Rather than guess, the limit is a plain QML `Timer` (15s) per
+view, restarted on every load attempt and stopped by every callback --
+independent of whatever the XHR implementation does. A late response still
+overwrites the error state, so it heals itself.
+
+A WebSocket (re)connect now also triggers a reload, because the socket only
+carries deltas, not structure -- without it the view kept showing "no
+connection" long after HA was reachable again. That reload is debounced by one
+second: after an outage several pending reconnects come through at once, and
+ungated this ran `refreshAll()` three times in the same second (measured),
+i.e. three `getStates` over ~1500 entities -- precisely the kind of load spike
+that caused the earlier ANR.
+
+**Startup made much lighter.** All three sub-views used to load at startup,
+each fetching the complete entity list, parsing it and building its own model
+-- three times ~1500 entities in parallel on the real instance. On a phone
+already under load (Android App Support, `loadavg` around 14) that was the
+actual reason startup crawled. Each view now loads the first time it becomes
+the current page; pull-down refresh still refreshes every page that has
+actually been opened. Measured with a temporary log line per load: startup
+triggers one load instead of three, the first swipe adds the sensor page, the
+second the updates page -- each exactly once.
+
+One subtlety showed up while verifying this: deriving "which page is current"
+continuously from `contentX` made a firm flick briefly overshoot the target
+page, so the page *after* the one being swiped to started loading as well
+(measured: one swipe to sensors also loaded updates). The current page is
+therefore set when the snap target is decided, not while the view is still
+moving.
+
+**Test method worth keeping**: the unreachable-HA case was reproduced in the
+emulator with `sudo iptables -I OUTPUT -d <HA-IP> -j DROP` (the target address
+read out of `/proc/<pid>/net/tcp` of the app process, hex little-endian), always
+paired with a `nohup sh -c 'sleep 150; iptables -D ...' &` safety net so a
+forgotten rule cannot linger. The placeholder appears after 15s instead of a
+spinning indicator, and the room list returns by itself once the rule is
+dropped.

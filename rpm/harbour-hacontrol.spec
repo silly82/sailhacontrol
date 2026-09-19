@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS
-Version:    0.53
+Version:    0.54
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -76,6 +76,25 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Sat Sep 19 2026 silly82 <siliwalker@gmail.com> - 0.54-1
+- Der Start ist deutlich leichtgewichtiger: bisher holten alle drei Seiten
+  beim Start gleichzeitig die komplette Entity-Liste, parsten sie und bauten
+  je ein Model auf -- bei der realen Instanz dreimal ~1500 Entities parallel.
+  Auf einem Gerät unter Last war das der Grund, warum der Start zäh war (bis
+  hin zu "reagiert nicht"). Jetzt lädt nur die sichtbare Seite; die anderen
+  holen ihre Daten beim ersten Hinwischen. Pull-down-Refresh aktualisiert
+  weiterhin alle Seiten, die man tatsächlich schon geöffnet hat.
+- Hängende Anfragen laufen nicht mehr endlos: ist Home Assistant nicht
+  erreichbar, feuert QMLs XMLHttpRequest weder Erfolgs- noch Fehler-Callback
+  (bis das System-TCP-Timeout nach Minuten aufgibt) -- der Ladekreis drehte
+  ewig weiter und der "Keine Verbindung"-Platzhalter erschien nie. Jede Seite
+  bricht den Versuch jetzt nach 15 Sekunden ab; trifft die Antwort später
+  doch ein, füllt sie sich von selbst.
+- Nach einem WebSocket-Reconnect lädt die App automatisch nach. Vorher blieb
+  "Keine Verbindung" stehen, obwohl die Live-Verbindung längst wieder lief
+  (der Socket liefert nur Zustandsänderungen, nicht die Struktur). Entprellt,
+  damit mehrere gleichzeitig durchkommende Reconnects nicht mehrfach laden.
+
 * Sat Sep 19 2026 silly82 <siliwalker@gmail.com> - 0.53-1
 - Leere Zustände nutzen jetzt Silicas ViewPlaceholder statt eigener Labels
   im Listenkopf: zentriert, plattformtypisch, und der Hinweistext nennt den
