@@ -409,62 +409,67 @@
     <name>UpdatesView</name>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="93"/>
-        <location filename="../qml/views/UpdatesView.qml" line="116"/>
+        <location filename="../qml/views/UpdatesView.qml" line="118"/>
         <source>Unbekannter Fehler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="136"/>
+        <location filename="../qml/views/UpdatesView.qml" line="138"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="140"/>
+        <location filename="../qml/views/UpdatesView.qml" line="142"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="146"/>
+        <location filename="../qml/views/UpdatesView.qml" line="148"/>
         <source>Updates (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="146"/>
+        <location filename="../qml/views/UpdatesView.qml" line="148"/>
         <source>Updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="153"/>
+        <location filename="../qml/views/UpdatesView.qml" line="155"/>
         <source>Noch nicht konfiguriert</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="154"/>
+        <location filename="../qml/views/UpdatesView.qml" line="156"/>
         <source>Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="159"/>
+        <location filename="../qml/views/UpdatesView.qml" line="161"/>
         <source>Keine Verbindung</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="165"/>
+        <location filename="../qml/views/UpdatesView.qml" line="167"/>
         <source>Alles aktuell</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="166"/>
+        <location filename="../qml/views/UpdatesView.qml" line="168"/>
         <source>Kein Gerät hat ein anstehendes Update. Nach unten ziehen zum Aktualisieren.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="254"/>
+        <location filename="../qml/views/UpdatesView.qml" line="185"/>
+        <source>Wird installiert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/UpdatesView.qml" line="268"/>
         <source>Installiert…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="254"/>
+        <location filename="../qml/views/UpdatesView.qml" line="268"/>
         <source>Installieren</source>
         <translation type="unfinished"></translation>
     </message>

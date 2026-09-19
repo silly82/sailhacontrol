@@ -104,14 +104,16 @@ Item {
         onTriggered: refresh()
     }
 
-    function installUpdate(index) {
-        var entry = entriesModel.get(index)
-        if (!entry.canInstall || entry.inProgress) {
-            return
-        }
+    // Nimmt die entityId, nicht den Zeilenindex: zwischen Tap und
+    // tatsächlichem Aufruf liegen fünf Sekunden Remorse-Frist, in denen ein
+    // Refresh (Pull-down, progressPollTimer, WS-Update) die Liste neu
+    // aufbauen kann -- ein gemerkter Index zeigte dann womöglich auf ein
+    // anderes Gerät, und ein Firmware-Update landet nicht dort, wo getippt
+    // wurde.
+    function installUpdate(entityId) {
         errorText = ""
         HaApi.callService(Credentials.baseUrl, Credentials.token,
-            "update", "install", { entity_id: entry.entityId },
+            "update", "install", { entity_id: entityId },
             function () { postInstallRefreshTimer.restart() },
             function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
     }
@@ -171,7 +173,19 @@ Item {
             width: listView.width
             contentHeight: model.inProgress ? Theme.itemSizeMedium + Theme.paddingSmall : Theme.itemSizeMedium
 
-            onClicked: installUpdate(index)
+            // Ein Firmware-Update auf echter Hardware lässt sich nicht
+            // zurücknehmen -- ein Fehltipp wäre teuer. remorseAction() gibt
+            // fünf Sekunden Zeit, den Auftrag per Tap wieder abzubrechen,
+            // bevor update.install tatsächlich rausgeht.
+            onClicked: {
+                if (!model.canInstall || model.inProgress) {
+                    return
+                }
+                var entityId = model.entityId
+                remorseAction(qsTr("Wird installiert"), function () {
+                    installUpdate(entityId)
+                })
+            }
 
             Column {
                 anchors.left: parent.left
