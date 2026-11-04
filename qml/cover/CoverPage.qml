@@ -49,12 +49,10 @@ CoverBackground {
             text: {
                 var count = lightsOnCountSetting.value
                 if (count === 0) {
-                    return qsTr("Alle Lichter aus")
+                    return qsTr("All lights off")
                 }
-                if (count === 1) {
-                    return qsTr("1 Licht an")
-                }
-                return qsTr("%1 Lichter an").arg(count)
+                //: Cover text, %n = number of lights that are on
+                return qsTr("%n light(s) on", "", count)
             }
         }
     }

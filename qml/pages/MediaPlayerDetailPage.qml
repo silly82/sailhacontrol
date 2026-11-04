@@ -19,12 +19,12 @@ Page {
 
     function stateLabel(state) {
         switch (state) {
-        case "playing": return qsTr("Spielt")
-        case "paused": return qsTr("Pausiert")
-        case "idle": return qsTr("Bereit")
-        case "off": return qsTr("Aus")
-        case "on": return qsTr("Ein")
-        case "buffering": return qsTr("Lädt")
+        case "playing": return qsTr("Playing")
+        case "paused": return qsTr("Paused")
+        case "idle": return qsTr("Idle")
+        case "off": return qsTr("Off")
+        case "on": return qsTr("On")
+        case "buffering": return qsTr("Buffering")
         case "standby": return qsTr("Standby")
         default: return state
         }
@@ -35,7 +35,7 @@ Page {
         serviceData.entity_id = entityId
         HaApi.callService(Credentials.baseUrl, Credentials.token, "media_player", service, serviceData,
             function () {},
-            function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
+            function (error) { errorText = error.hint || qsTr("Unknown error") })
     }
 
     SilicaFlickable {
@@ -103,7 +103,7 @@ Page {
             Slider {
                 visible: attributes.volume_level !== undefined
                 width: parent.width
-                label: qsTr("Lautstärke")
+                label: qsTr("Volume")
                 minimumValue: 0
                 maximumValue: 1
                 stepSize: 0.05

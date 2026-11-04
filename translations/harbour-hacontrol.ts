@@ -10,50 +10,48 @@
     </message>
     <message>
         <location filename="../qml/cover/CoverPage.qml" line="52"/>
-        <source>Alle Lichter aus</source>
+        <source>All lights off</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
+    <message numerus="yes">
         <location filename="../qml/cover/CoverPage.qml" line="55"/>
-        <source>1 Licht an</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/cover/CoverPage.qml" line="57"/>
-        <source>%1 Lichter an</source>
-        <translation type="unfinished"></translation>
+        <source>%n light(s) on</source>
+        <extracomment>Cover text, %n = number of lights that are on</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
     <name>LightDetailPage</name>
     <message>
         <location filename="../qml/pages/LightDetailPage.qml" line="34"/>
-        <source>Unbekannter Fehler</source>
+        <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/LightDetailPage.qml" line="82"/>
-        <source>Licht ist aus -- Regler zeigen einen Startwert, keine gespeicherte Einstellung (HA liefert Helligkeit/Farbe erst nach dem Einschalten). Verstellen schaltet das Licht mit ein.</source>
+        <source>Light is off -- the sliders show a starting value, not a stored setting (HA only reports brightness/color once the light is on). Moving a slider also switches the light on.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/LightDetailPage.qml" line="92"/>
-        <source>Dieses Licht unterstützt nur Ein/Aus.</source>
+        <source>This light only supports on/off.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/LightDetailPage.qml" line="99"/>
-        <source>Helligkeit</source>
+        <source>Brightness</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/LightDetailPage.qml" line="111"/>
-        <source>Farbtemperatur</source>
+        <source>Color temperature</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/LightDetailPage.qml" line="139"/>
-        <source>Farbe wählen</source>
+        <source>Choose color</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -61,32 +59,32 @@
     <name>MediaPlayerDetailPage</name>
     <message>
         <location filename="../qml/pages/MediaPlayerDetailPage.qml" line="22"/>
-        <source>Spielt</source>
+        <source>Playing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/MediaPlayerDetailPage.qml" line="23"/>
-        <source>Pausiert</source>
+        <source>Paused</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/MediaPlayerDetailPage.qml" line="24"/>
-        <source>Bereit</source>
+        <source>Idle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/MediaPlayerDetailPage.qml" line="25"/>
-        <source>Aus</source>
+        <source>Off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/MediaPlayerDetailPage.qml" line="26"/>
-        <source>Ein</source>
+        <source>On</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/MediaPlayerDetailPage.qml" line="27"/>
-        <source>Lädt</source>
+        <source>Buffering</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -96,12 +94,12 @@
     </message>
     <message>
         <location filename="../qml/pages/MediaPlayerDetailPage.qml" line="38"/>
-        <source>Unbekannter Fehler</source>
+        <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/MediaPlayerDetailPage.qml" line="106"/>
-        <source>Lautstärke</source>
+        <source>Volume</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -109,37 +107,37 @@
     <name>RoomsView</name>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="70"/>
-        <source>Ohne Raum</source>
+        <source>No room</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="174"/>
-        <source>Spielt</source>
+        <source>Playing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="175"/>
-        <source>Pausiert</source>
+        <source>Paused</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="176"/>
-        <source>Bereit</source>
+        <source>Idle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="177"/>
-        <source>Aus</source>
+        <source>Off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="178"/>
-        <source>Ein</source>
+        <source>On</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="179"/>
-        <source>Lädt</source>
+        <source>Buffering</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -151,12 +149,12 @@
         <location filename="../qml/views/RoomsView.qml" line="330"/>
         <location filename="../qml/views/RoomsView.qml" line="406"/>
         <location filename="../qml/views/RoomsView.qml" line="435"/>
-        <source>Unbekannter Fehler</source>
+        <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="374"/>
-        <source>Home Assistant antwortet nicht.</source>
+        <source>Home Assistant is not responding.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -176,7 +174,7 @@
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="633"/>
-        <source>Räume</source>
+        <source>Rooms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -186,47 +184,47 @@
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="645"/>
-        <source>Noch nicht konfiguriert</source>
+        <source>Not configured yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="646"/>
-        <source>Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
+        <source>Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="651"/>
-        <source>Keine Verbindung</source>
+        <source>No connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="657"/>
-        <source>Keine Geräte</source>
+        <source>No devices</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="658"/>
-        <source>Home Assistant meldet keine steuerbaren Entities. Nach unten ziehen zum Aktualisieren.</source>
+        <source>Home Assistant reports no controllable entities. Pull down to refresh.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="700"/>
-        <source>Benachrichtigung deaktivieren</source>
+        <source>Disable notification</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="700"/>
-        <source>Bei Änderung benachrichtigen</source>
+        <source>Notify on change</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="763"/>
-        <source>benachrichtigt</source>
+        <source>notifies</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/RoomsView.qml" line="846"/>
-        <source>Aktivieren</source>
+        <source>Activate</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -234,17 +232,17 @@
     <name>SensorsView</name>
     <message>
         <location filename="../qml/views/SensorsView.qml" line="29"/>
-        <source>Ohne Raum</source>
+        <source>No room</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/SensorsView.qml" line="118"/>
-        <source>Home Assistant antwortet nicht.</source>
+        <source>Home Assistant is not responding.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/SensorsView.qml" line="149"/>
-        <source>Unbekannter Fehler</source>
+        <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -259,32 +257,32 @@
     </message>
     <message>
         <location filename="../qml/views/SensorsView.qml" line="194"/>
-        <source>Sensor-Übersicht</source>
+        <source>Sensors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/SensorsView.qml" line="201"/>
-        <source>Noch nicht konfiguriert</source>
+        <source>Not configured yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/SensorsView.qml" line="202"/>
-        <source>Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
+        <source>Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/SensorsView.qml" line="207"/>
-        <source>Keine Verbindung</source>
+        <source>No connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/SensorsView.qml" line="213"/>
-        <source>Keine Sensoren</source>
+        <source>No sensors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/SensorsView.qml" line="214"/>
-        <source>Kein Sensor liefert gerade einen Messwert. Nach unten ziehen zum Aktualisieren.</source>
+        <source>No sensor is reporting a value right now. Pull down to refresh.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -318,42 +316,42 @@
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="68"/>
-        <source>erstellt in HA: Profil → Sicherheit</source>
+        <source>create one in HA: Profile → Security</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="80"/>
-        <source>Speichern fehlgeschlagen: </source>
+        <source>Saving failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="89"/>
-        <source>URL und Token werden über Sailfish Secrets verschlüsselt gespeichert und sind an die Gerätesperre gebunden. Gespeichert wird, sobald beide Felder ausgefüllt sind und den Fokus verlassen.</source>
+        <source>URL and token are stored encrypted via Sailfish Secrets and bound to the device lock. They are saved as soon as both fields are filled in and lose focus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="95"/>
-        <source>Home-Assistant-Geräteregistrierung</source>
+        <source>Home Assistant device registration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="101"/>
-        <source>Gerätename</source>
+        <source>Device name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="112"/>
-        <source>Registriert -- erscheint in HA als eigenes Gerät (notify.mobile_app_...) mit Akkustand-/Verbindungs-Sensoren.</source>
+        <source>Registered -- appears in HA as its own device (notify.mobile_app_...) with battery and connection sensors.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="113"/>
-        <source>Noch nicht registriert -- wird automatisch versucht, sobald URL und Token gültig sind.</source>
+        <source>Not registered yet -- will be tried automatically as soon as URL and token are valid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="120"/>
-        <source>Gerät neu registrieren</source>
+        <source>Re-register device</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -361,57 +359,57 @@
     <name>ThermostatDetailPage</name>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="31"/>
-        <source>Aus</source>
+        <source>Off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="32"/>
-        <source>Heizen</source>
+        <source>Heat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="33"/>
-        <source>Kühlen</source>
+        <source>Cool</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="34"/>
-        <source>Heizen/Kühlen</source>
+        <source>Heat/Cool</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="35"/>
-        <source>Automatik</source>
+        <source>Auto</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="36"/>
-        <source>Trocknen</source>
+        <source>Dry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="37"/>
-        <source>Nur Lüfter</source>
+        <source>Fan only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="47"/>
-        <source>Unbekannter Fehler</source>
+        <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="78"/>
-        <source>Aktuell: %1 °C</source>
+        <source>Current: %1 °C</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="85"/>
-        <source>Modus</source>
+        <source>Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/ThermostatDetailPage.qml" line="104"/>
-        <source>Zieltemperatur</source>
+        <source>Target temperature</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -419,13 +417,13 @@
     <name>UpdatesView</name>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="97"/>
-        <source>Home Assistant antwortet nicht.</source>
+        <source>Home Assistant is not responding.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="117"/>
         <location filename="../qml/views/UpdatesView.qml" line="142"/>
-        <source>Unbekannter Fehler</source>
+        <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -450,42 +448,42 @@
     </message>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="193"/>
-        <source>Noch nicht konfiguriert</source>
+        <source>Not configured yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="194"/>
-        <source>Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</source>
+        <source>Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="199"/>
-        <source>Keine Verbindung</source>
+        <source>No connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="205"/>
-        <source>Alles aktuell</source>
+        <source>Everything up to date</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="206"/>
-        <source>Kein Gerät hat ein anstehendes Update. Nach unten ziehen zum Aktualisieren.</source>
+        <source>No device has a pending update. Pull down to refresh.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="223"/>
-        <source>Wird installiert</source>
+        <source>Installing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="306"/>
-        <source>Installiert…</source>
+        <source>Installing…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="306"/>
-        <source>Installieren</source>
+        <source>Install</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -498,32 +496,32 @@
     </message>
     <message>
         <location filename="../qml/harbour-hacontrol.qml" line="169"/>
-        <source>Akkustand</source>
+        <source>Battery level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/harbour-hacontrol.qml" line="174"/>
-        <source>Lädt</source>
+        <source>Charging</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/harbour-hacontrol.qml" line="178"/>
-        <source>Verbindungsart</source>
+        <source>Connection type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/harbour-hacontrol.qml" line="255"/>
-        <source>eingeschaltet</source>
+        <source>switched on</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/harbour-hacontrol.qml" line="255"/>
-        <source>ausgeschaltet</source>
+        <source>switched off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/harbour-hacontrol.qml" line="257"/>
-        <source>Umschalten</source>
+        <source>Toggle</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

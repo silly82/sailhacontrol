@@ -166,16 +166,16 @@ ApplicationWindow {
             return
         }
         HaApi.callWebhook(baseUrl, webhookId, "register_sensor", {
-            type: "sensor", unique_id: "battery_level", name: qsTr("Akkustand"),
+            type: "sensor", unique_id: "battery_level", name: qsTr("Battery level"),
             device_class: "battery", unit_of_measurement: "%", state_class: "measurement",
             icon: "mdi:battery", state: null
         }, function () {}, function () {})
         HaApi.callWebhook(baseUrl, webhookId, "register_sensor", {
-            type: "binary_sensor", unique_id: "battery_charging", name: qsTr("Lädt"),
+            type: "binary_sensor", unique_id: "battery_charging", name: qsTr("Charging"),
             device_class: "battery_charging", icon: "mdi:power-plug", state: false
         }, function () {}, function () {})
         HaApi.callWebhook(baseUrl, webhookId, "register_sensor", {
-            type: "sensor", unique_id: "connection_type", name: qsTr("Verbindungsart"),
+            type: "sensor", unique_id: "connection_type", name: qsTr("Connection type"),
             icon: "mdi:wifi", state: "offline"
         }, function () {}, function () {})
 
@@ -252,9 +252,9 @@ ApplicationWindow {
         var component = 'import QtQuick 2.0\nimport Nemo.Notifications 1.0\nNotification { appName: "HA Control"; category: "x-nemo.example" }'
         var notification = Qt.createQmlObject(component, appWindow, "HaControlNotification")
         notification.summary = friendlyName
-        notification.body = isOn ? qsTr("eingeschaltet") : qsTr("ausgeschaltet")
+        notification.body = isOn ? qsTr("switched on") : qsTr("switched off")
         notification.remoteActions = [
-            notification.remoteAction("toggle", qsTr("Umschalten"),
+            notification.remoteAction("toggle", qsTr("Toggle"),
                 "org.example.hacontrol", "/org/example/hacontrol", "org.example.hacontrol",
                 "toggleEntity", [entityId])
         ]

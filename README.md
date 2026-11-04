@@ -4,7 +4,7 @@ A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home
 
 See [`KONZEPT.md`](KONZEPT.md) for the full design concept and dated development log. ([`KONZEPT_DE.md`](KONZEPT_DE.md) holds the original German text up to section 24; it is no longer updated.)
 
-## Status: v0.54, ready for use
+## Status: v0.55, ready for use
 
 - Entity list (lights/switches/fans/covers) with toggle, grouped by Home Assistant Area/Room, collapsible per room. Lights with a known color/color-temperature show a small color swatch next to the switch.
 - Tap a light's name to open brightness / color / color-temperature controls — only the controls that light actually supports are shown. The toggle switch itself is unchanged.
@@ -45,6 +45,10 @@ Install via `pkcon install-local -y <file>.rpm` over SSH (as `devel-su`), or `sf
 
 Local network only — no Nabu Casa / reverse-proxy support yet.
 
+## Translations
+
+The app is in English, with a complete German translation. It follows the phone's language. Translations into more languages are very welcome: copy one template file, translate it (e.g. with Qt Linguist) and send it in. No build changes are needed. See [TRANSLATING.md](TRANSLATING.md).
+
 ## Known limitations
 
 - URL and token are stored via **Sailfish Secrets** (encrypted, tied to the device lock), not in plaintext in dconf. That needs C++ (`src/credentials.h/.cpp`): the QML `Sailfish.Secrets` module cannot express the two requests involved — `StoredSecretRequest.identifier` is of a type the plugin never registers, and `StoreSecretRequest.secretStorageType` is an enum without `Q_ENUM`, so both fail from QML (verified on-device). Which storage/encryption plugin to use is asked from the daemon at startup rather than hardcoded, because the image may not register the encrypted-storage plugin.
@@ -67,7 +71,7 @@ Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer l
 
 Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md) (Englisch). Die ursprüngliche deutsche Fassung bis Abschnitt 24 steht in [`KONZEPT_DE.md`](KONZEPT_DE.md) und wird nicht mehr fortgeschrieben.
 
-## Status: v0.54, einsatzbereit
+## Status: v0.55, einsatzbereit
 
 - Entity-Liste (Lights/Switches/Fans/Covers) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar. Lichter mit bekannter Farbe/Farbtemperatur zeigen einen kleinen Farb-Punkt neben dem Switch.
 - Tap auf den Namen eines Lichts öffnet Helligkeit-/Farb-/Farbtemperatur-Regler — nur was das jeweilige Licht tatsächlich unterstützt wird angezeigt. Der Toggle-Switch selbst bleibt unverändert.
@@ -103,10 +107,14 @@ Installation via `pkcon install-local -y <datei>.rpm` über SSH (als `devel-su`)
 ## Einrichtung
 
 1. In Home Assistant: Profil (unten in der Seitenleiste) → Tab **Sicherheit** → **Langlebige Zugangs-Token** → **Token erstellen**. Sofort kopieren, er wird nur einmal angezeigt.
-2. In HA Control: Pull-down → **Settings** → Home-Assistant-URL (z. B. `http://homeassistant.local:8123`) und den Token eintragen.
-3. Zurückwischen. Die Liste lädt von selbst, sobald beide Felder ausgefüllt sind; Pull-down → **Refresh** erzwingt jederzeit ein Neuladen.
+2. In HA Control: Pull-down → **Einstellungen** → Home-Assistant-URL (z. B. `http://homeassistant.local:8123`) und den Token eintragen.
+3. Zurückwischen. Die Liste lädt von selbst, sobald beide Felder ausgefüllt sind; Pull-down → **Aktualisieren** erzwingt jederzeit ein Neuladen.
 
 Nur lokales Netz — Nabu Casa / Reverse-Proxy wird noch nicht unterstützt.
+
+## Übersetzungen
+
+Die App ist auf Englisch und vollständig ins Deutsche übersetzt. Sie richtet sich nach der Sprache des Telefons. Weitere Sprachen sind sehr willkommen: eine Vorlagedatei kopieren, übersetzen (z. B. mit Qt Linguist) und einschicken. Am Build muss nichts geändert werden. Details in [TRANSLATING.md](TRANSLATING.md) (Englisch).
 
 ## Bekannte Einschränkungen
 

@@ -65,7 +65,7 @@ Page {
                 id: tokenField
                 width: parent.width
                 label: qsTr("Long-Lived Access Token")
-                placeholderText: qsTr("erstellt in HA: Profil → Sicherheit")
+                placeholderText: qsTr("create one in HA: Profile → Security")
                 echoMode: TextInput.Password
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
                 text: Credentials.token
@@ -77,7 +77,7 @@ Page {
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 wrapMode: Text.Wrap
                 visible: Credentials.lastError.length > 0
-                text: qsTr("Speichern fehlgeschlagen: ") + Credentials.lastError
+                text: qsTr("Saving failed: %1").arg(Credentials.lastError)
                 color: Theme.errorColor
                 font.pixelSize: Theme.fontSizeExtraSmall
             }
@@ -86,19 +86,19 @@ Page {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 wrapMode: Text.Wrap
-                text: qsTr("URL und Token werden über Sailfish Secrets verschlüsselt gespeichert und sind an die Gerätesperre gebunden. Gespeichert wird, sobald beide Felder ausgefüllt sind und den Fokus verlassen.")
+                text: qsTr("URL and token are stored encrypted via Sailfish Secrets and bound to the device lock. They are saved as soon as both fields are filled in and lose focus.")
                 color: Theme.secondaryHighlightColor
                 font.pixelSize: Theme.fontSizeExtraSmall
             }
 
             SectionHeader {
-                text: qsTr("Home-Assistant-Geräteregistrierung")
+                text: qsTr("Home Assistant device registration")
             }
 
             TextField {
                 id: deviceNameField
                 width: parent.width
-                label: qsTr("Gerätename")
+                label: qsTr("Device name")
                 placeholderText: qsTr("SailfishOS Phone")
                 text: deviceNameSetting.value
                 onTextChanged: deviceNameSetting.value = text
@@ -109,15 +109,15 @@ Page {
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 wrapMode: Text.Wrap
                 text: webhookIdSetting.value.length > 0
-                    ? qsTr("Registriert -- erscheint in HA als eigenes Gerät (notify.mobile_app_...) mit Akkustand-/Verbindungs-Sensoren.")
-                    : qsTr("Noch nicht registriert -- wird automatisch versucht, sobald URL und Token gültig sind.")
+                    ? qsTr("Registered -- appears in HA as its own device (notify.mobile_app_...) with battery and connection sensors.")
+                    : qsTr("Not registered yet -- will be tried automatically as soon as URL and token are valid.")
                 color: Theme.secondaryHighlightColor
                 font.pixelSize: Theme.fontSizeExtraSmall
             }
 
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: qsTr("Gerät neu registrieren")
+                text: qsTr("Re-register device")
                 onClicked: webhookIdSetting.value = ""
             }
         }

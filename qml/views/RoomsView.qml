@@ -67,7 +67,7 @@ Item {
     // unlike state_changed events), used to tell the two apart in
     // onTextMessageReceived. 0 == not subscribed yet.
     property int pushChannelMsgId: 0
-    readonly property string noRoomLabel: qsTr("Ohne Raum")
+    readonly property string noRoomLabel: qsTr("No room")
     // room name -> bool. Missing key == collapsed (rooms start folded).
     property var expandedRooms: ({})
 
@@ -171,12 +171,12 @@ Item {
 
     function mediaStateLabel(state) {
         switch (state) {
-        case "playing": return qsTr("Spielt")
-        case "paused": return qsTr("Pausiert")
-        case "idle": return qsTr("Bereit")
-        case "off": return qsTr("Aus")
-        case "on": return qsTr("Ein")
-        case "buffering": return qsTr("Lädt")
+        case "playing": return qsTr("Playing")
+        case "paused": return qsTr("Paused")
+        case "idle": return qsTr("Idle")
+        case "off": return qsTr("Off")
+        case "on": return qsTr("On")
+        case "buffering": return qsTr("Buffering")
         case "standby": return qsTr("Standby")
         default: return state
         }
@@ -327,7 +327,7 @@ Item {
         HaApi.callService(Credentials.baseUrl, Credentials.token,
             "scene", "turn_on", { entity_id: entry.entityId },
             function () {},
-            function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
+            function (error) { errorText = error.hint || qsTr("Unknown error") })
     }
 
     // Nach einem WebSocket-(Re)Connect die per REST geladene Struktur
@@ -371,7 +371,7 @@ Item {
         repeat: false
         onTriggered: {
             busyIndicator.running = false
-            errorText = qsTr("Home Assistant antwortet nicht.")
+            errorText = qsTr("Home Assistant is not responding.")
         }
     }
 
@@ -403,7 +403,7 @@ Item {
             function (error) {
                 requestTimeout.stop()
                 busyIndicator.running = false
-                errorText = error.hint || qsTr("Unbekannter Fehler")
+                errorText = error.hint || qsTr("Unknown error")
             })
     }
 
@@ -432,7 +432,7 @@ Item {
                     coverLastLightNameSetting.value = entry.friendlyName
                 }
             },
-            function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
+            function (error) { errorText = error.hint || qsTr("Unknown error") })
     }
 
     // Ausbaustufe 2: WebSocket-Live-Updates statt reinem REST-Poll. Die
@@ -630,7 +630,7 @@ Item {
             }
 
             PageHeader {
-                title: qsTr("Räume")
+                title: qsTr("Rooms")
                 description: wsSubscribed ? qsTr("Live") : ""
             }
         }
@@ -642,20 +642,20 @@ Item {
         ViewPlaceholder {
             flickable: listView
             enabled: !configured
-            text: qsTr("Noch nicht konfiguriert")
-            hintText: qsTr("Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.")
+            text: qsTr("Not configured yet")
+            hintText: qsTr("Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.")
         }
         ViewPlaceholder {
             flickable: listView
             enabled: configured && errorText.length > 0
-            text: qsTr("Keine Verbindung")
+            text: qsTr("No connection")
             hintText: errorText
         }
         ViewPlaceholder {
             flickable: listView
             enabled: configured && errorText.length === 0 && entriesModel.count === 0 && !busyIndicator.running
-            text: qsTr("Keine Geräte")
-            hintText: qsTr("Home Assistant meldet keine steuerbaren Entities. Nach unten ziehen zum Aktualisieren.")
+            text: qsTr("No devices")
+            hintText: qsTr("Home Assistant reports no controllable entities. Pull down to refresh.")
         }
 
         delegate: ListItem {
@@ -697,7 +697,7 @@ Item {
                 id: notifyMenuComponent
                 ContextMenu {
                     MenuItem {
-                        text: model.notify ? qsTr("Benachrichtigung deaktivieren") : qsTr("Bei Änderung benachrichtigen")
+                        text: model.notify ? qsTr("Disable notification") : qsTr("Notify on change")
                         onClicked: toggleWatch(index)
                     }
                 }
@@ -760,7 +760,7 @@ Item {
                 anchors.right: toggleSwitch.left
                 anchors.rightMargin: Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("benachrichtigt")
+                text: qsTr("notifies")
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryHighlightColor
             }
@@ -843,7 +843,7 @@ Item {
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.horizontalPageMargin
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Aktivieren")
+                text: qsTr("Activate")
                 color: Theme.secondaryHighlightColor
             }
         }

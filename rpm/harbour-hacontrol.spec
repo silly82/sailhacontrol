@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS
-Version:    0.54
+Version:    0.55
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -76,6 +76,14 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Wed Nov 04 2026 silly82 <siliwalker@gmail.com> - 0.55-1
+- All texts in the app are now English in the source, with a complete
+  German translation. Before, some texts were German only and the
+  translation file was empty, so the UI was a mix of both languages.
+- Adding a language only needs a new translations/harbour-hacontrol-<lang>.ts
+  file, which is picked up automatically. See TRANSLATING.md.
+- The cover's "lights on" text now uses real plural forms.
+
 * Sat Sep 19 2026 silly82 <siliwalker@gmail.com> - 0.54-1
 - Der Start ist deutlich leichtgewichtiger: bisher holten alle drei Seiten
   beim Start gleichzeitig die komplette Entity-Liste, parsten sie und bauten

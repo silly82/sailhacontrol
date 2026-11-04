@@ -31,7 +31,7 @@ Page {
         serviceData.entity_id = entityId
         HaApi.callService(Credentials.baseUrl, Credentials.token, "light", "turn_on", serviceData,
             function () {},
-            function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
+            function (error) { errorText = error.hint || qsTr("Unknown error") })
     }
 
     Component {
@@ -79,7 +79,7 @@ Page {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 wrapMode: Text.Wrap
-                text: qsTr("Licht ist aus -- Regler zeigen einen Startwert, keine gespeicherte Einstellung (HA liefert Helligkeit/Farbe erst nach dem Einschalten). Verstellen schaltet das Licht mit ein.")
+                text: qsTr("Light is off -- the sliders show a starting value, not a stored setting (HA only reports brightness/color once the light is on). Moving a slider also switches the light on.")
                 color: Theme.secondaryHighlightColor
                 font.pixelSize: Theme.fontSizeExtraSmall
             }
@@ -89,14 +89,14 @@ Page {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 wrapMode: Text.Wrap
-                text: qsTr("Dieses Licht unterstützt nur Ein/Aus.")
+                text: qsTr("This light only supports on/off.")
                 color: Theme.secondaryHighlightColor
             }
 
             Slider {
                 visible: supportsBrightness
                 width: parent.width
-                label: qsTr("Helligkeit")
+                label: qsTr("Brightness")
                 minimumValue: 1
                 maximumValue: 255
                 stepSize: 1
@@ -108,7 +108,7 @@ Page {
             Slider {
                 visible: supportsColorTemp
                 width: parent.width
-                label: qsTr("Farbtemperatur")
+                label: qsTr("Color temperature")
                 minimumValue: attributes.min_color_temp_kelvin || 2000
                 maximumValue: attributes.max_color_temp_kelvin || 6500
                 stepSize: 50
@@ -136,7 +136,7 @@ Page {
                 Label {
                     x: 2 * Theme.horizontalPageMargin + Theme.itemSizeSmall
                     anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Farbe wählen")
+                    text: qsTr("Choose color")
                 }
             }
         }

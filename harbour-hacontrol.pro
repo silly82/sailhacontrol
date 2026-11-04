@@ -53,8 +53,7 @@ SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 # following CONFIG line
 CONFIG += sailfishapp_i18n
 
-# German translation is enabled as an example. If you aren't
-# planning to localize your app, remember to comment out the
-# following TRANSLATIONS line. And also do not forget to
-# modify the localized app name in the the .desktop file.
-TRANSLATIONS += translations/harbour-hacontrol-de.ts
+# Source strings are English. Every translations/harbour-hacontrol-<lang>.ts
+# file is picked up automatically -- adding a language needs no change here.
+# See TRANSLATING.md.
+TRANSLATIONS += $$files(translations/harbour-hacontrol-*.ts)

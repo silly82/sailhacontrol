@@ -94,7 +94,7 @@ Item {
         repeat: false
         onTriggered: {
             busyIndicator.running = false
-            errorText = qsTr("Home Assistant antwortet nicht.")
+            errorText = qsTr("Home Assistant is not responding.")
         }
     }
 
@@ -114,7 +114,7 @@ Item {
             function (error) {
                 requestTimeout.stop()
                 busyIndicator.running = false
-                errorText = error.hint || qsTr("Unbekannter Fehler")
+                errorText = error.hint || qsTr("Unknown error")
             })
     }
 
@@ -139,7 +139,7 @@ Item {
         HaApi.callService(Credentials.baseUrl, Credentials.token,
             "update", "install", { entity_id: entityId },
             function () { postInstallRefreshTimer.restart() },
-            function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
+            function (error) { errorText = error.hint || qsTr("Unknown error") })
     }
 
     // Lädt erst beim ersten Sichtbarwerden und erst mit Zugangsdaten --
@@ -190,20 +190,20 @@ Item {
         ViewPlaceholder {
             flickable: listView
             enabled: !configured
-            text: qsTr("Noch nicht konfiguriert")
-            hintText: qsTr("Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.")
+            text: qsTr("Not configured yet")
+            hintText: qsTr("Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.")
         }
         ViewPlaceholder {
             flickable: listView
             enabled: configured && errorText.length > 0
-            text: qsTr("Keine Verbindung")
+            text: qsTr("No connection")
             hintText: errorText
         }
         ViewPlaceholder {
             flickable: listView
             enabled: configured && errorText.length === 0 && entriesModel.count === 0 && !busyIndicator.running
-            text: qsTr("Alles aktuell")
-            hintText: qsTr("Kein Gerät hat ein anstehendes Update. Nach unten ziehen zum Aktualisieren.")
+            text: qsTr("Everything up to date")
+            hintText: qsTr("No device has a pending update. Pull down to refresh.")
         }
 
         delegate: ListItem {
@@ -220,7 +220,7 @@ Item {
                     return
                 }
                 var entityId = model.entityId
-                remorseAction(qsTr("Wird installiert"), function () {
+                remorseAction(qsTr("Installing"), function () {
                     installUpdate(entityId)
                 })
             }
@@ -303,7 +303,7 @@ Item {
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.horizontalPageMargin
                 anchors.verticalCenter: parent.verticalCenter
-                text: model.inProgress ? qsTr("Installiert…") : qsTr("Installieren")
+                text: model.inProgress ? qsTr("Installing…") : qsTr("Install")
                 color: model.canInstall && !model.inProgress ? Theme.highlightColor : Theme.secondaryColor
             }
         }

@@ -28,13 +28,13 @@ Page {
 
     function hvacModeLabel(mode) {
         switch (mode) {
-        case "off": return qsTr("Aus")
-        case "heat": return qsTr("Heizen")
-        case "cool": return qsTr("Kühlen")
-        case "heat_cool": return qsTr("Heizen/Kühlen")
-        case "auto": return qsTr("Automatik")
-        case "dry": return qsTr("Trocknen")
-        case "fan_only": return qsTr("Nur Lüfter")
+        case "off": return qsTr("Off")
+        case "heat": return qsTr("Heat")
+        case "cool": return qsTr("Cool")
+        case "heat_cool": return qsTr("Heat/Cool")
+        case "auto": return qsTr("Auto")
+        case "dry": return qsTr("Dry")
+        case "fan_only": return qsTr("Fan only")
         default: return mode
         }
     }
@@ -44,7 +44,7 @@ Page {
         serviceData.entity_id = entityId
         HaApi.callService(Credentials.baseUrl, Credentials.token, "climate", service, serviceData,
             function () {},
-            function (error) { errorText = error.hint || qsTr("Unbekannter Fehler") })
+            function (error) { errorText = error.hint || qsTr("Unknown error") })
     }
 
     SilicaFlickable {
@@ -75,14 +75,14 @@ Page {
                 visible: attributes.current_temperature !== undefined
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Aktuell: %1 °C").arg(attributes.current_temperature)
+                text: qsTr("Current: %1 °C").arg(attributes.current_temperature)
                 color: Theme.secondaryHighlightColor
             }
 
             ComboBox {
                 visible: hvacModes.length > 1
                 width: parent.width
-                label: qsTr("Modus")
+                label: qsTr("Mode")
                 value: hvacModeLabel(selectedMode)
                 menu: ContextMenu {
                     Repeater {
@@ -101,7 +101,7 @@ Page {
             Slider {
                 visible: attributes.temperature !== undefined
                 width: parent.width
-                label: qsTr("Zieltemperatur")
+                label: qsTr("Target temperature")
                 minimumValue: minTemp
                 maximumValue: maxTemp
                 stepSize: tempStep

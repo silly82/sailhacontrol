@@ -26,7 +26,7 @@ Item {
     // lief früher auch darüber und wurde per Textvergleich wieder
     // herausgefiltert -- das wäre spätestens beim Übersetzen gebrochen.
     property string errorText: ""
-    readonly property string noRoomLabel: qsTr("Ohne Raum")
+    readonly property string noRoomLabel: qsTr("No room")
     // room name -> bool. Missing key == collapsed (rooms start folded) --
     // gleiches Muster wie RoomsView.qml, hier separat gehalten statt
     // geteilt (jede Sub-View verwaltet ihren eigenen Auf-/Zu-Zustand).
@@ -115,7 +115,7 @@ Item {
         repeat: false
         onTriggered: {
             busyIndicator.running = false
-            errorText = qsTr("Home Assistant antwortet nicht.")
+            errorText = qsTr("Home Assistant is not responding.")
         }
     }
 
@@ -146,7 +146,7 @@ Item {
             function (error) {
                 requestTimeout.stop()
                 busyIndicator.running = false
-                errorText = error.hint || qsTr("Unbekannter Fehler")
+                errorText = error.hint || qsTr("Unknown error")
             })
     }
 
@@ -191,27 +191,27 @@ Item {
             }
 
             PageHeader {
-                title: qsTr("Sensor-Übersicht")
+                title: qsTr("Sensors")
             }
         }
 
         ViewPlaceholder {
             flickable: listView
             enabled: !configured
-            text: qsTr("Noch nicht konfiguriert")
-            hintText: qsTr("Im Pull-down-Menü unter Settings die Home-Assistant-URL und einen Long-Lived Access Token eintragen.")
+            text: qsTr("Not configured yet")
+            hintText: qsTr("Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.")
         }
         ViewPlaceholder {
             flickable: listView
             enabled: configured && errorText.length > 0
-            text: qsTr("Keine Verbindung")
+            text: qsTr("No connection")
             hintText: errorText
         }
         ViewPlaceholder {
             flickable: listView
             enabled: configured && errorText.length === 0 && entriesModel.count === 0 && !busyIndicator.running
-            text: qsTr("Keine Sensoren")
-            hintText: qsTr("Kein Sensor liefert gerade einen Messwert. Nach unten ziehen zum Aktualisieren.")
+            text: qsTr("No sensors")
+            hintText: qsTr("No sensor is reporting a value right now. Pull down to refresh.")
         }
 
         delegate: ListItem {
