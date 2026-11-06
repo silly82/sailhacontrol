@@ -19,4 +19,7 @@ ApplicationName=hacontrol
 # Only local-network HTTP(S) to the Home Assistant instance is needed for
 # Ausbaustufe 1 -- Secrets added for encrypted credential storage (see
 # KONZEPT.md's Sailfish-Secrets migration).
-Permissions=Internet;Secrets;
+# Location: only for the opt-in "Report location to Home Assistant" setting
+# (mobile_app device_tracker); Wi-Fi SSID/strength come from connman, which
+# the Internet permission already covers.
+Permissions=Internet;Secrets;Location;

@@ -199,6 +199,21 @@ ApplicationWindow {
         id: deviceStatusProbe
     }
 
+    // Opt-in (Settings > "Report location to Home Assistant"), per instance.
+    ConfigurationValue {
+        id: reportLocationSetting
+        key: Credentials.settingsPrefix + "reportLocation"
+        defaultValue: false
+    }
+    LocationProbe {
+        id: locationProbe
+    }
+    // webhookId for which this app session already sent register_sensor for
+    // every sensor -- so installs registered before a sensor was added get
+    // it too, without re-registering the device (register_sensor is safe to
+    // repeat for an existing unique_id).
+    property string sensorsRegisteredFor: ""
+
     function randomDeviceId() {
         var chars = "0123456789abcdef"
         var id = ""
@@ -258,8 +273,37 @@ ApplicationWindow {
             type: "sensor", unique_id: "connection_type", name: qsTr("Connection type"),
             icon: "mdi:wifi", state: "offline"
         }, function () {}, function () {})
+        registerExtraDeviceSensors(baseUrl, webhookId, function () {})
 
         updateDeviceSensors()
+    }
+
+    // Sensors added after the first three (v0.56). Also sent once per app
+    // session for already registered installs (see updateDeviceSensors()),
+    // calling onDone when all requests are answered, so the following
+    // update_sensor_states doesn't race ahead of the registration.
+    function registerExtraDeviceSensors(baseUrl, webhookId, onDone) {
+        sensorsRegisteredFor = webhookId
+        var sensors = [
+            { type: "sensor", unique_id: "wifi_connection", name: qsTr("Wi-Fi connection"),
+              icon: "mdi:wifi", state: null },
+            { type: "sensor", unique_id: "wifi_signal_strength", name: qsTr("Wi-Fi signal strength"),
+              icon: "mdi:wifi-strength-2", unit_of_measurement: "%", state_class: "measurement",
+              entity_category: "diagnostic", state: null },
+            { type: "sensor", unique_id: "storage", name: qsTr("Free storage"),
+              icon: "mdi:harddisk", device_class: "data_size", unit_of_measurement: "GB",
+              state_class: "measurement", entity_category: "diagnostic", state: null }
+        ]
+        var pending = sensors.length
+        function answered() {
+            pending -= 1
+            if (pending === 0) {
+                onDone()
+            }
+        }
+        for (var i = 0; i < sensors.length; i++) {
+            HaApi.callWebhook(baseUrl, webhookId, "register_sensor", sensors[i], answered, answered)
+        }
     }
 
     function updateDeviceSensors() {
@@ -269,20 +313,43 @@ ApplicationWindow {
             console.log("DeviceSensors: übersprungen (URL " + baseUrl.length + " Zeichen, webhookId " + webhookId.length + " Zeichen)")
             return
         }
+        if (sensorsRegisteredFor !== webhookId) {
+            registerExtraDeviceSensors(baseUrl, webhookId, updateDeviceSensors)
+            return
+        }
         deviceStatusProbe.query(function (status) {
             var sensors = [
                 { type: "binary_sensor", unique_id: "battery_charging", state: status.charging },
-                { type: "sensor", unique_id: "connection_type", state: status.connectionType }
+                { type: "sensor", unique_id: "connection_type", state: status.connectionType },
+                { type: "sensor", unique_id: "wifi_connection",
+                  state: status.wifiSsid.length > 0 ? status.wifiSsid : "Not connected" },
+                { type: "sensor", unique_id: "wifi_signal_strength",
+                  state: status.wifiStrength >= 0 ? status.wifiStrength : null }
             ]
             // -1 (unknown, z.B. auf dem SDK-Emulator ohne echten Akku) nicht
             // senden -- HA erwartet für device_class battery eine Zahl.
             if (status.batteryLevel >= 0) {
                 sensors.push({ type: "sensor", unique_id: "battery_level", state: status.batteryLevel })
             }
+            if (status.freeStorageGb >= 0) {
+                sensors.push({ type: "sensor", unique_id: "storage", state: status.freeStorageGb })
+            }
             HaApi.callWebhook(baseUrl, webhookId, "update_sensor_states", sensors,
                 function () { console.log("DeviceSensors: " + sensors.length + " Sensoren an HA gemeldet") },
                 function (error) { console.log("DeviceSensors: Meldung fehlgeschlagen -- " + (error.hint || "unbekannt")) })
         })
+        // Opt-in only; the position source runs just until this one fix.
+        // Coordinates are never logged.
+        if (reportLocationSetting.value === true) {
+            locationProbe.query(function (location) {
+                if (!location) {
+                    return
+                }
+                HaApi.callWebhook(baseUrl, webhookId, "update_location", location,
+                    function () { console.log("DeviceSensors: Standort an HA gemeldet") },
+                    function (error) { console.log("DeviceSensors: Standort-Meldung fehlgeschlagen -- " + (error.hint || "unbekannt")) })
+            })
+        }
     }
 
     Connections {

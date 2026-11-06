@@ -3,6 +3,7 @@
 #endif
 
 #include "credentials.h"
+#include "deviceinfo.h"
 
 #include <sailfishapp.h>
 #include <QGuiApplication>
@@ -45,6 +46,11 @@ int main(int argc, char *argv[])
     // every existing QML call site (`Credentials.baseUrl`, ...) unchanged.
     Credentials credentials;
     view->rootContext()->setContextProperty(QStringLiteral("Credentials"), &credentials);
+
+    // Device sensors for HA's mobile_app integration that need C++ (free
+    // storage via QStorageInfo) -- see qml/components/DeviceStatusProbe.qml.
+    DeviceInfo deviceInfo;
+    view->rootContext()->setContextProperty(QStringLiteral("DeviceInfo"), &deviceInfo);
 
     view->setSource(SailfishApp::pathTo(QStringLiteral("qml/harbour-hacontrol.qml")));
     view->show();

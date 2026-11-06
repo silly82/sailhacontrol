@@ -14,8 +14,13 @@ Item {
     // battery_level: -1 if unknown (e.g. no real battery, seen on the SDK
     // emulator) -- caller should skip sending that sensor value in that case.
     // charging: true/false. connectionType: "wifi"/"ethernet"/"cellular"/"offline".
+    // wifiSsid: SSID of the connected Wi-Fi, "" if none. wifiStrength: 0-100,
+    // -1 if not connected/unknown. freeStorageGb: free space in the home
+    // directory's filesystem, -1 if unknown (via the C++ DeviceInfo object).
     function query(callback) {
-        var result = { batteryLevel: -1, charging: false, connectionType: "offline" }
+        var result = { batteryLevel: -1, charging: false, connectionType: "offline",
+                       wifiSsid: "", wifiStrength: -1,
+                       freeStorageGb: DeviceInfo.freeStorageGb() }
         var pending = 3
 
         function done() {
@@ -44,6 +49,18 @@ Item {
             if (services && services.length > 0 && services[0].length > 1) {
                 var props = services[0][1]
                 result.connectionType = props.Type || "offline"
+            }
+            // Wi-Fi may be connected without being the default route, so
+            // look for any connected wifi service rather than only element 0.
+            // For wifi services connman's Name property is the SSID and
+            // Strength the signal strength in percent (0-100).
+            for (var i = 0; services && i < services.length; i++) {
+                var p = services[i].length > 1 ? services[i][1] : null
+                if (p && p.Type === "wifi" && (p.State === "ready" || p.State === "online")) {
+                    result.wifiSsid = p.Name || ""
+                    result.wifiStrength = (p.Strength !== undefined) ? Number(p.Strength) : -1
+                    break
+                }
             }
             done()
         }, function (error) { done() })
