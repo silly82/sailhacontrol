@@ -587,7 +587,7 @@
 <context>
     <name>Credentials</name>
     <message>
-        <location filename="../src/credentials.cpp" line="398"/>
+        <location filename="../src/credentials.cpp" line="382"/>
         <source>Home</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1174,7 +1174,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1424"/>
+        <location filename="../qml/views/RoomsView.qml" line="1436"/>
         <source>notifies</source>
         <translation type="unfinished"></translation>
     </message>
