@@ -135,7 +135,7 @@ Item {
     readonly property var sensorDeviceClasses: ["temperature", "humidity", "pressure", "atmospheric_pressure", "battery", "energy", "power"]
     // Reihenfolge innerhalb eines Raums: steuerbare Entities zuerst,
     // read-only Sensoren zuletzt.
-    readonly property var kindOrder: ({ toggle: 0, lock: 1, climate: 2, mediaplayer: 3, camera: 4, scene: 5, sensor: 6, alarm: 7, vacuum: 8 })
+    readonly property var kindOrder: ({ toggle: 0, lock: 1, alarm: 2, climate: 3, mediaplayer: 4, vacuum: 5, camera: 6, scene: 7, sensor: 8 })
     readonly property real colorSwatchDiameter: Theme.iconSizeExtraSmall
 
     // "Aus"-Gegenstück ist bei den meisten toggle-Domains state === "on",
