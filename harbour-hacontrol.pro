@@ -50,6 +50,7 @@ DISTFILES += qml/harbour-hacontrol.qml \
     qml/pages/MediaPlayerDetailPage.qml \
     qml/pages/CoverDetailPage.qml \
     qml/pages/CoverSettingsPage.qml \
+    qml/pages/EntityPickerPage.qml \
     qml/pages/SensorHistoryPage.qml \
     qml/pages/CameraPage.qml \
     qml/pages/TodoListsPage.qml \

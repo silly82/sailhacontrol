@@ -50,7 +50,8 @@ Page {
         "connectionMode", "watchedEntities", "lastKnownStates", "webhookId",
         "favoriteEntities", "coverLightsOnCount", "coverLastLightId",
         "coverLastLightName", "coverTargetId", "coverTargetName", "coverTargetDomain",
-        "reportLocation"
+        "coverTarget2Id", "coverTarget2Name", "coverTarget2Domain", "coverShowWeather",
+        "coverWeatherText", "weatherEntity", "reportLocation"
     ]
     function clearProfileSettings(id) {
         var prefix = Credentials.settingsPrefixFor(id)

@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Nemo.Configuration 1.0
 import "../lib/HaApi.js" as HaApi
 import "../components"
 
@@ -36,6 +37,221 @@ Item {
 
     ListModel {
         id: entriesModel
+    }
+
+    // --- Weather card (list header) --------------------------------------
+    // One weather.* entity, chosen via EntityPickerPage.qml (tap the card);
+    // empty setting == the first one Home Assistant reports. There is no
+    // live update path in this view -- the card refreshes with the list.
+    ConfigurationValue {
+        id: weatherEntitySetting
+        key: Credentials.settingsPrefix + "weatherEntity"
+        defaultValue: ""
+    }
+    // Read by CoverPage.qml (the cover never polls HA itself) -- same
+    // pattern as RoomsView.qml's coverLightsOnCount.
+    ConfigurationValue {
+        id: coverWeatherTextSetting
+        key: Credentials.settingsPrefix + "coverWeatherText"
+        defaultValue: ""
+    }
+    // All weather.* states from the last refresh and the one shown.
+    property var weatherStates: []
+    property var weather: null
+    ListModel {
+        id: forecastModel
+    }
+
+    function weatherConditionLabel(condition) {
+        switch (condition) {
+        case "clear-night": return qsTr("Clear night")
+        case "cloudy": return qsTr("Cloudy")
+        case "exceptional": return qsTr("Exceptional")
+        case "fog": return qsTr("Fog")
+        case "hail": return qsTr("Hail")
+        case "lightning": return qsTr("Thunderstorm")
+        case "lightning-rainy": return qsTr("Thunderstorm, rain")
+        case "partlycloudy": return qsTr("Partly cloudy")
+        case "pouring": return qsTr("Pouring rain")
+        case "rainy": return qsTr("Rainy")
+        case "snowy": return qsTr("Snowy")
+        case "snowy-rainy": return qsTr("Sleet")
+        case "sunny": return qsTr("Sunny")
+        case "windy": return qsTr("Windy")
+        case "windy-variant": return qsTr("Windy, cloudy")
+        case "unavailable": return qsTr("Unavailable")
+        }
+        return condition || ""
+    }
+
+    // HA gives wind_bearing in degrees (most integrations) or already as a
+    // compass string.
+    function compassLabel(bearing) {
+        if (bearing === undefined || bearing === null || bearing === "") {
+            return ""
+        }
+        var deg = parseFloat(bearing)
+        if (isNaN(deg)) {
+            return String(bearing)
+        }
+        var names = [qsTr("N"), qsTr("NE"), qsTr("E"), qsTr("SE"),
+                     qsTr("S"), qsTr("SW"), qsTr("W"), qsTr("NW")]
+        return names[Math.round((((deg % 360) + 360) % 360) / 45) % 8]
+    }
+
+    function formatTemperature(value, unit) {
+        var num = parseFloat(value)
+        if (isNaN(num)) {
+            return ""
+        }
+        return num.toFixed(1) + (unit ? (" " + unit) : "")
+    }
+
+    function weatherDetails(st) {
+        if (!st) {
+            return ""
+        }
+        var a = st.attributes || {}
+        var parts = []
+        if (a.humidity !== undefined && a.humidity !== null) {
+            //: Weather card, %1 = relative humidity in percent
+            parts.push(qsTr("Humidity %1 %").arg(Math.round(a.humidity)))
+        }
+        if (a.wind_speed !== undefined && a.wind_speed !== null) {
+            var wind = (Math.round(parseFloat(a.wind_speed) * 10) / 10)
+                + (a.wind_speed_unit ? (" " + a.wind_speed_unit) : "")
+            var dir = compassLabel(a.wind_bearing)
+            //: Weather card, %1 = wind speed with unit and direction, e.g. "12 km/h SW"
+            parts.push(qsTr("Wind %1").arg(dir.length > 0 ? wind + " " + dir : wind))
+        }
+        return parts.join(" · ")
+    }
+
+    function buildWeather(states) {
+        var list = []
+        for (var i = 0; i < states.length; i++) {
+            if (states[i].entity_id.split(".")[0] === "weather") {
+                list.push(states[i])
+            }
+        }
+        weatherStates = list
+        chooseWeather()
+    }
+
+    function chooseWeather() {
+        var chosen = null
+        for (var i = 0; i < weatherStates.length; i++) {
+            if (weatherStates[i].entity_id === weatherEntitySetting.value) {
+                chosen = weatherStates[i]
+                break
+            }
+        }
+        if (!chosen && weatherStates.length > 0) {
+            chosen = weatherStates[0]
+        }
+        weather = chosen
+        forecastModel.clear()
+        if (!chosen) {
+            coverWeatherTextSetting.value = ""
+            return
+        }
+        var a = chosen.attributes || {}
+        var temp = formatTemperature(a.temperature, a.temperature_unit)
+        var cond = weatherConditionLabel(chosen.state)
+        coverWeatherTextSetting.value = temp.length > 0 ? temp + ", " + cond : cond
+        loadForecast(chosen)
+    }
+
+    // Modern HA (2024.3+) only returns forecasts via the weather.get_forecasts
+    // service; attributes.forecast is the pre-2024 fallback. supported_features:
+    // 1 = daily, 2 = hourly, 4 = twice daily. Hourly-only entities get no row
+    // (unless the old attribute is there).
+    function loadForecast(st) {
+        var attrs = st.attributes || {}
+        var features = attrs.supported_features || 0
+        var type = ""
+        if ((features & 1) || !(features & 6)) {
+            type = "daily"
+        } else if (features & 4) {
+            type = "twice_daily"
+        }
+        if (type.length === 0) {
+            applyForecast(attrs.forecast)
+            return
+        }
+        var profileId = Credentials.activeProfileId
+        var entityId = st.entity_id
+        HaApi.callServiceWithResponse(Credentials.baseUrl, Credentials.token,
+            "weather", "get_forecasts", { entity_id: entityId, type: type },
+            function (response) {
+                if (profileId !== Credentials.activeProfileId || !weather || weather.entity_id !== entityId) return
+                var entry = response[entityId]
+                if (entry && entry.forecast && entry.forecast.length > 0) {
+                    applyForecast(entry.forecast)
+                } else {
+                    applyForecast(attrs.forecast)
+                }
+            },
+            function (error) {
+                if (profileId !== Credentials.activeProfileId || !weather || weather.entity_id !== entityId) return
+                applyForecast(attrs.forecast)
+            })
+    }
+
+    // Up to five entries from today on; the row hides itself when empty.
+    function applyForecast(list) {
+        forecastModel.clear()
+        if (!list || !list.length) {
+            return
+        }
+        var today = new Date()
+        today.setHours(0, 0, 0, 0)
+        for (var i = 0; i < list.length && forecastModel.count < 5; i++) {
+            var f = list[i]
+            // twice_daily: keep the day part only.
+            if (f.is_daytime === false) {
+                continue
+            }
+            var date = new Date(f.datetime)
+            if (isNaN(date.getTime())) {
+                continue
+            }
+            var day = new Date(date.getTime())
+            day.setHours(0, 0, 0, 0)
+            if (day.getTime() < today.getTime()) {
+                continue
+            }
+            var high = parseFloat(f.temperature)
+            var low = parseFloat(f.templow)
+            var temps = isNaN(high) ? "" : Math.round(high) + "°"
+            if (!isNaN(low)) {
+                temps += (temps.length > 0 ? " / " : "") + Math.round(low) + "°"
+            }
+            forecastModel.append({
+                //: Weather forecast column for the current day
+                dayLabel: day.getTime() === today.getTime() ? qsTr("Today") : Qt.formatDate(date, "ddd"),
+                temps: temps,
+                condition: weatherConditionLabel(f.condition)
+            })
+        }
+    }
+
+    function openWeatherPicker() {
+        var picker = pageStack.push(Qt.resolvedUrl("../pages/EntityPickerPage.qml"), {
+            headerTitle: qsTr("Weather"),
+            description: qsTr("Shown at the top of the sensor overview and on the app cover."),
+            domains: ["weather"],
+            defaultLabel: qsTr("Automatic"),
+            defaultDescription: qsTr("The first weather entity Home Assistant reports"),
+            currentId: weatherEntitySetting.value,
+            searchPlaceholder: qsTr("Search weather entities"),
+            noMatchesHint: qsTr("No weather entity matches the search."),
+            nothingHint: qsTr("Home Assistant has no weather entities.")
+        })
+        picker.picked.connect(function (entityId) {
+            weatherEntitySetting.value = entityId
+            chooseWeather()
+        })
     }
 
     function formatValue(value, unit) {
@@ -133,6 +349,7 @@ Item {
         HaApi.getStates(Credentials.baseUrl, Credentials.token,
             function (states) {
                 if (profileId !== Credentials.activeProfileId) return
+                buildWeather(states || [])
                 HaApi.getAreaMap(Credentials.baseUrl, Credentials.token,
                     function (areaPairs) {
                         if (profileId !== Credentials.activeProfileId) return
@@ -188,6 +405,9 @@ Item {
             busyIndicator.running = false
             errorText = ""
             entriesModel.clear()
+            forecastModel.clear()
+            weatherStates = []
+            weather = null
             expandedRooms = ({})
             loadedOnce = false
             loadIfNeeded()
@@ -208,6 +428,13 @@ Item {
                     onClicked: pageStack.push(Qt.resolvedUrl("../pages/SettingsPage.qml"))
                 }
                 MenuItem {
+                    // Tapping the card does the same; the menu entry only
+                    // shows up when there is something to choose.
+                    visible: root.weatherStates.length > 1
+                    text: qsTr("Choose weather")
+                    onClicked: root.openWeatherPicker()
+                }
+                MenuItem {
                     text: qsTr("Refresh")
                     onClicked: root.refreshRequested()
                 }
@@ -215,6 +442,109 @@ Item {
 
             PageHeader {
                 title: qsTr("Sensors")
+            }
+
+            BackgroundItem {
+                id: weatherCard
+                visible: root.weather !== null
+                width: parent.width
+                height: visible ? weatherColumn.height + 2 * Theme.paddingMedium : 0
+                onClicked: root.openWeatherPicker()
+
+                Column {
+                    id: weatherColumn
+                    x: Theme.horizontalPageMargin
+                    y: Theme.paddingMedium
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    spacing: Theme.paddingSmall
+
+                    Item {
+                        width: parent.width
+                        height: Math.max(nowColumn.height, tempLabel.height)
+
+                        Column {
+                            id: nowColumn
+                            anchors.left: parent.left
+                            anchors.right: tempLabel.left
+                            anchors.rightMargin: Theme.paddingMedium
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Label {
+                                width: parent.width
+                                truncationMode: TruncationMode.Fade
+                                text: root.weather ? root.weatherConditionLabel(root.weather.state) : ""
+                                font.pixelSize: Theme.fontSizeLarge
+                                color: weatherCard.highlighted ? Theme.highlightColor : Theme.primaryColor
+                            }
+                            Label {
+                                width: parent.width
+                                truncationMode: TruncationMode.Fade
+                                text: root.weather ? (root.weather.attributes.friendly_name || root.weather.entity_id) : ""
+                                font.pixelSize: Theme.fontSizeExtraSmall
+                                color: Theme.secondaryHighlightColor
+                            }
+                        }
+                        Label {
+                            id: tempLabel
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.weather ? root.formatTemperature(root.weather.attributes.temperature,
+                                                                        root.weather.attributes.temperature_unit) : ""
+                            font.pixelSize: Theme.fontSizeExtraLarge
+                            color: Theme.highlightColor
+                        }
+                    }
+
+                    Label {
+                        visible: text.length > 0
+                        width: parent.width
+                        wrapMode: Text.Wrap
+                        text: root.weatherDetails(root.weather)
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.secondaryColor
+                    }
+
+                    Row {
+                        visible: forecastModel.count > 0
+                        width: parent.width
+
+                        Repeater {
+                            model: forecastModel
+
+                            Column {
+                                width: weatherColumn.width / Math.max(1, forecastModel.count)
+
+                                Label {
+                                    width: parent.width
+                                    horizontalAlignment: Text.AlignHCenter
+                                    truncationMode: TruncationMode.Fade
+                                    text: model.dayLabel
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.highlightColor
+                                }
+                                Label {
+                                    width: parent.width
+                                    horizontalAlignment: Text.AlignHCenter
+                                    truncationMode: TruncationMode.Fade
+                                    text: model.temps
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.primaryColor
+                                }
+                                Label {
+                                    x: Theme.paddingSmall / 2
+                                    width: parent.width - Theme.paddingSmall
+                                    horizontalAlignment: Text.AlignHCenter
+                                    wrapMode: Text.Wrap
+                                    maximumLineCount: 2
+                                    truncationMode: TruncationMode.Elide
+                                    text: model.condition
+                                    font.pixelSize: Theme.fontSizeTiny
+                                    color: Theme.secondaryColor
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -232,6 +562,8 @@ Item {
         }
         ViewPlaceholder {
             flickable: listView
+            // Below the weather card when there is one.
+            verticalOffset: weather !== null && listView.headerItem ? listView.headerItem.height / 2 : 0
             enabled: configured && errorText.length === 0 && entriesModel.count === 0 && !busyIndicator.running
             text: qsTr("No sensors")
             hintText: qsTr("No sensor is reporting a value right now. Pull down to refresh.")
