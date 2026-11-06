@@ -43,7 +43,13 @@ DISTFILES += qml/harbour-hacontrol.qml \
     qml/components/DeviceStatusProbe.qml \
     qml/components/LocationProbe.qml \
     qml/components/PushNotifications.qml \
+    qml/components/DetailPageHeader.qml \
+    qml/components/DetailStatusBlock.qml \
+    qml/components/DetailErrorLabel.qml \
+    qml/components/ActionButtonGrid.qml \
+    qml/components/ServiceCaller.qml \
     qml/lib/HaApi.js \
+    qml/lib/EntityIcons.js \
     qml/pages/FirstPage.qml \
     qml/pages/SettingsPage.qml \
     qml/pages/LightDetailPage.qml \

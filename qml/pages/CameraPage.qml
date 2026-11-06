@@ -2,6 +2,8 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Nemo.Configuration 1.0
 import "../lib/HaApi.js" as HaApi
+import "../lib/EntityIcons.js" as EntityIcons
+import "../components"
 
 // Standbild einer camera-Entity, geöffnet per Tap in RoomsView.qml.
 //
@@ -16,6 +18,9 @@ import "../lib/HaApi.js" as HaApi
 //
 // Doppelpuffer: zwei Image-Items, das neue Bild wird erst sichtbar, wenn es
 // Image.Ready erreicht -- kein Flackern beim Nachladen.
+//
+// Aufbau wie alle Detailseiten (s. LightDetailPage.qml), nur übernimmt das
+// Kamerabild die Rolle des Statusblocks.
 Page {
     id: page
 
@@ -206,7 +211,7 @@ Page {
     SilicaFlickable {
         id: flickable
         anchors.fill: parent
-        contentHeight: column.height
+        contentHeight: column.height + Theme.paddingLarge
 
         PullDownMenu {
             MenuItem {
@@ -220,10 +225,14 @@ Page {
         Column {
             id: column
             width: page.width
+            spacing: Theme.paddingLarge
 
-            PageHeader {
+            DetailPageHeader {
                 title: entityName
                 description: cameraStateLabel(entityState)
+                // Erstes Bild bzw. Token-Nachholen -- das periodische
+                // Nachladen soll nicht alle paar Sekunden blinken.
+                busy: (!hasFrame && !loadFailed) || refetching
             }
 
             Item {
@@ -254,21 +263,25 @@ Page {
                     onStatusChanged: frameStatusChanged(imageB)
                 }
 
-                BusyIndicator {
+                // Platzhalter bis zum ersten Bild (busy zeigt der Header).
+                Icon {
+                    visible: !hasFrame && !loadFailed
                     anchors.centerIn: parent
-                    size: BusyIndicatorSize.Large
-                    running: !hasFrame && !loadFailed
+                    width: Theme.iconSizeLarge
+                    height: width
+                    sourceSize.width: width
+                    sourceSize.height: height
+                    source: "image://theme/" + EntityIcons.iconFor("camera") + "?" + Theme.secondaryColor
                 }
             }
 
             // Ein altes Bild bleibt stehen, wenn nur das Nachladen scheitert.
-            Label {
-                visible: hasFrame && loadFailed
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: qsTr("The image could not be refreshed.")
-                color: Theme.errorColor
+            DetailErrorLabel {
+                text: hasFrame && loadFailed ? qsTr("The image could not be refreshed.") : ""
+            }
+
+            SectionHeader {
+                text: qsTr("Display")
             }
 
             ComboBox {

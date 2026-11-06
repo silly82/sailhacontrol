@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import "../lib/HaApi.js" as HaApi
+import "../components"
 
 // Alarmanlage (alarm_control_panel), geöffnet per Tap in RoomsView.qml.
 // Zeigt den Zustand gross an und bietet die Scharf-Modi, die das Panel laut
@@ -11,6 +11,8 @@ import "../lib/HaApi.js" as HaApi
 // Code lebt nur in enteredCode, geht ausschliesslich als "code" in die
 // Service-Daten (nie in console.log, nie in ConfigurationValue) und wird
 // nach jedem Aufruf sowie beim Verlassen der Seite gelöscht.
+//
+// Aufbau wie alle Detailseiten, s. LightDetailPage.qml.
 Page {
     id: page
 
@@ -44,7 +46,6 @@ Page {
     readonly property bool isDisarmed: entityState === "disarmed"
 
     property string enteredCode: ""
-    property string errorText: ""
 
     function alarmStateLabel(state) {
         switch (state) {
@@ -72,9 +73,8 @@ Page {
     // ihn ablehnen) -- stattdessen Hinweis. Ein eingegebener Code geht auch
     // bei nicht verlangtem Code mit; HA ignoriert ihn dann.
     function callAlarm(service, needsCode) {
-        errorText = ""
         if (needsCode && enteredCode.length === 0) {
-            errorText = qsTr("Enter the code first.")
+            caller.errorText = qsTr("Enter the code first.")
             return
         }
         var serviceData = { entity_id: entityId }
@@ -82,13 +82,9 @@ Page {
             serviceData.code = enteredCode
         }
         clearCode()
-        HaApi.callService(Credentials.baseUrl, Credentials.token, "alarm_control_panel", service, serviceData,
-            function () {},
-            function (error) {
-                // Nur der Hinweis (HTTP-Status), nicht error.detail -- der
-                // Antworttext gehört nicht in die Oberfläche.
-                errorText = error.hint || qsTr("Unknown error")
-            })
+        // ServiceCaller zeigt nur error.hint (HTTP-Status), nie
+        // error.detail, und loggt serviceData nicht.
+        caller.call("alarm_control_panel", service, serviceData)
     }
 
     function disarm() {
@@ -117,6 +113,10 @@ Page {
         }
     }
 
+    ServiceCaller {
+        id: caller
+    }
+
     RemorsePopup {
         id: remorse
     }
@@ -132,42 +132,33 @@ Page {
             width: page.width
             spacing: Theme.paddingLarge
 
-            PageHeader {
+            DetailPageHeader {
                 title: entityName
+                description: alarmStateLabel(entityState)
+                busy: caller.busy
             }
 
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-                text: alarmStateLabel(entityState)
-                font.pixelSize: Theme.fontSizeExtraLarge
-                color: entityState === "triggered" ? Theme.errorColor
+            DetailStatusBlock {
+                domain: "alarm_control_panel"
+                readonly property color stateColor: entityState === "triggered" ? Theme.errorColor
                     : (isDisarmed ? Theme.secondaryHighlightColor : Theme.highlightColor)
+                iconColor: stateColor
+                valueColor: stateColor
+                value: alarmStateLabel(entityState)
+                detail: attributes.changed_by !== undefined && attributes.changed_by !== null && String(attributes.changed_by).length > 0
+                    ? qsTr("Changed by %1").arg(attributes.changed_by) : ""
             }
 
-            Label {
-                visible: attributes.changed_by !== undefined && attributes.changed_by !== null && String(attributes.changed_by).length > 0
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-                text: qsTr("Changed by %1").arg(attributes.changed_by)
-                font.pixelSize: Theme.fontSizeSmall
-                color: Theme.secondaryColor
-            }
-
-            Label {
-                visible: errorText.length > 0
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: errorText
-                color: Theme.errorColor
+            DetailErrorLabel {
+                text: caller.errorText
             }
 
             // -- Code entry --
+            SectionHeader {
+                visible: codeRequired
+                text: qsTr("Code")
+            }
+
             // "text": Passwortfeld (keine Vorschläge, kein Lernen).
             PasswordField {
                 id: codeField
@@ -224,69 +215,47 @@ Page {
             // -- Actions --
             SectionHeader {
                 text: qsTr("Arm")
-                visible: supportsArmHome || supportsArmAway || supportsArmNight || supportsArmVacation || supportsArmCustomBypass
+                visible: armGrid.visible
             }
 
-            Flow {
-                id: armFlow
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                spacing: Theme.paddingMedium
-                readonly property real buttonWidth: (width - spacing) / 2
-
-                Button {
-                    visible: supportsArmHome
-                    width: armFlow.buttonWidth
-                    text: qsTr("Home", "alarm arm mode")
-                    onClicked: callAlarm("alarm_arm_home", codeArmRequired)
-                }
-                Button {
-                    visible: supportsArmAway
-                    width: armFlow.buttonWidth
-                    text: qsTr("Away", "alarm arm mode")
-                    onClicked: callAlarm("alarm_arm_away", codeArmRequired)
-                }
-                Button {
-                    visible: supportsArmNight
-                    width: armFlow.buttonWidth
-                    text: qsTr("Night", "alarm arm mode")
-                    onClicked: callAlarm("alarm_arm_night", codeArmRequired)
-                }
-                Button {
-                    visible: supportsArmVacation
-                    width: armFlow.buttonWidth
-                    text: qsTr("Vacation", "alarm arm mode")
-                    onClicked: callAlarm("alarm_arm_vacation", codeArmRequired)
-                }
-                Button {
-                    visible: supportsArmCustomBypass
-                    width: armFlow.buttonWidth
-                    text: qsTr("Custom bypass", "alarm arm mode")
-                    onClicked: callAlarm("alarm_arm_custom_bypass", codeArmRequired)
-                }
+            ActionButtonGrid {
+                id: armGrid
+                actions: [
+                    { text: qsTr("Home", "alarm arm mode"), visible: supportsArmHome,
+                      action: function () { callAlarm("alarm_arm_home", codeArmRequired) } },
+                    { text: qsTr("Away", "alarm arm mode"), visible: supportsArmAway,
+                      action: function () { callAlarm("alarm_arm_away", codeArmRequired) } },
+                    { text: qsTr("Night", "alarm arm mode"), visible: supportsArmNight,
+                      action: function () { callAlarm("alarm_arm_night", codeArmRequired) } },
+                    { text: qsTr("Vacation", "alarm arm mode"), visible: supportsArmVacation,
+                      action: function () { callAlarm("alarm_arm_vacation", codeArmRequired) } },
+                    { text: qsTr("Custom bypass", "alarm arm mode"), visible: supportsArmCustomBypass,
+                      action: function () { callAlarm("alarm_arm_custom_bypass", codeArmRequired) } }
+                ]
             }
 
             SectionHeader {
                 text: qsTr("Disarm")
             }
 
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: qsTr("Disarm")
-                // Auch bei "disarmed" bedienbar -- falls die Live-Anzeige
-                // hinterherhinkt, soll Unscharf nie blockiert sein.
-                preferredWidth: Theme.buttonWidthLarge
-                onClicked: disarm()
+            // Unscharf auch bei "disarmed" bedienbar -- falls die
+            // Live-Anzeige hinterherhinkt, soll Unscharf nie blockiert sein.
+            // "Alarm auslösen" löst die Sirene aus -- nur mit Remorse-Frist
+            // und nur, wenn das Panel TRIGGER unterstützt. Bewusst in einer
+            // eigenen Zeile, nicht neben Unscharf.
+            ActionButtonGrid {
+                actions: [
+                    { text: qsTr("Disarm"), action: disarm }
+                ]
             }
 
-            // Löst die Sirene aus -- nur mit Remorse-Frist, und nur wenn das
-            // Panel TRIGGER unterstützt.
-            Button {
-                visible: supportsTrigger
-                anchors.horizontalCenter: parent.horizontalCenter
-                preferredWidth: Theme.buttonWidthLarge
-                text: qsTr("Trigger alarm")
-                onClicked: remorse.execute(qsTr("Triggering alarm"), function () { callAlarm("alarm_trigger", false) })
+            ActionButtonGrid {
+                actions: [
+                    { text: qsTr("Trigger alarm"), visible: supportsTrigger,
+                      action: function () {
+                          remorse.execute(qsTr("Triggering alarm"), function () { callAlarm("alarm_trigger", false) })
+                      } }
+                ]
             }
         }
     }

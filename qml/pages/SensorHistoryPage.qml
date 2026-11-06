@@ -1,12 +1,15 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import "../lib/HaApi.js" as HaApi
+import "../components"
 
 // Line chart of one numeric sensor's history, opened per tap from
 // SensorsView.qml. Data comes from /api/history/period (HaApi.getHistory) and
 // is drawn ONCE per data set (and on resize) into a plain QtQuick Canvas --
 // no animation, nothing per frame. Non-numeric states (unavailable/unknown)
 // are not drawn; the line is interrupted there instead of bridging the gap.
+//
+// Same layout as the other detail pages (see LightDetailPage.qml).
 Page {
     id: page
 
@@ -191,12 +194,32 @@ Page {
 
         Column {
             id: column
+            visible: configured
             width: page.width
-            spacing: Theme.paddingMedium
+            spacing: Theme.paddingLarge
 
-            PageHeader {
+            DetailPageHeader {
                 title: page.entityName
-                description: page.entityId
+                description: page.formatValue(page.lastValue)
+                busy: page.loading
+            }
+
+            DetailStatusBlock {
+                domain: "sensor"
+                entityId: page.entityId
+                unit: page.unit
+                // Until the history has loaded, lastValue is NaN and
+                // formatValue() falls back to the value from the list.
+                value: page.formatValue(page.lastValue)
+                detail: page.entityId
+            }
+
+            DetailErrorLabel {
+                text: page.errorText
+            }
+
+            SectionHeader {
+                text: qsTr("History")
             }
 
             ComboBox {
@@ -211,20 +234,28 @@ Page {
                 onCurrentIndexChanged: page.hours = page.periodHours[currentIndex]
             }
 
-            DetailItem {
-                visible: page.hasData
-                label: qsTr("Current")
-                value: page.formatValue(page.lastValue)
-            }
-            DetailItem {
-                visible: page.hasData
-                label: qsTr("Minimum")
-                value: page.formatValue(page.minValue)
-            }
-            DetailItem {
-                visible: page.hasData
-                label: qsTr("Maximum")
-                value: page.formatValue(page.maxValue)
+            // Replaces a ViewPlaceholder, which would overlap the status
+            // block.
+            Column {
+                visible: !page.loading && page.loadedOnce && page.errorText.length === 0 && !page.hasData
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                spacing: Theme.paddingSmall
+
+                Label {
+                    width: parent.width
+                    wrapMode: Text.Wrap
+                    text: qsTr("No history")
+                    color: Theme.highlightColor
+                    font.pixelSize: Theme.fontSizeLarge
+                }
+                Label {
+                    width: parent.width
+                    wrapMode: Text.Wrap
+                    text: qsTr("Home Assistant has no numeric values for this sensor in the selected period. Pull down to refresh.")
+                    color: Theme.secondaryHighlightColor
+                    font.pixelSize: Theme.fontSizeSmall
+                }
             }
 
             Item {
@@ -371,6 +402,17 @@ Page {
                     }
                 }
             }
+
+            DetailItem {
+                visible: page.hasData
+                label: qsTr("Minimum")
+                value: page.formatValue(page.minValue)
+            }
+            DetailItem {
+                visible: page.hasData
+                label: qsTr("Maximum")
+                value: page.formatValue(page.maxValue)
+            }
         }
 
         ViewPlaceholder {
@@ -379,25 +421,7 @@ Page {
             text: qsTr("Not configured yet")
             hintText: qsTr("Enter the Home Assistant URL and a long-lived access token in Settings first.")
         }
-        ViewPlaceholder {
-            flickable: flickable
-            enabled: configured && !loading && errorText.length > 0
-            text: qsTr("No connection")
-            hintText: errorText
-        }
-        ViewPlaceholder {
-            flickable: flickable
-            enabled: configured && !loading && loadedOnce && errorText.length === 0 && !page.hasData
-            text: qsTr("No history")
-            hintText: qsTr("Home Assistant has no numeric values for this sensor in the selected period. Pull down to refresh.")
-        }
 
         VerticalScrollDecorator {}
-    }
-
-    BusyIndicator {
-        anchors.centerIn: parent
-        size: BusyIndicatorSize.Large
-        running: page.loading
     }
 }

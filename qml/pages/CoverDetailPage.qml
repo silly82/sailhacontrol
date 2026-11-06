@@ -1,12 +1,14 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import "../lib/HaApi.js" as HaApi
+import "../components"
 
 // Submenu für Rollos/Markisen mit Positionsangabe (cover-Domain), geöffnet
 // per Tap auf den Namen in RoomsView.qml -- nur für Covers, die
 // SET_POSITION unterstützen oder current_position melden (s.
 // coverHasPosition() dort). Zeigt einen Positions-Slider und die
 // Auf/Stopp/Zu-Tasten, die das Cover laut supported_features kann.
+//
+// Aufbau wie alle Detailseiten, s. LightDetailPage.qml.
 Page {
     id: page
 
@@ -34,8 +36,6 @@ Page {
     readonly property bool hasPosition: attributes.current_position !== undefined && attributes.current_position !== null
     readonly property real coverPosition: hasPosition ? attributes.current_position : 0
 
-    property string errorText: ""
-
     function coverStateLabel(state) {
         switch (state) {
         case "open": return qsTr("Open", "cover state")
@@ -48,11 +48,8 @@ Page {
     }
 
     function callCover(service, serviceData) {
-        errorText = ""
         serviceData.entity_id = entityId
-        HaApi.callService(Credentials.baseUrl, Credentials.token, "cover", service, serviceData,
-            function () {},
-            function (error) { errorText = error.hint || qsTr("Unknown error") })
+        caller.call("cover", service, serviceData)
     }
 
     // Slider-Wert nur nachziehen, solange der Nutzer ihn nicht gerade
@@ -75,9 +72,13 @@ Page {
         }
     }
 
+    ServiceCaller {
+        id: caller
+    }
+
     SilicaFlickable {
         anchors.fill: parent
-        contentHeight: column.height
+        contentHeight: column.height + Theme.paddingLarge
 
         VerticalScrollDecorator {}
 
@@ -86,18 +87,39 @@ Page {
             width: page.width
             spacing: Theme.paddingLarge
 
-            PageHeader {
+            DetailPageHeader {
                 title: entityName
                 description: coverStateLabel(entityState)
+                busy: caller.busy
             }
 
-            Label {
-                visible: errorText.length > 0
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: errorText
-                color: Theme.errorColor
+            DetailStatusBlock {
+                domain: "cover"
+                iconColor: entityState === "closed" || entityState === "unavailable" ? Theme.secondaryColor : Theme.highlightColor
+                // HA: 0 = zu, 100 = offen.
+                value: hasPosition ? Math.round(coverPosition) + " %" : coverStateLabel(entityState)
+                detail: hasPosition ? qsTr("Position") : ""
+            }
+
+            DetailErrorLabel {
+                text: caller.errorText
+            }
+
+            ActionButtonGrid {
+                maxColumns: 3
+                actions: [
+                    { text: qsTr("Open", "cover action"), visible: supportsOpen,
+                      action: function () { callCover("open_cover", {}) } },
+                    { text: qsTr("Stop"), visible: supportsStop,
+                      action: function () { callCover("stop_cover", {}) } },
+                    { text: qsTr("Close"), visible: supportsClose,
+                      action: function () { callCover("close_cover", {}) } }
+                ]
+            }
+
+            SectionHeader {
+                visible: supportsSetPosition
+                text: qsTr("Controls")
             }
 
             Slider {
@@ -111,45 +133,6 @@ Page {
                 value: coverPosition
                 valueText: Math.round(value) + " %"
                 onReleased: callCover("set_cover_position", { position: Math.round(value) })
-            }
-
-            // Meldet das Cover eine Position, kann sie aber nicht gezielt
-            // anfahren: nur anzeigen.
-            Label {
-                visible: !supportsSetPosition && hasPosition
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Position: %1 %").arg(Math.round(coverPosition))
-                color: Theme.secondaryHighlightColor
-            }
-
-            Row {
-                id: buttonRow
-                readonly property int buttonCount: (supportsOpen ? 1 : 0) + (supportsStop ? 1 : 0) + (supportsClose ? 1 : 0)
-                readonly property real buttonWidth: buttonCount > 0
-                    ? (parent.width - 2 * Theme.horizontalPageMargin - (buttonCount - 1) * Theme.paddingMedium) / buttonCount : 0
-                visible: buttonCount > 0
-                x: Theme.horizontalPageMargin
-                spacing: Theme.paddingMedium
-
-                Button {
-                    visible: supportsOpen
-                    width: buttonRow.buttonWidth
-                    text: qsTr("Open", "cover action")
-                    onClicked: callCover("open_cover", {})
-                }
-                Button {
-                    visible: supportsStop
-                    width: buttonRow.buttonWidth
-                    text: qsTr("Stop")
-                    onClicked: callCover("stop_cover", {})
-                }
-                Button {
-                    visible: supportsClose
-                    width: buttonRow.buttonWidth
-                    text: qsTr("Close")
-                    onClicked: callCover("close_cover", {})
-                }
             }
         }
     }
