@@ -4,6 +4,7 @@ import QtWebSockets 1.0
 import Nemo.Configuration 1.0
 import Nemo.Notifications 1.0
 import "../lib/HaApi.js" as HaApi
+import "../lib/EntityIcons.js" as EntityIcons
 import "../components"
 
 // One of two swipeable sub-views of FirstPage.qml (the other is
@@ -271,51 +272,11 @@ Item {
     // Glühbirnen-/Thermometer-/Staubsauger-Icon im Theme -- wo nichts
     // Passendes existiert, steht ein neutrales Icon statt eines
     // irreführenden:
-    //   light                       icon-m-flashlight  (Lichtquelle)
-    //   switch                      icon-m-charging    (Strom/Steckdose)
-    //   input_boolean               icon-m-setting     (Helfer/Einstellung)
-    //   fan                         icon-m-sync        (Drehbewegung)
-    //   cover                       icon-m-home        (Fenster/Tor am Haus)
-    //   climate                     icon-m-levels      (Regler/Sollwert)
-    //   media_player                icon-m-speaker
-    //   scene                       icon-m-ambience    (Stimmung)
-    //   script                      icon-m-play        (Ablauf starten)
-    //   button, input_button        icon-m-dot         (Taster)
-    //   lock                        icon-m-device-lock
-    //   camera                      icon-m-camera
-    //   alarm_control_panel         icon-m-alarm
-    //   vacuum                      icon-m-other       (neutral)
-    //   sensor (Akku)               icon-m-battery     (entity_id enthält "battery")
-    //   sensor (W/kW/Wh/kWh)        icon-m-charging
-    //   sensor (sonst)              icon-m-about       (reiner Messwert)
+    //   (mapping: qml/lib/EntityIcons.js, shared with the detail pages)
     // Sensor-Zeilen tragen keine Attribute im Model (s. buildEntries()) --
     // daher die Einheit bzw. die entity_id statt device_class.
     function entityIconName(domain, kind, entityId, unit) {
-        switch (domain) {
-        case "light": return "icon-m-flashlight"
-        case "switch": return "icon-m-charging"
-        case "input_boolean": return "icon-m-setting"
-        case "fan": return "icon-m-sync"
-        case "cover": return "icon-m-home"
-        case "climate": return "icon-m-levels"
-        case "media_player": return "icon-m-speaker"
-        case "scene": return "icon-m-ambience"
-        case "script": return "icon-m-play"
-        case "button":
-        case "input_button": return "icon-m-dot"
-        case "lock": return "icon-m-device-lock"
-        case "camera": return "icon-m-camera"
-        case "alarm_control_panel": return "icon-m-alarm"
-        case "sensor":
-            if (entityId.indexOf("battery") >= 0) {
-                return "icon-m-battery"
-            }
-            if (unit === "W" || unit === "kW" || unit === "Wh" || unit === "kWh") {
-                return "icon-m-charging"
-            }
-            return "icon-m-about"
-        default: return "icon-m-other"
-        }
+        return EntityIcons.iconFor(domain, entityId, unit)
     }
 
     // Farbe des Zeilen-Symbols: primaryColor im Ruhezustand,

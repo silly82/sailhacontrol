@@ -3,7 +3,7 @@ import QtPositioning 5.4
 
 // One-shot position fix for the opt-in mobile_app device_tracker (see
 // harbour-hacontrol.qml's updateDeviceSensors() and the "Report location to
-// Home Assistant" switch in SettingsPage.qml). The source only runs between
+// Home Assistant" switch in DeviceSettingsPage.qml). The source only runs between
 // query() and the first good fix (or the timeout), so GPS isn't kept on
 // between the 10-minute reports. Never log coordinates.
 Item {
