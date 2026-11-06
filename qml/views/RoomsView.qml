@@ -1002,15 +1002,13 @@ Item {
         }
     }
 
-    // Gleiches Qt.createQmlObject()-Muster wie notifyStateChange() in
-    // harbour-hacontrol.qml, hier lokal statt geteilt -- kein Grund, für eine
-    // einzelne Notification über Dateigrenzen zu koppeln.
+    // Building the notification, its buttons (data.actions), tag replacement
+    // and clear_notification live in components/PushNotifications.qml
+    // (instance `pushNotifier` in harbour-hacontrol.qml, next to the D-Bus
+    // adaptor that receives the button taps). wsProfileId tells it which
+    // instance the push came from, so a button fires back into that one.
     function showPushNotification(event) {
-        var component = 'import QtQuick 2.0\nimport Nemo.Notifications 1.0\nNotification { appName: "HA Control"; category: "x-nemo.example" }'
-        var notification = Qt.createQmlObject(component, root, "HaControlPushNotification")
-        notification.summary = event.title || qsTr("Home Assistant")
-        notification.body = event.message || ""
-        notification.publish()
+        pushNotifier.show(event, wsProfileId)
     }
 
     // Kein automatisches Reconnect im WebSocket-Typ selbst -- bei

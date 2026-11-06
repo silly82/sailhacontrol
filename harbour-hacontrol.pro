@@ -42,6 +42,7 @@ DISTFILES += qml/harbour-hacontrol.qml \
     qml/components/ScrollingLabel.qml \
     qml/components/DeviceStatusProbe.qml \
     qml/components/LocationProbe.qml \
+    qml/components/PushNotifications.qml \
     qml/lib/HaApi.js \
     qml/pages/FirstPage.qml \
     qml/pages/SettingsPage.qml \

@@ -1,6 +1,8 @@
 #ifndef CREDENTIALS_H
 #define CREDENTIALS_H
 
+#include <functional>
+
 #include <QNetworkAccessManager>
 #include <QNetworkConfigurationManager>
 #include <QNetworkReply>
@@ -152,6 +154,12 @@ public:
     Q_INVOKABLE void renameProfile(int id, const QString &name);
     Q_INVOKABLE void setActiveProfile(int id);
     Q_INVOKABLE QString settingsPrefixFor(int id) const;
+    // Reads the stored internal + external URL of any profile, active or not,
+    // without touching the active one's state -- for notification actions
+    // that belong to an instance other than the selected one (their mobile_app
+    // webhook needs only the URL, not the token). Answers asynchronously with
+    // profileUrlsRead(requestId, ...); empty strings if nothing is stored.
+    Q_INVOKABLE void readProfileUrls(int profileId, int requestId);
 
 Q_SIGNALS:
     void baseUrlChanged();
@@ -168,6 +176,7 @@ Q_SIGNALS:
     void profilesChanged();
     void activeProfileIdChanged();
     void activeProfileNameChanged();
+    void profileUrlsRead(int requestId, int profileId, const QString &internalUrl, const QString &externalUrl);
 
 private:
     struct Profile {
@@ -294,6 +303,16 @@ private:
     QString m_storagePluginName;
     QString m_encryptionPluginName;
     bool m_pluginsResolved;
+
+    // readProfileUrls() calls made before the plugin names were known
+    // (D-Bus activation by a notification action right at startup).
+    struct PendingUrlRead {
+        int profileId;
+        int requestId;
+    };
+    QVector<PendingUrlRead> m_pendingUrlReads;
+    void flushPendingUrlReads();
+    void readOneSecret(const QString &name, std::function<void(const QString &)> done);
 };
 
 #endif // CREDENTIALS_H

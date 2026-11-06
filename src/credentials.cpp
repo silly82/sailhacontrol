@@ -143,6 +143,7 @@ Credentials::Credentials(QObject *parent)
                        << "-- falling back to the default plugin names";
             m_pluginsResolved = true;
             startLoading();
+            flushPendingUrlReads();
             return;
         }
         choosePlugins(m_pluginInfo.storagePlugins(),
@@ -350,6 +351,7 @@ void Credentials::choosePlugins(const QVector<PluginInfo> &storage,
              << "and encryption plugin" << m_encryptionPluginName;
     m_pluginsResolved = true;
     startLoading();
+    flushPendingUrlReads();
 }
 
 QVariantList Credentials::profiles() const
@@ -407,6 +409,56 @@ QString Credentials::settingsPrefixFor(int id) const
         return SettingsRoot;
     }
     return SettingsRoot + QStringLiteral("profiles/") + QString::number(id) + QLatin1Char('/');
+}
+
+void Credentials::readProfileUrls(int profileId, int requestId)
+{
+    if (!m_pluginsResolved) {
+        PendingUrlRead pending;
+        pending.profileId = profileId;
+        pending.requestId = requestId;
+        m_pendingUrlReads.append(pending);
+        return;
+    }
+    // Internal first, then external -- sequential like the main load chain.
+    // The URLs themselves are never logged.
+    readOneSecret(secretName(BaseUrlSecretName, profileId), [this, profileId, requestId](const QString &internalUrl) {
+        readOneSecret(secretName(ExternalUrlSecretName, profileId), [this, profileId, requestId, internalUrl](const QString &externalUrl) {
+            Q_EMIT profileUrlsRead(requestId, profileId, internalUrl, externalUrl);
+        });
+    });
+}
+
+void Credentials::flushPendingUrlReads()
+{
+    const QVector<PendingUrlRead> pending = m_pendingUrlReads;
+    m_pendingUrlReads.clear();
+    for (const PendingUrlRead &read : pending) {
+        readProfileUrls(read.profileId, read.requestId);
+    }
+}
+
+void Credentials::readOneSecret(const QString &name, std::function<void(const QString &)> done)
+{
+    StoredSecretRequest *request = new StoredSecretRequest(this);
+    request->setManager(&m_manager);
+    request->setUserInteractionMode(SecretManager::SystemInteraction);
+    request->setIdentifier(Secret::Identifier(name, QString(), m_storagePluginName));
+    connect(request, &StoredSecretRequest::statusChanged, this, [request, name, done]() {
+        if (request->status() != Request::Finished) {
+            return;
+        }
+        QString value;
+        const Result result = request->result();
+        if (result.code() == Result::Succeeded) {
+            value = QString::fromUtf8(request->secret().data());
+        } else {
+            qDebug() << "Credentials: nothing read for" << name << "(" << result.errorMessage() << ")";
+        }
+        request->deleteLater();
+        done(value);
+    });
+    request->startRequest();
 }
 
 int Credentials::indexOfProfile(int id) const

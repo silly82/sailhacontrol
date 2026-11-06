@@ -378,15 +378,18 @@ ApplicationWindow {
         ensureMobileAppRegistered()
     }
 
-    // D-Bus-Endpunkt für den "Umschalten"-Button auf der Benachrichtigung
-    // (s. notifyStateChange() unten) -- rein in QML über Nemo.DBus'
-    // DBusAdaptor, kein C++ nötig. service/path/iface ergeben sich aus dem
-    // in .desktop/[X-Sailjail] konfigurierten OrganizationName+ApplicationName
-    // (org.example.hacontrol), das Sailjail dem Prozess ohnehin schon als
-    // eigenen D-Bus-Namen zuteilt. Gleiche Restriktion wie der Background-
-    // Poll: funktioniert nur, während dieser App-Prozess resident ist -- bei
-    // vollständig beendeter App läuft der Aufruf ins Leere (kein D-Bus-
-    // Activation-.service-File vorhanden).
+    // D-Bus endpoint for notification buttons: the "Toggle" button of the
+    // watched-entity notifications (notifyStateChange() below) and the
+    // buttons of Home Assistant push notifications (PushNotifications.qml).
+    // Pure QML via Nemo.DBus' DBusAdaptor. service/path/iface follow the
+    // OrganizationName+ApplicationName from .desktop/[X-Sailjail]
+    // (org.example.hacontrol), the D-Bus name Sailjail lets the process own.
+    // The same .desktop section's ExecDBus makes sailjaild generate a D-Bus
+    // activation file for that name, so a button tapped while the app is not
+    // running starts it (via invoker --single-instance), and dbus-daemon hands
+    // the queued call over once this adaptor has registered. While the app
+    // runs, the call simply arrives here -- there is never a second process.
+    // Calls can come in before Credentials has loaded, hence whenLoaded().
     DBusAdaptor {
         service: "org.example.hacontrol"
         path: "/org/example/hacontrol"
@@ -394,17 +397,37 @@ ApplicationWindow {
 
         function toggleEntity(entityId) {
             var domain = entityId.split(".")[0]
-            // Nur Domains, deren Benachrichtigung überhaupt einen Toggle-
-            // Button trägt -- dieser D-Bus-Endpunkt ist für jeden Prozess
-            // der Session erreichbar, eine Alarmanlage (alarm_control_panel)
-            // oder ein Schloss darf darüber nie umgeschaltet werden.
+            // Only domains whose notification carries a Toggle button at all:
+            // this D-Bus endpoint is reachable by any process in the session,
+            // so an alarm panel or a lock must never be switched through it.
             if (appWindow.toggleNotificationDomains.indexOf(domain) < 0) {
                 return
             }
-            HaApi.callService(Credentials.baseUrl, Credentials.token, domain, "toggle", { entity_id: entityId },
-                function () {},
-                function (error) {})
+            pushNotifier.whenLoaded(function () {
+                HaApi.callService(Credentials.baseUrl, Credentials.token, domain, "toggle", { entity_id: entityId },
+                    function () {},
+                    function (error) {})
+            })
         }
+
+        // Push notification button with an action key -> mobile_app event.
+        function notificationAction(profileId, action, tag, nonce) {
+            pushNotifier.handleAction(profileId, action, tag, nonce)
+        }
+
+        // Push notification button with an http(s) uri.
+        function openNotificationUri(uri, nonce) {
+            pushNotifier.handleUri(uri, nonce)
+        }
+
+        // Tap on a push notification itself.
+        function openNotification(profileId, tag, nonce) {
+            appWindow.activate()
+        }
+    }
+
+    PushNotifications {
+        id: pushNotifier
     }
 
     // Domains, deren "Notify on change"-Benachrichtigung einen Toggle-Button
