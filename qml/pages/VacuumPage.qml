@@ -1,10 +1,12 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import "../lib/HaApi.js" as HaApi
+import "../components"
 
 // Saugroboter (vacuum), geöffnet per Tap in RoomsView.qml. Zeigt Zustand
 // und Akku, die Tasten, die der Roboter laut supported_features kann, und
 // die Saugstufe aus fan_speed_list.
+//
+// Aufbau wie alle Detailseiten, s. LightDetailPage.qml.
 Page {
     id: page
 
@@ -33,8 +35,6 @@ Page {
     readonly property bool supportsFanSpeed: fanSpeeds.length > 0 && (!hasFeatureInfo || (vacuumFeatures & 32) !== 0)
     readonly property bool hasBattery: attributes.battery_level !== undefined && attributes.battery_level !== null
 
-    property string errorText: ""
-
     function vacuumStateLabel(state) {
         switch (state) {
         case "cleaning": return qsTr("Cleaning")
@@ -49,11 +49,8 @@ Page {
     }
 
     function callVacuum(service, serviceData) {
-        errorText = ""
         serviceData.entity_id = entityId
-        HaApi.callService(Credentials.baseUrl, Credentials.token, "vacuum", service, serviceData,
-            function () {},
-            function (error) { errorText = error.hint || qsTr("Unknown error") })
+        caller.call("vacuum", service, serviceData)
     }
 
     Connections {
@@ -67,6 +64,10 @@ Page {
         }
     }
 
+    ServiceCaller {
+        id: caller
+    }
+
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: column.height + Theme.paddingLarge
@@ -78,70 +79,50 @@ Page {
             width: page.width
             spacing: Theme.paddingLarge
 
-            PageHeader {
+            DetailPageHeader {
                 title: entityName
-                description: hasBattery
-                    ? qsTr("%1 · Battery %2 %").arg(vacuumStateLabel(entityState)).arg(Math.round(attributes.battery_level))
-                    : vacuumStateLabel(entityState)
+                description: vacuumStateLabel(entityState)
+                busy: caller.busy
             }
 
-            Label {
-                visible: errorText.length > 0
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: errorText
-                color: Theme.errorColor
+            DetailStatusBlock {
+                domain: "vacuum"
+                iconColor: entityState === "error" ? Theme.errorColor
+                    : (entityState === "cleaning" || entityState === "returning" ? Theme.highlightColor : Theme.secondaryColor)
+                value: hasBattery ? Math.round(attributes.battery_level) + " %" : vacuumStateLabel(entityState)
+                detail: hasBattery ? qsTr("Battery") : ""
             }
 
             // Fehlermeldung des Roboters selbst (manche Integrationen melden
-            // sie als Attribut "error" bzw. "status").
-            Label {
-                visible: entityState === "error" && (attributes.error !== undefined || attributes.status !== undefined)
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: String(attributes.error !== undefined ? attributes.error : (attributes.status || ""))
-                color: Theme.errorColor
+            // sie als Attribut "error" bzw. "status") -- an derselben Stelle
+            // wie Fehler beim Aufruf.
+            DetailErrorLabel {
+                text: entityState === "error" && (attributes.error !== undefined || attributes.status !== undefined)
+                    ? String(attributes.error !== undefined ? attributes.error : (attributes.status || "")) : ""
             }
 
-            Flow {
-                id: buttonFlow
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                spacing: Theme.paddingMedium
-                readonly property real buttonWidth: (width - spacing) / 2
+            DetailErrorLabel {
+                text: caller.errorText
+            }
 
-                Button {
-                    visible: supportsStart
-                    width: buttonFlow.buttonWidth
-                    text: qsTr("Start", "vacuum action")
-                    onClicked: callVacuum("start", {})
-                }
-                Button {
-                    visible: supportsPause
-                    width: buttonFlow.buttonWidth
-                    text: qsTr("Pause", "vacuum action")
-                    onClicked: callVacuum("pause", {})
-                }
-                Button {
-                    visible: supportsStop
-                    width: buttonFlow.buttonWidth
-                    text: qsTr("Stop")
-                    onClicked: callVacuum("stop", {})
-                }
-                Button {
-                    visible: supportsReturnHome
-                    width: buttonFlow.buttonWidth
-                    text: qsTr("Return to dock")
-                    onClicked: callVacuum("return_to_base", {})
-                }
-                Button {
-                    visible: supportsLocate
-                    width: buttonFlow.buttonWidth
-                    text: qsTr("Locate")
-                    onClicked: callVacuum("locate", {})
-                }
+            ActionButtonGrid {
+                actions: [
+                    { text: qsTr("Start", "vacuum action"), visible: supportsStart,
+                      action: function () { callVacuum("start", {}) } },
+                    { text: qsTr("Pause", "vacuum action"), visible: supportsPause,
+                      action: function () { callVacuum("pause", {}) } },
+                    { text: qsTr("Stop"), visible: supportsStop,
+                      action: function () { callVacuum("stop", {}) } },
+                    { text: qsTr("Return to dock"), visible: supportsReturnHome,
+                      action: function () { callVacuum("return_to_base", {}) } },
+                    { text: qsTr("Locate"), visible: supportsLocate,
+                      action: function () { callVacuum("locate", {}) } }
+                ]
+            }
+
+            SectionHeader {
+                visible: supportsFanSpeed
+                text: qsTr("Controls")
             }
 
             ComboBox {

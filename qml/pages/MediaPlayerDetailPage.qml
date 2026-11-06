@@ -1,11 +1,13 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import "../lib/HaApi.js" as HaApi
+import "../components"
 
 // Submenü für Media Player, geöffnet per Tap auf den Namen in
 // RoomsView.qml. Zeigt Cover-Bild und Titel/Interpret (falls vorhanden),
 // Play/Pause, Ein/Aus, Quelle, Stummschalten und einen Lautstärke-Regler
 // (falls volume_level unterstützt wird).
+//
+// Aufbau wie alle Detailseiten, s. LightDetailPage.qml.
 Page {
     id: page
 
@@ -18,8 +20,6 @@ Page {
     // RoomsView.qml (liveStateReceived), wie bei CoverDetailPage.qml. Darf
     // null sein (dann ohne Live-Update).
     property var stateSource: null
-
-    property string errorText: ""
 
     // MediaPlayerEntityFeature: VOLUME_MUTE = 8, TURN_ON = 128,
     // TURN_OFF = 256, SELECT_SOURCE = 2048. Fehlt supported_features ganz:
@@ -61,13 +61,19 @@ Page {
         }
     }
 
+    readonly property bool hasTitle: attributes.media_title !== undefined && attributes.media_title !== null
+        && String(attributes.media_title).length > 0
+    readonly property bool hasVolume: attributes.volume_level !== undefined && attributes.volume_level !== null
+    readonly property real volume: hasVolume ? attributes.volume_level : 0.5
+
     function callMediaPlayer(service, serviceData) {
-        errorText = ""
         serviceData.entity_id = entityId
-        HaApi.callService(Credentials.baseUrl, Credentials.token, "media_player", service, serviceData,
-            function () {},
-            function (error) { errorText = error.hint || qsTr("Unknown error") })
+        caller.call("media_player", service, serviceData)
     }
+
+    // Slider nur nachziehen, solange er nicht festgehalten wird (wie
+    // CoverDetailPage.qml).
+    onVolumeChanged: if (!volumeSlider.down) volumeSlider.value = volume
 
     Connections {
         target: stateSource
@@ -80,9 +86,13 @@ Page {
         }
     }
 
+    ServiceCaller {
+        id: caller
+    }
+
     SilicaFlickable {
         anchors.fill: parent
-        contentHeight: column.height
+        contentHeight: column.height + Theme.paddingLarge
 
         VerticalScrollDecorator {}
 
@@ -91,24 +101,22 @@ Page {
             width: page.width
             spacing: Theme.paddingLarge
 
-            PageHeader {
+            DetailPageHeader {
                 title: entityName
+                description: stateLabel(entityState)
+                busy: caller.busy
             }
 
-            Label {
-                visible: errorText.length > 0
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: errorText
-                color: Theme.errorColor
+            DetailStatusBlock {
+                domain: "media_player"
+                iconColor: entityState === "playing" ? Theme.highlightColor : Theme.secondaryColor
+                value: hasTitle ? String(attributes.media_title) : stateLabel(entityState)
+                detail: hasTitle && attributes.media_artist !== undefined && attributes.media_artist !== null
+                    ? String(attributes.media_artist) : ""
             }
 
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                text: stateLabel(entityState)
-                color: Theme.secondaryHighlightColor
+            DetailErrorLabel {
+                text: caller.errorText
             }
 
             Image {
@@ -124,19 +132,9 @@ Page {
                 source: artworkUrl
             }
 
-            Label {
-                visible: attributes.media_title !== undefined
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: attributes.media_artist !== undefined
-                    ? attributes.media_artist + " – " + attributes.media_title
-                    : (attributes.media_title || "")
-            }
-
+            // Transporttasten: Medien-üblich als IconButtons, zentriert.
             Row {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
+                anchors.horizontalCenter: parent.horizontalCenter
                 spacing: Theme.paddingLarge
 
                 IconButton {
@@ -155,14 +153,28 @@ Page {
                 }
             }
 
+            ActionButtonGrid {
+                actions: [
+                    { text: isOff ? qsTr("Turn on") : qsTr("Turn off"),
+                      visible: isOff ? supportsTurnOn : supportsTurnOff,
+                      action: function () { callMediaPlayer(isOff ? "turn_on" : "turn_off", {}) } }
+                ]
+            }
+
+            SectionHeader {
+                visible: hasVolume || supportsMute || supportsSelectSource
+                text: qsTr("Controls")
+            }
+
             Slider {
-                visible: attributes.volume_level !== undefined
+                id: volumeSlider
+                visible: hasVolume
                 width: parent.width
                 label: qsTr("Volume")
                 minimumValue: 0
                 maximumValue: 1
                 stepSize: 0.05
-                value: attributes.volume_level !== undefined ? attributes.volume_level : 0.5
+                value: volume
                 valueText: Math.round(value * 100) + " %"
                 onReleased: callMediaPlayer("volume_set", { volume_level: value })
             }
@@ -191,13 +203,6 @@ Page {
                         }
                     }
                 }
-            }
-
-            Button {
-                visible: isOff ? supportsTurnOn : supportsTurnOff
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: isOff ? qsTr("Turn on") : qsTr("Turn off")
-                onClicked: callMediaPlayer(isOff ? "turn_on" : "turn_off", {})
             }
         }
     }
