@@ -283,6 +283,103 @@
     </message>
 </context>
 <context>
+    <name>ConnectionSettingsPage</name>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="88"/>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="118"/>
+        <source>Connection</source>
+        <extracomment>Settings: page with URLs, connection mode and token</extracomment>
+        <translation>Verbindung</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="93"/>
+        <source>Server</source>
+        <extracomment>Settings &gt; Connection: section with the two URLs</extracomment>
+        <translation>Server</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="99"/>
+        <source>Home Assistant URL</source>
+        <translation>Home-Assistant-URL</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="100"/>
+        <source>http://homeassistant.local:8123</source>
+        <translation>http://homeassistant.local:8123</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="108"/>
+        <source>External URL (optional)</source>
+        <translation>Externe URL (optional)</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="109"/>
+        <source>https://example.ui.nabu.casa</source>
+        <translation>https://example.ui.nabu.casa</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="110"/>
+        <source>Used when the URL above can&apos;t be reached, e.g. Nabu Casa or Tailscale. Same token.</source>
+        <translation>Wird verwendet, wenn die URL oben nicht erreichbar ist, z. B. Nabu Casa oder Tailscale. Gleicher Token.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="123"/>
+        <source>Checking whether the internal URL is reachable…</source>
+        <translation>Prüfe, ob die interne URL erreichbar ist…</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="125"/>
+        <source>Connected via: external URL</source>
+        <translation>Verbunden über: externe URL</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="126"/>
+        <source>Connected via: internal URL</source>
+        <translation>Verbunden über: interne URL</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="129"/>
+        <source>Automatic</source>
+        <translation>Automatisch</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="130"/>
+        <source>Internal URL only</source>
+        <translation>Nur interne URL</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="131"/>
+        <source>External URL only</source>
+        <translation>Nur externe URL</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="145"/>
+        <source>Access</source>
+        <extracomment>Settings &gt; Connection: section with the access token</extracomment>
+        <translation>Zugang</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="151"/>
+        <source>Long-Lived Access Token</source>
+        <translation>Long-Lived Access Token</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="152"/>
+        <source>create one in HA: Profile → Security</source>
+        <translation>erstellt in HA: Profil → Sicherheit</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="153"/>
+        <source>Stored encrypted with Sailfish Secrets. Saved once URL and token are filled in.</source>
+        <translation>Verschlüsselt über Sailfish Secrets gespeichert, sobald URL und Token ausgefüllt sind.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ConnectionSettingsPage.qml" line="164"/>
+        <source>Saving failed: %1</source>
+        <translation>Speichern fehlgeschlagen: %1</translation>
+    </message>
+</context>
+<context>
     <name>CoverDetailPage</name>
     <message>
         <location filename="../qml/pages/CoverDetailPage.qml" line="41"/>
@@ -368,83 +465,125 @@
 <context>
     <name>CoverSettingsPage</name>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="61"/>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="111"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="73"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="155"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="159"/>
+        <source>Weather</source>
+        <translation>Wetter</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="74"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="163"/>
+        <source>Shown at the top of the sensor overview and on the app cover.</source>
+        <translation>Wird oben in der Sensor-Übersicht und auf dem App-Cover angezeigt.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="76"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="161"/>
+        <source>Automatic</source>
+        <translation>Automatisch</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="77"/>
+        <source>The first weather entity Home Assistant reports</source>
+        <translation>Die erste Wetter-Entity, die Home Assistant meldet</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="79"/>
+        <source>Search weather entities</source>
+        <translation>Wetter-Entities suchen</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="80"/>
+        <source>No weather entity matches the search.</source>
+        <translation>Keine Wetter-Entity passt zur Suche.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="81"/>
+        <source>Home Assistant has no weather entities.</source>
+        <translation>Home Assistant hat keine Wetter-Entities.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="92"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="136"/>
         <source>First button</source>
         <extracomment>Cover settings: the first (left) cover action</extracomment>
         <translation>Erste Taste</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="61"/>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="120"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="92"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="146"/>
         <source>Second button</source>
         <extracomment>Cover settings: the optional second (right) cover action</extracomment>
         <translation>Zweite Taste</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="62"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="93"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="140"/>
         <source>Scenes and scripts are run, lights and switches are toggled.</source>
         <translation>Szenen und Skripte werden ausgeführt, Lichter und Schalter umgeschaltet.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="64"/>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="113"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="95"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="138"/>
         <source>Last used light</source>
         <translation>Zuletzt benutztes Licht</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="64"/>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="122"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="95"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="148"/>
         <source>None</source>
         <translation>Keine</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="66"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="97"/>
         <source>The light you last switched in the app (default)</source>
         <translation>Das zuletzt in der App geschaltete Licht (Standard)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="67"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="98"/>
         <source>Only one button on the cover (default)</source>
         <translation>Nur eine Taste auf dem Cover (Standard)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="69"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="100"/>
         <source>Search scenes, scripts, lights, switches</source>
         <translation>Szenen, Skripte, Lichter, Schalter suchen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="95"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="127"/>
+        <source>Cover &amp; weather</source>
+        <extracomment>Settings: page with the cover buttons and the weather entity</extracomment>
+        <translation>Cover &amp; Wetter</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="131"/>
         <source>Cover</source>
         <translation>Cover</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="102"/>
-        <source>The app cover can have up to two buttons. Scenes and scripts are run, lights and switches are toggled.</source>
-        <translation>Das App-Cover kann bis zu zwei Tasten haben. Szenen und Skripte werden ausgeführt, Lichter und Schalter umgeschaltet.</translation>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="170"/>
+        <source>Shows temperature and condition of this weather entity on the cover.</source>
+        <extracomment>Cover settings: description of the &quot;Show weather&quot; switch, below the weather entity selector</extracomment>
+        <translation>Zeigt Temperatur und Wetterlage dieser Wetter-Entity auf dem Cover.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="124"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="150"/>
         <source>Shown to the right of the first one</source>
         <translation>Wird rechts neben der ersten angezeigt</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="129"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="168"/>
         <source>Show weather</source>
         <translation>Wetter anzeigen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="130"/>
-        <source>Current temperature and condition of the weather entity chosen in the sensor overview. Updated whenever the sensor overview refreshes.</source>
-        <translation>Aktuelle Temperatur und Wetterlage der in der Sensor-Übersicht gewählten Wetter-Entity. Wird bei jeder Aktualisierung der Sensor-Übersicht nachgeführt.</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="70"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="101"/>
         <source>No scene, script, light or switch matches the search.</source>
         <translation>Keine Szene, kein Skript, Licht oder Schalter passt zur Suche.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="71"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="102"/>
         <source>Home Assistant has no scenes, scripts, lights or switches.</source>
         <translation>Home Assistant hat keine Szenen, Skripte, Lichter oder Schalter.</translation>
     </message>
@@ -455,6 +594,62 @@
         <location filename="../src/credentials.cpp" line="398"/>
         <source>Home</source>
         <translation>Zuhause</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceSettingsPage</name>
+    <message>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="18"/>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="61"/>
+        <source>SailfishOS Phone</source>
+        <translation>SailfishOS Phone</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="50"/>
+        <source>Device &amp; sensors</source>
+        <extracomment>Settings: page with the mobile_app registration and location reporting</extracomment>
+        <translation>Gerät &amp; Sensoren</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="54"/>
+        <source>Home Assistant device registration</source>
+        <translation>Home-Assistant-Geräteregistrierung</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="60"/>
+        <source>Device name</source>
+        <translation>Gerätename</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="63"/>
+        <source>Registered as its own device in Home Assistant, with battery and connection sensors.</source>
+        <translation>In Home Assistant als eigenes Gerät registriert, mit Akku- und Verbindungssensoren.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="64"/>
+        <source>Not registered yet. Tried automatically once URL and token are valid.</source>
+        <translation>Noch nicht registriert. Wird automatisch versucht, sobald URL und Token gültig sind.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="70"/>
+        <source>Re-register device</source>
+        <translation>Gerät neu registrieren</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="76"/>
+        <source>Location</source>
+        <extracomment>Settings &gt; Device &amp; sensors: section with the location switch</extracomment>
+        <translation>Standort</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="80"/>
+        <source>Report location to Home Assistant</source>
+        <translation>Standort an Home Assistant melden</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/DeviceSettingsPage.qml" line="81"/>
+        <source>Sends this phone&apos;s position as its device tracker: at app start, on refresh and every 10 minutes in the background. Turning it off doesn&apos;t delete positions already stored.</source>
+        <translation>Sendet die Position dieses Telefons als Device-Tracker: beim App-Start, beim Aktualisieren und alle 10 Minuten im Hintergrund. Ausschalten löscht bereits gespeicherte Positionen nicht.</translation>
     </message>
 </context>
 <context>
@@ -642,331 +837,331 @@
 <context>
     <name>RoomsView</name>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="89"/>
+        <location filename="../qml/views/RoomsView.qml" line="90"/>
         <source>No room</source>
         <translation>Ohne Raum</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="92"/>
+        <location filename="../qml/views/RoomsView.qml" line="93"/>
         <source>Favorites</source>
         <translation>Favoriten</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="193"/>
+        <location filename="../qml/views/RoomsView.qml" line="194"/>
         <source>Locked</source>
         <translation>Abgeschlossen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="194"/>
+        <location filename="../qml/views/RoomsView.qml" line="195"/>
         <source>Unlocked</source>
         <translation>Aufgeschlossen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="195"/>
+        <location filename="../qml/views/RoomsView.qml" line="196"/>
         <source>Locking</source>
         <translation>Wird abgeschlossen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="196"/>
-        <location filename="../qml/views/RoomsView.qml" line="1230"/>
-        <location filename="../qml/views/RoomsView.qml" line="1274"/>
+        <location filename="../qml/views/RoomsView.qml" line="197"/>
+        <location filename="../qml/views/RoomsView.qml" line="1283"/>
+        <location filename="../qml/views/RoomsView.qml" line="1327"/>
         <source>Unlocking</source>
         <translation>Wird aufgeschlossen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="197"/>
+        <location filename="../qml/views/RoomsView.qml" line="198"/>
         <source>Jammed</source>
         <translation>Blockiert</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="198"/>
+        <location filename="../qml/views/RoomsView.qml" line="199"/>
         <source>Open</source>
         <comment>lock state</comment>
         <translation>Offen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="199"/>
-        <location filename="../qml/views/RoomsView.qml" line="1284"/>
+        <location filename="../qml/views/RoomsView.qml" line="200"/>
+        <location filename="../qml/views/RoomsView.qml" line="1337"/>
         <source>Opening</source>
         <translation>Wird geöffnet</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="200"/>
-        <location filename="../qml/views/RoomsView.qml" line="217"/>
-        <location filename="../qml/views/RoomsView.qml" line="230"/>
-        <location filename="../qml/views/RoomsView.qml" line="263"/>
+        <location filename="../qml/views/RoomsView.qml" line="201"/>
+        <location filename="../qml/views/RoomsView.qml" line="218"/>
+        <location filename="../qml/views/RoomsView.qml" line="231"/>
+        <location filename="../qml/views/RoomsView.qml" line="264"/>
         <source>Unavailable</source>
         <translation>Nicht verfügbar</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="444"/>
+        <location filename="../qml/views/RoomsView.qml" line="489"/>
         <source>Playing</source>
         <translation>Spielt</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="227"/>
-        <location filename="../qml/views/RoomsView.qml" line="445"/>
+        <location filename="../qml/views/RoomsView.qml" line="228"/>
+        <location filename="../qml/views/RoomsView.qml" line="490"/>
         <source>Paused</source>
         <translation>Pausiert</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="207"/>
+        <location filename="../qml/views/RoomsView.qml" line="208"/>
         <source>Disarmed</source>
         <translation>Unscharf</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="208"/>
+        <location filename="../qml/views/RoomsView.qml" line="209"/>
         <source>Armed home</source>
         <translation>Scharf (Zuhause)</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="209"/>
+        <location filename="../qml/views/RoomsView.qml" line="210"/>
         <source>Armed away</source>
         <translation>Scharf (Abwesend)</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="210"/>
+        <location filename="../qml/views/RoomsView.qml" line="211"/>
         <source>Armed night</source>
         <translation>Scharf (Nacht)</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="211"/>
+        <location filename="../qml/views/RoomsView.qml" line="212"/>
         <source>Armed vacation</source>
         <translation>Scharf (Urlaub)</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="212"/>
+        <location filename="../qml/views/RoomsView.qml" line="213"/>
         <source>Armed custom bypass</source>
         <translation>Scharf (benutzerdefiniert)</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="213"/>
+        <location filename="../qml/views/RoomsView.qml" line="214"/>
         <source>Arming</source>
         <translation>Wird scharf geschaltet</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="214"/>
+        <location filename="../qml/views/RoomsView.qml" line="215"/>
         <source>Disarming</source>
         <translation>Wird unscharf geschaltet</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="215"/>
+        <location filename="../qml/views/RoomsView.qml" line="216"/>
         <source>Pending</source>
         <translation>Verzögerung</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="216"/>
+        <location filename="../qml/views/RoomsView.qml" line="217"/>
         <source>Triggered</source>
         <translation>Alarm ausgelöst</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="224"/>
+        <location filename="../qml/views/RoomsView.qml" line="225"/>
         <source>Cleaning</source>
         <translation>Reinigt</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="225"/>
+        <location filename="../qml/views/RoomsView.qml" line="226"/>
         <source>Docked</source>
         <translation>In der Station</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="226"/>
+        <location filename="../qml/views/RoomsView.qml" line="227"/>
         <source>Returning</source>
         <translation>Kehrt zurück</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="228"/>
-        <location filename="../qml/views/RoomsView.qml" line="260"/>
-        <location filename="../qml/views/RoomsView.qml" line="446"/>
+        <location filename="../qml/views/RoomsView.qml" line="229"/>
+        <location filename="../qml/views/RoomsView.qml" line="261"/>
+        <location filename="../qml/views/RoomsView.qml" line="491"/>
         <source>Idle</source>
         <translation>Bereit</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="229"/>
+        <location filename="../qml/views/RoomsView.qml" line="230"/>
         <source>Error</source>
         <translation>Fehler</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="261"/>
+        <location filename="../qml/views/RoomsView.qml" line="262"/>
         <source>Recording</source>
         <translation>Aufnahme</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="262"/>
+        <location filename="../qml/views/RoomsView.qml" line="263"/>
         <source>Streaming</source>
         <translation>Streaming</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="264"/>
+        <location filename="../qml/views/RoomsView.qml" line="265"/>
         <source>Camera</source>
         <translation>Kamera</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="447"/>
+        <location filename="../qml/views/RoomsView.qml" line="492"/>
         <source>Off</source>
         <translation>Aus</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="448"/>
+        <location filename="../qml/views/RoomsView.qml" line="493"/>
         <source>On</source>
         <translation>Ein</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="449"/>
+        <location filename="../qml/views/RoomsView.qml" line="494"/>
         <source>Buffering</source>
         <translation>Lädt</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="450"/>
+        <location filename="../qml/views/RoomsView.qml" line="495"/>
         <source>Standby</source>
         <translation>Standby</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="700"/>
+        <location filename="../qml/views/RoomsView.qml" line="745"/>
         <source>Done</source>
         <translation>Erledigt</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="703"/>
+        <location filename="../qml/views/RoomsView.qml" line="748"/>
         <source>Running</source>
         <translation>Läuft</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="703"/>
+        <location filename="../qml/views/RoomsView.qml" line="748"/>
         <source>Run</source>
         <translation>Ausführen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="706"/>
+        <location filename="../qml/views/RoomsView.qml" line="751"/>
         <source>Press</source>
         <translation>Drücken</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="658"/>
-        <location filename="../qml/views/RoomsView.qml" line="724"/>
-        <location filename="../qml/views/RoomsView.qml" line="734"/>
-        <location filename="../qml/views/RoomsView.qml" line="818"/>
-        <location filename="../qml/views/RoomsView.qml" line="847"/>
+        <location filename="../qml/views/RoomsView.qml" line="703"/>
+        <location filename="../qml/views/RoomsView.qml" line="769"/>
+        <location filename="../qml/views/RoomsView.qml" line="779"/>
+        <location filename="../qml/views/RoomsView.qml" line="863"/>
+        <location filename="../qml/views/RoomsView.qml" line="892"/>
         <source>Unknown error</source>
         <translation>Unbekannter Fehler</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="778"/>
+        <location filename="../qml/views/RoomsView.qml" line="823"/>
         <source>Home Assistant is not responding.</source>
         <translation>Home Assistant antwortet nicht.</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1106"/>
+        <location filename="../qml/views/RoomsView.qml" line="1151"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1110"/>
+        <location filename="../qml/views/RoomsView.qml" line="1155"/>
         <source>To-do lists</source>
         <translation>To-do-Listen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1114"/>
+        <location filename="../qml/views/RoomsView.qml" line="1159"/>
         <source>Assist</source>
         <translation>Assist</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1118"/>
+        <location filename="../qml/views/RoomsView.qml" line="1163"/>
         <source>Refresh</source>
         <translation>Aktualisieren</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1124"/>
+        <location filename="../qml/views/RoomsView.qml" line="1169"/>
         <source>Rooms</source>
         <translation>Räume</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1133"/>
+        <location filename="../qml/views/RoomsView.qml" line="1178"/>
         <source>Live</source>
         <translation>Live</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1142"/>
+        <location filename="../qml/views/RoomsView.qml" line="1187"/>
         <source>Search devices</source>
         <translation>Geräte suchen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1156"/>
+        <location filename="../qml/views/RoomsView.qml" line="1201"/>
         <source>Not configured yet</source>
         <translation>Noch nicht konfiguriert</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1157"/>
+        <location filename="../qml/views/RoomsView.qml" line="1202"/>
         <source>Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.</source>
         <translation>Im Pull-down-Menü unter Einstellungen die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1162"/>
+        <location filename="../qml/views/RoomsView.qml" line="1207"/>
         <source>No connection</source>
         <translation>Keine Verbindung</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1168"/>
+        <location filename="../qml/views/RoomsView.qml" line="1213"/>
         <source>No devices</source>
         <translation>Keine Geräte</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1169"/>
+        <location filename="../qml/views/RoomsView.qml" line="1214"/>
         <source>Home Assistant reports no controllable entities. Pull down to refresh.</source>
         <translation>Home Assistant meldet keine steuerbaren Entities. Nach unten ziehen zum Aktualisieren.</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1174"/>
+        <location filename="../qml/views/RoomsView.qml" line="1219"/>
         <source>No matches</source>
         <translation>Keine Treffer</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1175"/>
+        <location filename="../qml/views/RoomsView.qml" line="1220"/>
         <source>No device name or entity ID contains &quot;%1&quot;.</source>
         <translation>Kein Gerätename und keine Entity-ID enthält „%1“.</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1253"/>
+        <location filename="../qml/views/RoomsView.qml" line="1306"/>
         <source>Remove from favorites</source>
         <translation>Aus Favoriten entfernen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1253"/>
+        <location filename="../qml/views/RoomsView.qml" line="1306"/>
         <source>Add to favorites</source>
         <translation>Zu Favoriten hinzufügen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1261"/>
+        <location filename="../qml/views/RoomsView.qml" line="1314"/>
         <source>Disable notification</source>
         <translation>Benachrichtigung deaktivieren</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1261"/>
+        <location filename="../qml/views/RoomsView.qml" line="1314"/>
         <source>Notify on change</source>
         <translation>Bei Änderung benachrichtigen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1266"/>
+        <location filename="../qml/views/RoomsView.qml" line="1319"/>
         <source>Lock</source>
         <translation>Abschliessen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1271"/>
+        <location filename="../qml/views/RoomsView.qml" line="1324"/>
         <source>Unlock</source>
         <translation>Aufschliessen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1281"/>
+        <location filename="../qml/views/RoomsView.qml" line="1334"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1349"/>
+        <location filename="../qml/views/RoomsView.qml" line="1409"/>
         <source>notifies</source>
         <translation>benachrichtigt</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="708"/>
+        <location filename="../qml/views/RoomsView.qml" line="753"/>
         <source>Activate</source>
         <translation>Aktivieren</translation>
     </message>
@@ -1288,7 +1483,7 @@
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="71"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="68"/>
         <source>Deleting instance</source>
         <extracomment>Remorse popup while deleting a Home Assistant instance (profile)</extracomment>
         <translation>Instanz wird gelöscht</translation>
@@ -1306,198 +1501,109 @@
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="121"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="256"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="221"/>
         <source>Instance</source>
         <extracomment>Settings: selector for the active Home Assistant instance (profile)</extracomment>
         <translation>Instanz</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="146"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="373"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="147"/>
         <source>SailfishOS Phone</source>
         <translation>SailfishOS Phone</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="215"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="181"/>
         <source>Delete instance</source>
         <translation>Instanz löschen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="220"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="223"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="186"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="189"/>
         <source>Rename instance</source>
         <translation>Instanz umbenennen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="232"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="234"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="198"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="200"/>
         <source>Add instance</source>
         <translation>Instanz hinzufügen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="248"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="213"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="266"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="224"/>
         <source>Notifications for watched devices only come from the selected instance.</source>
         <translation>Benachrichtigungen für beobachtete Geräte kommen nur von der ausgewählten Instanz.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="274"/>
-        <source>Home Assistant URL</source>
-        <translation>Home-Assistant-URL</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="275"/>
-        <source>http://homeassistant.local:8123</source>
-        <translation>http://homeassistant.local:8123</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="284"/>
-        <source>External URL (optional)</source>
-        <translation>Externe URL (optional)</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="285"/>
-        <source>https://example.ui.nabu.casa</source>
-        <translation>https://example.ui.nabu.casa</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="295"/>
-        <source>Used when the URL above can&apos;t be reached, e.g. away from home: Nabu Casa, Tailscale or a reverse proxy. The same token is used for both.</source>
-        <translation>Wird verwendet, wenn die URL oben nicht erreichbar ist, z. B. unterwegs: Nabu Casa, Tailscale oder ein Reverse-Proxy. Für beide wird derselbe Token verwendet.</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="303"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="234"/>
         <source>Connection</source>
+        <extracomment>Settings overview: row opening the URL/token page</extracomment>
         <translation>Verbindung</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="190"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="307"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="409"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="240"/>
+        <source>Not configured: enter URL and token</source>
+        <extracomment>Settings overview: summary of the Connection row while URL or token is missing</extracomment>
+        <translation>Nicht eingerichtet: URL und Token eintragen</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="252"/>
+        <source>Device &amp; sensors</source>
+        <extracomment>Settings overview: row opening the registration/location page</extracomment>
+        <translation>Gerät &amp; Sensoren</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="255"/>
+        <source>Registered as %1</source>
+        <extracomment>Settings overview: summary of the Device row, %1 = device name</extracomment>
+        <translation>Registriert als %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="257"/>
+        <source>Not registered yet</source>
+        <extracomment>Settings overview: summary of the Device row</extracomment>
+        <translation>Noch nicht registriert</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="264"/>
+        <source>Cover &amp; weather</source>
+        <extracomment>Settings overview: row opening the cover buttons/weather page</extracomment>
+        <translation>Cover &amp; Wetter</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="266"/>
+        <source>%1 · Weather: %2</source>
+        <extracomment>Settings overview: summary of the Cover row, %1 = first cover button, %2 = weather entity</extracomment>
+        <translation>%1 · Wetter: %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="268"/>
+        <source>Last used light</source>
+        <translation>Zuletzt benutztes Licht</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="271"/>
         <source>Automatic</source>
         <translation>Automatisch</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="187"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="403"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="407"/>
-        <source>Weather</source>
-        <translation>Wetter</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="188"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="411"/>
-        <source>Shown at the top of the sensor overview and on the app cover.</source>
-        <translation>Wird oben in der Sensor-Übersicht und auf dem App-Cover angezeigt.</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="191"/>
-        <source>The first weather entity Home Assistant reports</source>
-        <translation>Die erste Wetter-Entity, die Home Assistant meldet</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="193"/>
-        <source>Search weather entities</source>
-        <translation>Wetter-Entities suchen</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="194"/>
-        <source>No weather entity matches the search.</source>
-        <translation>Keine Wetter-Entity passt zur Suche.</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="195"/>
-        <source>Home Assistant has no weather entities.</source>
-        <translation>Home Assistant hat keine Wetter-Entities.</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="308"/>
-        <source>Internal URL only</source>
-        <translation>Nur interne URL</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="309"/>
-        <source>External URL only</source>
-        <translation>Nur externe URL</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="327"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="242"/>
         <source>Checking whether the internal URL is reachable…</source>
         <translation>Prüfe, ob die interne URL erreichbar ist…</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="329"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="244"/>
         <source>Connected via: external URL</source>
         <translation>Verbunden über: externe URL</translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="330"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="245"/>
         <source>Connected via: internal URL</source>
         <translation>Verbunden über: interne URL</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="338"/>
-        <source>Long-Lived Access Token</source>
-        <translation>Long-Lived Access Token</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="339"/>
-        <source>create one in HA: Profile → Security</source>
-        <translation>erstellt in HA: Profil → Sicherheit</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="351"/>
-        <source>Saving failed: %1</source>
-        <translation>Speichern fehlgeschlagen: %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="360"/>
-        <source>URL and token are stored encrypted via Sailfish Secrets and bound to the device lock. They are saved as soon as both fields are filled in and lose focus.</source>
-        <translation>URL und Token werden über Sailfish Secrets verschlüsselt gespeichert und sind an die Gerätesperre gebunden. Gespeichert wird, sobald beide Felder ausgefüllt sind und den Fokus verlassen.</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="366"/>
-        <source>Home Assistant device registration</source>
-        <translation>Home-Assistant-Geräteregistrierung</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="372"/>
-        <source>Device name</source>
-        <translation>Gerätename</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="383"/>
-        <source>Registered -- appears in HA as its own device (notify.mobile_app_...) with battery and connection sensors.</source>
-        <translation>Registriert -- erscheint in HA als eigenes Gerät (notify.mobile_app_...) mit Akkustand-/Verbindungs-Sensoren.</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="384"/>
-        <source>Not registered yet -- will be tried automatically as soon as URL and token are valid.</source>
-        <translation>Noch nicht registriert -- wird automatisch versucht, sobald URL und Token gültig sind.</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="391"/>
-        <source>Re-register device</source>
-        <translation>Gerät neu registrieren</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="396"/>
-        <source>Report location to Home Assistant</source>
-        <translation>Standort an Home Assistant melden</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="397"/>
-        <source>Sends this phone&apos;s position to this instance as its device tracker -- only at app start, on refresh and every 10 minutes in the background, never continuously. Off by default; turning it off stops reporting but doesn&apos;t delete positions already stored in Home Assistant.</source>
-        <translation>Sendet die Position dieses Telefons als Geräte-Tracker an diese Instanz -- nur beim App-Start, beim Aktualisieren und alle 10 Minuten im Hintergrund, nie dauerhaft. Standardmässig aus; Ausschalten beendet die Meldung, löscht aber keine bereits in Home Assistant gespeicherten Positionen.</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="417"/>
-        <source>Cover action</source>
-        <translation>Cover-Aktion</translation>
     </message>
 </context>
 <context>
@@ -1561,17 +1667,17 @@
 <context>
     <name>TodoListPage</name>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="37"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="54"/>
         <source>Unavailable</source>
         <translation>Nicht verfügbar</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="42"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="59"/>
         <source>Nothing open</source>
         <translation>Nichts offen</translation>
     </message>
     <message numerus="yes">
-        <location filename="../qml/pages/TodoListPage.qml" line="42"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="59"/>
         <source>%n open</source>
         <comment>to-do items</comment>
         <translation>
@@ -1580,96 +1686,96 @@
         </translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="47"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="64"/>
         <source>Home Assistant did not return the list items. To-do lists need a newer Home Assistant version (2024.8 or later).</source>
         <translation>Home Assistant hat die Einträge nicht geliefert. To-do-Listen benötigen eine neuere Home-Assistant-Version (2024.8 oder neuer).</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="49"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="66"/>
         <source>Unknown error</source>
         <translation>Unbekannter Fehler</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="62"/>
-        <location filename="../qml/pages/TodoListPage.qml" line="66"/>
-        <location filename="../qml/pages/TodoListPage.qml" line="68"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="79"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="83"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="85"/>
         <source>Due %1</source>
         <translation>Fällig %1</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="157"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="174"/>
         <source>Unexpected answer from Home Assistant.</source>
         <translation>Unerwartete Antwort von Home Assistant.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="280"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="300"/>
         <source>Home Assistant is not responding.</source>
         <translation>Home Assistant antwortet nicht.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="331"/>
-        <location filename="../qml/pages/TodoListPage.qml" line="438"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="351"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="505"/>
         <source>Rename</source>
         <translation>Umbenennen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="337"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="357"/>
         <source>Name</source>
         <translation>Name</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="355"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="375"/>
         <source>Remove completed</source>
         <translation>Erledigte entfernen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="357"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="377"/>
         <source>Removing completed items</source>
         <translation>Erledigte Einträge werden entfernt</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="362"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="382"/>
         <source>Refresh</source>
         <translation>Aktualisieren</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="379"/>
-        <location filename="../qml/pages/TodoListPage.qml" line="380"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="399"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="400"/>
         <source>Add item</source>
         <translation>Eintrag hinzufügen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="410"/>
-        <source>Completed</source>
-        <translation>Erledigt</translation>
+        <location filename="../qml/pages/TodoListPage.qml" line="444"/>
+        <source>Completed (%1)</source>
+        <translation>Erledigt (%1)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="445"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="512"/>
         <source>Delete</source>
         <translation>Löschen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="459"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="526"/>
         <source>Not configured yet</source>
         <translation>Noch nicht konfiguriert</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="460"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="527"/>
         <source>Enter the Home Assistant URL and a long-lived access token in Settings first.</source>
         <translation>Zuerst in den Einstellungen die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="466"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="533"/>
         <source>Could not load the list</source>
         <translation>Liste konnte nicht geladen werden</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="473"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="540"/>
         <source>Nothing on this list</source>
         <translation>Diese Liste ist leer</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="474"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="541"/>
         <source>Add an item with the field above.</source>
         <translation>Oben über das Feld einen Eintrag hinzufügen.</translation>
     </message>
