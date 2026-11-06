@@ -581,7 +581,7 @@ Item {
             width: listView.width
             readonly property bool isHeader: model.rowType === "header"
             readonly property bool rowVisible: isHeader || expandedRooms[model.room] === true
-            contentHeight: rowVisible ? (isHeader ? Theme.itemSizeExtraSmall : Theme.itemSizeMedium) : 0
+            contentHeight: rowVisible ? (isHeader ? Theme.itemSizeSmall : Theme.itemSizeMedium) : 0
             visible: rowVisible
             clip: true
 
@@ -600,22 +600,18 @@ Item {
                 }
             }
 
-            Row {
-                visible: delegateItem.isHeader
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.paddingSmall
-
-                Label {
-                    text: expandedRooms[model.room] === true ? "▾" : "▸"
-                    color: Theme.highlightColor
-                    font.pixelSize: Theme.fontSizeMedium
-                }
-                Label {
-                    text: model.room + " (" + model.count + ")"
-                    color: Theme.highlightColor
-                    font.pixelSize: Theme.fontSizeMedium
+            // Same header look as RoomsView.qml; Loader so the sensor rows
+            // don't each carry a header item.
+            Loader {
+                anchors.fill: parent
+                active: delegateItem.isHeader
+                sourceComponent: Component {
+                    RoomSectionHeader {
+                        title: model.room
+                        count: model.count
+                        expanded: expandedRooms[model.room] === true
+                        highlighted: delegateItem.highlighted
+                    }
                 }
             }
 

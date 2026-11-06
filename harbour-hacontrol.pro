@@ -40,6 +40,7 @@ HEADERS += \
 DISTFILES += qml/harbour-hacontrol.qml \
     qml/cover/CoverPage.qml \
     qml/components/ScrollingLabel.qml \
+    qml/components/RoomSectionHeader.qml \
     qml/components/DeviceStatusProbe.qml \
     qml/components/LocationProbe.qml \
     qml/components/PushNotifications.qml \
