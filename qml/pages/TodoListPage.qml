@@ -417,75 +417,75 @@ Page {
             }
         }
 
-        // Only the completed block gets a visible header; the open items
-        // sit directly under the "Add item" field. The header (styled like
-        // a SectionHeader) toggles the completed block, collapsed by default.
-        section.property: "status"
-        section.delegate: BackgroundItem {
-            id: sectionItem
-            readonly property bool isCompleted: section === "completed"
-            width: listView.width
-            height: isCompleted ? Theme.itemSizeSmall : 0
-            visible: isCompleted
-            enabled: isCompleted
-            onClicked: page.completedExpanded = !page.completedExpanded
-
-            Label {
-                id: completedLabel
-                anchors {
-                    left: parent.left
-                    leftMargin: Theme.horizontalPageMargin
-                    right: expandIcon.left
-                    rightMargin: Theme.paddingSmall
-                    verticalCenter: parent.verticalCenter
-                }
-                horizontalAlignment: Text.AlignRight
-                truncationMode: TruncationMode.Fade
-                text: qsTr("Completed (%1)").arg(page.completedCount)
-                color: Theme.highlightColor
-                font.pixelSize: Theme.fontSizeSmall
-                transformOrigin: Item.Right
-            }
-
-            Icon {
-                id: expandIcon
-                anchors {
-                    right: parent.right
-                    rightMargin: Theme.horizontalPageMargin - Theme.paddingMedium
-                    verticalCenter: parent.verticalCenter
-                }
-                source: "image://theme/icon-m-down"
-                highlighted: true
-                rotation: page.completedExpanded ? 180 : 0
-                Behavior on rotation { NumberAnimation { duration: 150 } }
-            }
-
-            SequentialAnimation {
-                id: pulseAnimation
-                NumberAnimation { target: completedLabel; property: "scale"; to: 1.2; duration: 120; easing.type: Easing.OutQuad }
-                NumberAnimation { target: completedLabel; property: "scale"; to: 1.0; duration: 240; easing.type: Easing.InQuad }
-            }
-
-            Connections {
-                target: page
-                onCompletedWhileCollapsed: if (sectionItem.isCompleted) pulseAnimation.restart()
-            }
-        }
-
         delegate: ListItem {
             id: delegateItem
             // Completed rows fold away like collapsed rooms in RoomsView.qml
-            // (height 0 + invisible) -- the model and the open/completed
-            // ordering stay untouched, so check/uncheck, remorse and live
-            // reloads work the same in both states.
+            // (height 0) -- the model and the open/completed ordering stay
+            // untouched, so check/uncheck, remorse and live reloads work the
+            // same in both states. The "Completed (n)" header is part of the
+            // first completed row instead of a ListView section delegate:
+            // with folded (height 0) rows, Qt 5.6 drew the section header a
+            // second time at the top of the list.
             readonly property bool rowVisible: model.status !== "completed" || page.completedExpanded
+            readonly property bool showsHeader: model.status === "completed" && index === listView.count - page.completedCount
             width: listView.width
-            contentHeight: rowVisible ? itemSwitch.height : 0
-            visible: rowVisible
+            contentHeight: (showsHeader ? completedHeader.height : 0) + (rowVisible ? itemSwitch.height : 0)
+            visible: rowVisible || showsHeader
             menu: itemMenuComponent
+
+            BackgroundItem {
+                id: completedHeader
+                visible: delegateItem.showsHeader
+                width: parent.width
+                height: Theme.itemSizeSmall
+                onClicked: page.completedExpanded = !page.completedExpanded
+
+                Label {
+                    id: completedLabel
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        right: expandIcon.left
+                        rightMargin: Theme.paddingSmall
+                        verticalCenter: parent.verticalCenter
+                    }
+                    horizontalAlignment: Text.AlignRight
+                    truncationMode: TruncationMode.Fade
+                    text: qsTr("Completed (%1)").arg(page.completedCount)
+                    color: Theme.highlightColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    transformOrigin: Item.Right
+                }
+
+                Icon {
+                    id: expandIcon
+                    anchors {
+                        right: parent.right
+                        rightMargin: Theme.horizontalPageMargin - Theme.paddingMedium
+                        verticalCenter: parent.verticalCenter
+                    }
+                    source: "image://theme/icon-m-down"
+                    highlighted: true
+                    rotation: page.completedExpanded ? 180 : 0
+                    Behavior on rotation { NumberAnimation { duration: 150 } }
+                }
+
+                SequentialAnimation {
+                    id: pulseAnimation
+                    NumberAnimation { target: completedLabel; property: "scale"; to: 1.2; duration: 120; easing.type: Easing.OutQuad }
+                    NumberAnimation { target: completedLabel; property: "scale"; to: 1.0; duration: 240; easing.type: Easing.InQuad }
+                }
+
+                Connections {
+                    target: page
+                    onCompletedWhileCollapsed: pulseAnimation.restart()
+                }
+            }
 
             TextSwitch {
                 id: itemSwitch
+                y: delegateItem.showsHeader ? completedHeader.height : 0
+                visible: delegateItem.rowVisible
                 automaticCheck: false
                 checked: model.status === "completed"
                 text: model.summary

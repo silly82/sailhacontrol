@@ -1380,7 +1380,11 @@ Item {
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "toggle"
                 x: delegateItem.labelX
-                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - notifyLabel.width - toggleSwitch.width - colorSwatchDiameter - Theme.paddingSmall
+                // Only subtract what is actually shown -- the hidden "notifies" label
+                // and swatch used to eat a third of the row on every switch.
+                width: parent.width - delegateItem.labelX - toggleSwitch.width
+                       - (notifyLabel.visible ? notifyLabel.width + Theme.paddingSmall : 0)
+                       - (colorSwatch.visible ? colorSwatchDiameter + Theme.paddingSmall : 0)
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
             }
