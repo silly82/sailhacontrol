@@ -41,6 +41,7 @@ DISTFILES += qml/harbour-hacontrol.qml \
     qml/pages/LightDetailPage.qml \
     qml/pages/ThermostatDetailPage.qml \
     qml/pages/MediaPlayerDetailPage.qml \
+    qml/pages/CoverDetailPage.qml \
     qml/views/RoomsView.qml \
     qml/views/SensorsView.qml \
     qml/views/UpdatesView.qml \

@@ -15,6 +15,10 @@ Item {
     // die drei Views liegen gleichzeitig nebeneinander, ein Refresh nur der
     // sichtbaren würde die anderen mit alten Daten stehen lassen.
     signal refreshRequested()
+    // Jedes state_changed-Event vom WebSocket, ungefiltert weitergereicht --
+    // Detailseiten (CoverDetailPage.qml) hängen sich per Connections daran,
+    // um z.B. die Position eines fahrenden Rollos live nachzuziehen.
+    signal liveStateReceived(string changedEntityId, var newState)
 
     // Comma-separated entity_ids -- shared with the BackgroundJob poller
     // in harbour-hacontrol.qml (Ausbaustufe 3, Variante B).
@@ -97,17 +101,26 @@ Item {
     // "toggle" umfasst alle Domains, die HAs generischen <domain>.toggle-
     // Service unterstützen -- fan/cover haben kein eigenes Submenu, nur
     // Ein-/Aus (bzw. Auf/Zu) über den bestehenden Switch-Mechanismus.
-    readonly property var toggleDomains: ["light", "switch", "fan", "cover"]
+    // input_boolean (Helfer) verhält sich wie ein Schalter, inkl.
+    // input_boolean.toggle.
+    readonly property var toggleDomains: ["light", "switch", "fan", "cover", "input_boolean"]
     readonly property var climateDomains: ["climate"]
     readonly property var mediaPlayerDomains: ["media_player"]
     // scene hat keinen sinnvollen on/off-state (state ist der Zeitpunkt der
     // letzten Aktivierung) und keinen toggle-Service -- eigener kind mit
     // Tap-zum-Aktivieren statt Switch.
-    readonly property var sceneDomains: ["scene"]
+    // script/button/input_button teilen sich diesen kind: ebenfalls kein
+    // sinnvoller on/off-state (bei button/input_button ist state wie bei
+    // Szenen der Zeitpunkt des letzten Drucks), Tap löst aus -- Service je
+    // Domain s. runServiceFor().
+    readonly property var sceneDomains: ["scene", "script", "button", "input_button"]
+    // lock: Zustand anzeigen, Abschliessen direkt, Aufschliessen/Öffnen nur
+    // mit Remorse-Frist (s. Delegate).
+    readonly property var lockDomains: ["lock"]
     readonly property var sensorDeviceClasses: ["temperature", "humidity", "pressure", "atmospheric_pressure", "battery", "energy", "power"]
     // Reihenfolge innerhalb eines Raums: steuerbare Entities zuerst,
     // read-only Sensoren zuletzt.
-    readonly property var kindOrder: ({ toggle: 0, climate: 1, mediaplayer: 2, scene: 3, sensor: 4 })
+    readonly property var kindOrder: ({ toggle: 0, lock: 1, climate: 2, mediaplayer: 3, scene: 4, sensor: 5 })
     readonly property real colorSwatchDiameter: Theme.iconSizeExtraSmall
 
     // "Aus"-Gegenstück ist bei den meisten toggle-Domains state === "on",
@@ -158,6 +171,31 @@ Item {
             return kelvinToRgb(attrs.color_temp_kelvin)
         }
         return null
+    }
+
+    function lockStateLabel(state) {
+        switch (state) {
+        case "locked": return qsTr("Locked")
+        case "unlocked": return qsTr("Unlocked")
+        case "locking": return qsTr("Locking")
+        case "unlocking": return qsTr("Unlocking")
+        case "jammed": return qsTr("Jammed")
+        case "open": return qsTr("Open", "lock state")
+        case "opening": return qsTr("Opening")
+        case "unavailable": return qsTr("Unavailable")
+        default: return state
+        }
+    }
+
+    // Rollos mit Positionsangabe (supported_features SET_POSITION = 4 oder
+    // ein gemeldetes current_position) bekommen eine Detailseite mit
+    // Positions-Slider; alle anderen bleiben reiner Auf/Zu-Toggle.
+    function coverHasPosition(attrs) {
+        if (!attrs) {
+            return false
+        }
+        return ((attrs.supported_features || 0) & 4) !== 0
+            || (attrs.current_position !== undefined && attrs.current_position !== null)
     }
 
     // Flat list, mixed row types: {rowType: "header", room, count} and
@@ -374,6 +412,8 @@ Item {
                 kind = "mediaplayer"
             } else if (sceneDomains.indexOf(domain) >= 0) {
                 kind = "scene"
+            } else if (lockDomains.indexOf(domain) >= 0) {
+                kind = "lock"
             } else if (domain === "sensor" && sensorDeviceClasses.indexOf(deviceClass) >= 0) {
                 kind = "sensor"
             }
@@ -415,7 +455,9 @@ Item {
                 // min_temp/max_temp bzw. volume_level/media_title) fürs
                 // Submenu -- s.u. openLightDetail()/openThermostatDetail()/
                 // openMediaPlayerDetail().
-                attributes: (domain === "light" || domain === "climate" || domain === "media_player") ? s.attributes : ({})
+                // cover: supported_features/current_position für
+                // CoverDetailPage.qml, lock: supported_features (OPEN).
+                attributes: (domain === "light" || domain === "climate" || domain === "media_player" || domain === "cover" || domain === "lock") ? s.attributes : ({})
             })
         }
 
@@ -498,12 +540,67 @@ Item {
         })
     }
 
-    // Szenen haben keinen on/off-Zustand und keinen toggle-Service -- Tap
-    // aktiviert sie direkt, statt eine Detailseite zu öffnen.
+    function openCoverDetail(index) {
+        var entry = entriesModel.get(index)
+        pageStack.push(Qt.resolvedUrl("../pages/CoverDetailPage.qml"), {
+            entityId: entry.entityId,
+            entityName: entry.friendlyName,
+            entityState: entry.value,
+            attributes: entry.attributes,
+            stateSource: root
+        })
+    }
+
+    // entityId der zuletzt ausgelösten Szene/Skript/Taste -- deren Zeile
+    // zeigt kurz "Done" als Rückmeldung (ein einzelner Timer hier statt
+    // einer pro Delegate).
+    property string triggeredEntityId: ""
+    Timer {
+        id: triggeredFeedbackTimer
+        interval: 2000
+        repeat: false
+        onTriggered: triggeredEntityId = ""
+    }
+
+    function runServiceFor(domain) {
+        return (domain === "button" || domain === "input_button") ? "press" : "turn_on"
+    }
+
+    function runHintFor(domain, state, entityId) {
+        if (entityId === triggeredEntityId) {
+            return qsTr("Done")
+        }
+        if (domain === "script") {
+            return state === "on" ? qsTr("Running") : qsTr("Run")
+        }
+        if (domain === "button" || domain === "input_button") {
+            return qsTr("Press")
+        }
+        return qsTr("Activate")
+    }
+
+    // Szenen/Skripte/Tasten haben keinen on/off-Zustand und keinen toggle-
+    // Service -- Tap löst sie direkt aus, statt eine Detailseite zu öffnen.
+    // script.turn_on startet das Skript im Hintergrund (wartet nicht auf
+    // dessen Ende), button/input_button.press drückt die Taste.
     function activateScene(index) {
         var entry = entriesModel.get(index)
+        var entityId = entry.entityId
         HaApi.callService(Credentials.baseUrl, Credentials.token,
-            "scene", "turn_on", { entity_id: entry.entityId },
+            entry.domain, runServiceFor(entry.domain), { entity_id: entityId },
+            function () {
+                triggeredEntityId = entityId
+                triggeredFeedbackTimer.restart()
+            },
+            function (error) { errorText = error.hint || qsTr("Unknown error") })
+    }
+
+    // Per entityId statt Zeilenindex -- Aufschliessen läuft über eine
+    // Remorse-Frist, in der ein Refresh die Liste neu aufbauen kann (gleiche
+    // Begründung wie installUpdate() in UpdatesView.qml).
+    function callLock(entityId, service) {
+        HaApi.callService(Credentials.baseUrl, Credentials.token,
+            "lock", service, { entity_id: entityId },
             function () {},
             function (error) { errorText = error.hint || qsTr("Unknown error") })
     }
@@ -648,6 +745,10 @@ Item {
                 // hier trotzdem generisch mitgeführt, damit der Farb-Swatch
                 // auch bei externen Änderungen (Live-Update) sofort
                 // nachzieht, statt erst beim nächsten Pull-to-refresh.
+                if (row.domain === "cover") {
+                    entriesModel.setProperty(i, "value", newState.state)
+                    entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                }
                 if (row.domain === "light") {
                     entriesModel.setProperty(i, "attributes", newState.attributes || {})
                     // O(1) nachführen statt eines vollen Rescans über
@@ -669,6 +770,13 @@ Item {
                 entriesModel.setProperty(i, "hvacMode", newState.state || "")
                 entriesModel.setProperty(i, "attributes", newState.attributes || {})
             } else if (row.kind === "mediaplayer") {
+                entriesModel.setProperty(i, "value", newState.state)
+                entriesModel.setProperty(i, "attributes", newState.attributes || {})
+            } else if (row.kind === "scene") {
+                // Für script ("on" == läuft gerade) -- bei scene/button nur
+                // der Zeitpunkt, schadet aber nicht.
+                entriesModel.setProperty(i, "value", newState.state)
+            } else if (row.kind === "lock") {
                 entriesModel.setProperty(i, "value", newState.state)
                 entriesModel.setProperty(i, "attributes", newState.attributes || {})
             }
@@ -732,6 +840,7 @@ Item {
                 var data = msg.event.data
                 if (data && data.new_state) {
                     applyStateChange(data.entity_id, data.new_state)
+                    liveStateReceived(data.entity_id, data.new_state)
                 }
             } else if (msg.type === "event" && pushChannelMsgId > 0 && msg.id === pushChannelMsgId) {
                 showPushNotification(msg.event)
@@ -879,6 +988,10 @@ Item {
             // sich bei Bedarf aus.
             readonly property bool canNotify: model.kind === "toggle" || model.kind === "climate" || model.kind === "mediaplayer"
             menu: !isHeader ? entityMenuComponent : null
+            // Schlösser: kein "Notify on change" (canNotify schliesst lock
+            // aus) -- die Benachrichtigung bietet "Toggle" an, das liefe
+            // ohne Bestätigung, und lock hat keinen toggle-Service. Die
+            // Lock-Einträge stehen stattdessen im selben Menü.
 
             // Bei Lichtern/Thermostaten/Media-Playern: Tap auf den Namen
             // öffnet das jeweilige Submenu. Bei Szenen aktiviert der Tap
@@ -892,6 +1005,18 @@ Item {
                 }
                 if (model.kind === "toggle" && model.domain === "light") {
                     openLightDetail(index)
+                } else if (model.kind === "toggle" && model.domain === "cover" && coverHasPosition(model.attributes)) {
+                    openCoverDetail(index)
+                } else if (model.kind === "lock") {
+                    // Abschliessen sofort, Aufschliessen erst nach Remorse-
+                    // Frist. Während eines Übergangs (locking/unlocking/
+                    // opening) oder unavailable: nichts tun.
+                    var lockEntityId = model.entityId
+                    if (model.value === "locked") {
+                        remorseAction(qsTr("Unlocking"), function () { callLock(lockEntityId, "unlock") })
+                    } else if (model.value === "unlocked" || model.value === "open" || model.value === "jammed") {
+                        callLock(lockEntityId, "lock")
+                    }
                 } else if (model.kind === "climate") {
                     openThermostatDetail(index)
                 } else if (model.kind === "mediaplayer") {
@@ -915,6 +1040,29 @@ Item {
                         visible: delegateItem.canNotify
                         text: model.notify ? qsTr("Disable notification") : qsTr("Notify on change")
                         onClicked: toggleWatch(index)
+                    }
+                    MenuItem {
+                        visible: model.kind === "lock"
+                        text: qsTr("Lock")
+                        onClicked: callLock(model.entityId, "lock")
+                    }
+                    MenuItem {
+                        visible: model.kind === "lock"
+                        text: qsTr("Unlock")
+                        onClicked: {
+                            var entityId = model.entityId
+                            delegateItem.remorseAction(qsTr("Unlocking"), function () { callLock(entityId, "unlock") })
+                        }
+                    }
+                    // lock.open (Falle ziehen) nur, wenn das Schloss es kann
+                    // -- LockEntityFeature.OPEN = 1.
+                    MenuItem {
+                        visible: model.kind === "lock" && (model.attributes ? ((model.attributes.supported_features || 0) & 1) !== 0 : false)
+                        text: qsTr("Open")
+                        onClicked: {
+                            var entityId = model.entityId
+                            delegateItem.remorseAction(qsTr("Opening"), function () { callLock(entityId, "open") })
+                        }
                     }
                 }
             }
@@ -1061,8 +1209,29 @@ Item {
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.horizontalPageMargin
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Activate")
-                color: Theme.secondaryHighlightColor
+                text: runHintFor(model.domain, model.value, model.entityId)
+                color: model.entityId === triggeredEntityId || (model.domain === "script" && model.value === "on")
+                    ? Theme.highlightColor : Theme.secondaryHighlightColor
+            }
+
+            // -- Entity row: lock -- Tap schliesst ab bzw. (mit Remorse)
+            // auf, Long-Press-Menü für Lock/Unlock/Open.
+            ScrollingLabel {
+                visible: !delegateItem.isHeader && model.kind === "lock"
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin - lockValueLabel.width - Theme.paddingSmall
+                anchors.verticalCenter: parent.verticalCenter
+                text: model.friendlyName || ""
+            }
+            Label {
+                id: lockValueLabel
+                visible: !delegateItem.isHeader && model.kind === "lock"
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.horizontalPageMargin
+                anchors.verticalCenter: parent.verticalCenter
+                text: lockStateLabel(model.value)
+                color: model.value === "jammed" ? Theme.errorColor
+                    : ((model.value === "unlocked" || model.value === "open") ? Theme.highlightColor : Theme.secondaryHighlightColor)
             }
         }
 
