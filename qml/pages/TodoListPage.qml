@@ -1,12 +1,14 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import "../lib/HaApi.js" as HaApi
+import "../lib/TodoUiState.js" as TodoUiState
 
 // Items of one Home Assistant to-do list (opened from TodoListsPage.qml).
 // Items are read via todo.get_items with a service response (REST
 // ?return_response) and changed via todo.add_item / update_item /
 // remove_item / remove_completed_items. Open items come first, completed
-// ones follow under a "Completed" section header.
+// ones follow under a "Completed" section header, which is collapsed by
+// default (tap to expand; remembered per list for the app session).
 Page {
     id: page
 
@@ -30,6 +32,21 @@ Page {
     // response can't overwrite a newer one.
     property int loadGeneration: 0
     property int completedCount: 0
+    // Completed rows are hidden (height 0, invisible) unless expanded --
+    // on long-lived lists they would otherwise bury the few open items.
+    // Remembered per list for the app session in TodoUiState.js.
+    // (Binding is replaced by the first tap; entityId is fixed per page.)
+    property bool completedExpanded: TodoUiState.isCompletedExpanded(entityId)
+    onCompletedExpandedChanged: {
+        if (entityId.length > 0) {
+            TodoUiState.setCompletedExpanded(entityId, completedExpanded)
+        }
+    }
+
+    // Emitted when an item is checked while the completed block is
+    // collapsed -- the section header briefly pulses, so the row vanishing
+    // into the folded block reads as "moved", not "lost".
+    signal completedWhileCollapsed()
 
     function countLabel(state) {
         var n = parseInt(state, 10)
@@ -216,6 +233,9 @@ Page {
         var oldStatus = itemsModel.get(oldIndex).status
         errorText = ""
         moveToStatus(key, status)
+        if (status === "completed" && oldStatus !== "completed" && !completedExpanded) {
+            completedWhileCollapsed()
+        }
         HaApi.callService(Credentials.baseUrl, Credentials.token,
             "todo", "update_item", { entity_id: entityId, item: key, status: status },
             function () {},
@@ -398,23 +418,70 @@ Page {
         }
 
         // Only the completed block gets a visible header; the open items
-        // sit directly under the "Add item" field.
+        // sit directly under the "Add item" field. The header (styled like
+        // a SectionHeader) toggles the completed block, collapsed by default.
         section.property: "status"
-        section.delegate: Item {
+        section.delegate: BackgroundItem {
+            id: sectionItem
+            readonly property bool isCompleted: section === "completed"
             width: listView.width
-            height: section === "completed" ? completedHeader.height : 0
+            height: isCompleted ? Theme.itemSizeSmall : 0
+            visible: isCompleted
+            enabled: isCompleted
+            onClicked: page.completedExpanded = !page.completedExpanded
 
-            SectionHeader {
-                id: completedHeader
-                visible: section === "completed"
-                text: qsTr("Completed")
+            Label {
+                id: completedLabel
+                anchors {
+                    left: parent.left
+                    leftMargin: Theme.horizontalPageMargin
+                    right: expandIcon.left
+                    rightMargin: Theme.paddingSmall
+                    verticalCenter: parent.verticalCenter
+                }
+                horizontalAlignment: Text.AlignRight
+                truncationMode: TruncationMode.Fade
+                text: qsTr("Completed (%1)").arg(page.completedCount)
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeSmall
+                transformOrigin: Item.Right
+            }
+
+            Icon {
+                id: expandIcon
+                anchors {
+                    right: parent.right
+                    rightMargin: Theme.horizontalPageMargin - Theme.paddingMedium
+                    verticalCenter: parent.verticalCenter
+                }
+                source: "image://theme/icon-m-down"
+                highlighted: true
+                rotation: page.completedExpanded ? 180 : 0
+                Behavior on rotation { NumberAnimation { duration: 150 } }
+            }
+
+            SequentialAnimation {
+                id: pulseAnimation
+                NumberAnimation { target: completedLabel; property: "scale"; to: 1.2; duration: 120; easing.type: Easing.OutQuad }
+                NumberAnimation { target: completedLabel; property: "scale"; to: 1.0; duration: 240; easing.type: Easing.InQuad }
+            }
+
+            Connections {
+                target: page
+                onCompletedWhileCollapsed: if (sectionItem.isCompleted) pulseAnimation.restart()
             }
         }
 
         delegate: ListItem {
             id: delegateItem
+            // Completed rows fold away like collapsed rooms in RoomsView.qml
+            // (height 0 + invisible) -- the model and the open/completed
+            // ordering stay untouched, so check/uncheck, remorse and live
+            // reloads work the same in both states.
+            readonly property bool rowVisible: model.status !== "completed" || page.completedExpanded
             width: listView.width
-            contentHeight: itemSwitch.height
+            contentHeight: rowVisible ? itemSwitch.height : 0
+            visible: rowVisible
             menu: itemMenuComponent
 
             TextSwitch {

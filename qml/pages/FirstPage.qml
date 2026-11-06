@@ -132,4 +132,64 @@ Page {
     HorizontalScrollDecorator {
         flickable: swipeContainer
     }
+
+    // Seitenindikator: drei Punkte unten mittig, damit erkennbar ist, dass
+    // man zwischen Räumen/Sensoren/Updates wischen kann. Die Füllung folgt
+    // contentX (nicht currentPage), läuft also beim Ziehen und während der
+    // Snap-Animation flüssig mit und landet am Ende auf currentPage.
+    // Antippen springt auf die Seite. Klein gehalten und nur so hoch wie
+    // nötig, damit er Listen-Inhalt am unteren Rand kaum verdeckt und dort
+    // nur Taps direkt auf den Punkten abfängt.
+    Row {
+        id: pageIndicator
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            bottom: parent.bottom
+            bottomMargin: Theme.paddingSmall
+        }
+        readonly property real position: page.width > 0 ? swipeContainer.contentX / page.width : 0
+
+        Repeater {
+            model: 3
+
+            MouseArea {
+                id: dotArea
+                // Gewicht 1 = diese Seite ist vorne, 0 = eine Seite oder
+                // mehr entfernt.
+                readonly property real weight: Math.max(0, 1 - Math.abs(pageIndicator.position - index))
+                width: Theme.paddingLarge + Theme.paddingSmall
+                height: width
+                onClicked: page.showPage(index)
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: Math.round(Theme.paddingSmall * 1.5)
+                    height: width
+                    radius: width / 2
+                    color: Theme.secondaryColor
+                    opacity: 0.6 * (1 - dotArea.weight)
+                }
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: Math.round(Theme.paddingSmall * 1.5)
+                    height: width
+                    radius: width / 2
+                    color: dotArea.pressed ? Theme.secondaryHighlightColor : Theme.highlightColor
+                    opacity: dotArea.weight
+                }
+            }
+        }
+    }
+
+    // Springt per Animation direkt auf eine Seite (auch zwei weit, dann
+    // wird die übersprungene Seite nicht geladen). Die Animation bewegt die
+    // Flickable ohne userGesture -- onMovementEnded ignoriert sie also.
+    function showPage(index) {
+        if (page.width <= 0 || index === page.currentPage) {
+            return
+        }
+        page.currentPage = index
+        snapAnimation.to = index * page.width
+        snapAnimation.restart()
+    }
 }
