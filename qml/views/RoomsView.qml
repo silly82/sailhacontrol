@@ -647,6 +647,7 @@ Item {
         onTriggered: {
             busyIndicator.running = false
             errorText = qsTr("Home Assistant is not responding.")
+            Credentials.reportConnectionProblem()
         }
     }
 
@@ -817,6 +818,14 @@ Item {
                 pushChannelMsgId = 0
                 wsReconnectTimer.restart()
             }
+            // Host unreachable (left home, VPN down, ...): let Credentials
+            // re-check the internal URL; if that switches baseUrl, the url
+            // binding above reconnects to the other host, and the
+            // wsSubscribed -> reconnectRefresh path reloads as after any
+            // reconnect. Rate-limited in C++.
+            if (status === WebSocket.Error) {
+                Credentials.reportConnectionProblem()
+            }
         }
 
         onTextMessageReceived: {
@@ -868,10 +877,22 @@ Item {
         id: wsReconnectTimer
         interval: 5000
         repeat: false
-        onTriggered: {
-            liveSocket.active = false
-            liveSocket.active = Qt.binding(function () { return configured })
-        }
+        onTriggered: reconnectSocket()
+    }
+
+    function reconnectSocket() {
+        liveSocket.active = false
+        liveSocket.active = Qt.binding(function () { return configured })
+    }
+
+    // Credentials.baseUrl is the *effective* URL and flips between the
+    // internal and the external one (src/credentials.h). The url binding
+    // alone would leave a connect attempt that is hanging on the
+    // unreachable old host alone until its TCP timeout, so reconnect
+    // explicitly -- the same path as wsReconnectTimer, just right away.
+    Connections {
+        target: Credentials
+        onBaseUrlChanged: if (configured) reconnectSocket()
     }
 
     // Lädt beim ersten Sichtbarwerden, sobald Zugangsdaten da sind. Beides

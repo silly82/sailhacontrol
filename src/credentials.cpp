@@ -1,6 +1,9 @@
 #include "credentials.h"
 
+#include <QDateTime>
 #include <QDebug>
+#include <QNetworkRequest>
+#include <QUrl>
 #include <QVector>
 
 #include <Secrets/plugininfo.h>
@@ -15,14 +18,34 @@ using namespace Sailfish::Secrets;
 // manual inspection line up with what is stored here.
 static const QLatin1String BaseUrlSecretName("harbour-hacontrol-baseUrl");
 static const QLatin1String TokenSecretName("harbour-hacontrol-token");
+// Added in v0.56 as a third, separate secret rather than a new field inside
+// the baseUrl secret: data stored by v0.55 and earlier simply has no such
+// secret, its load fails like on a fresh install and the external URL stays
+// empty -- the two existing secrets are read exactly as before. The internal
+// URL keeps living under the old "baseUrl" name for the same reason.
+static const QLatin1String ExternalUrlSecretName("harbour-hacontrol-externalUrl");
+
+// Short on purpose: this decides how long a start away from home talks to an
+// unreachable internal host before switching to the external URL.
+static const int ProbeTimeoutMs = 3000;
+// While on the external URL, how often to look whether the internal one is
+// back even without a network-change signal.
+static const int RecheckIntervalMs = 60000;
+// Network changes arrive in bursts, and a fresh link needs DHCP/DNS first.
+static const int NetworkChangeDebounceMs = 2000;
+// reportConnectionProblem() rate limit.
+static const qint64 ProbeMinIntervalMs = 10000;
 
 Credentials::Credentials(QObject *parent)
     : QObject(parent)
+    , m_usingExternal(false)
+    , m_connectionMode(AutoMode)
     , m_loaded(false)
     , m_pendingStores(0)
     , m_saveBusy(false)
     , m_lastSaveOk(false)
     , m_saveFailed(false)
+    , m_lastProbeStarted(0)
     , m_storagePluginName(SecretManager::DefaultStoragePluginName)
     , m_encryptionPluginName(SecretManager::DefaultEncryptionPluginName)
     , m_pluginsResolved(false)
@@ -31,16 +54,64 @@ Credentials::Credentials(QObject *parent)
     // which SecretManager (i.e. which connection to sailfishsecretsd) to use.
     m_baseUrlLoad.setManager(&m_manager);
     m_tokenLoad.setManager(&m_manager);
+    m_externalUrlLoad.setManager(&m_manager);
     m_baseUrlStore.setManager(&m_manager);
     m_tokenStore.setManager(&m_manager);
+    m_externalUrlStore.setManager(&m_manager);
     m_baseUrlDelete.setManager(&m_manager);
     m_tokenDelete.setManager(&m_manager);
+    m_externalUrlDelete.setManager(&m_manager);
     m_pluginInfo.setManager(&m_manager);
 
     // System-mediated interaction, no in-app prompts: reading our own secrets
     // back must not require the user to unlock anything by hand.
     m_baseUrlLoad.setUserInteractionMode(SecretManager::SystemInteraction);
     m_tokenLoad.setUserInteractionMode(SecretManager::SystemInteraction);
+    m_externalUrlLoad.setUserInteractionMode(SecretManager::SystemInteraction);
+
+    m_probeTimeout.setSingleShot(true);
+    m_probeTimeout.setInterval(ProbeTimeoutMs);
+    connect(&m_probeTimeout, &QTimer::timeout, this, [this]() {
+        if (m_probeReply) {
+            // Emits finished() -> onProbeFinished() sees OperationCanceledError
+            // and treats the internal URL as unreachable.
+            m_probeReply->abort();
+        }
+    });
+
+    m_recheckTimer.setInterval(RecheckIntervalMs);
+    connect(&m_recheckTimer, &QTimer::timeout, this, &Credentials::probe);
+
+    m_networkChangeDebounce.setSingleShot(true);
+    m_networkChangeDebounce.setInterval(NetworkChangeDebounceMs);
+    connect(&m_networkChangeDebounce, &QTimer::timeout, this, [this]() {
+        // A probe still running was started on the previous network -- its
+        // answer says nothing about the new one.
+        abortProbe();
+        probe();
+    });
+    // Plain QtNetwork bearer management (Qt5Network is a Harbour-allowed
+    // library). If the image ships no bearer plugin these simply never fire;
+    // the WebSocket-error path (reportConnectionProblem) and the recheck timer
+    // still cover switching then, just less promptly.
+    connect(&m_networkConfig, &QNetworkConfigurationManager::onlineStateChanged,
+            this, [this](bool) { m_networkChangeDebounce.start(); });
+    connect(&m_networkConfig, &QNetworkConfigurationManager::configurationChanged,
+            this, [this](const QNetworkConfiguration &config) {
+                // configurationChanged also fires for every WLAN scan result
+                // (Discovered flags); only a link going up or down matters.
+                const bool active = config.state().testFlag(QNetworkConfiguration::Active);
+                const bool wasActive = m_activeConfigs.contains(config.identifier());
+                if (active == wasActive) {
+                    return;
+                }
+                if (active) {
+                    m_activeConfigs.insert(config.identifier());
+                } else {
+                    m_activeConfigs.remove(config.identifier());
+                }
+                m_networkChangeDebounce.start();
+            });
 
     connect(&m_pluginInfo, &PluginInfoRequest::statusChanged, this, [this]() {
         if (m_pluginInfo.status() != Request::Finished) {
@@ -65,7 +136,7 @@ Credentials::Credentials(QObject *parent)
         }
         const Result result = m_baseUrlLoad.result();
         if (result.code() == Result::Succeeded) {
-            setBaseUrl(QString::fromUtf8(m_baseUrlLoad.secret().data()));
+            setInternalUrl(QString::fromUtf8(m_baseUrlLoad.secret().data()));
         } else {
             // "nothing stored yet" on a fresh install lands here as well -- not
             // an error the user needs to see, the empty Settings fields are
@@ -87,11 +158,28 @@ Credentials::Credentials(QObject *parent)
         } else {
             qDebug() << "Credentials: token not loaded:" << result.errorMessage();
         }
+        startExternalUrlLoad();
+    });
+
+    connect(&m_externalUrlLoad, &StoredSecretRequest::statusChanged, this, [this]() {
+        if (m_externalUrlLoad.status() != Request::Finished) {
+            return;
+        }
+        const Result result = m_externalUrlLoad.result();
+        if (result.code() == Result::Succeeded) {
+            setExternalUrl(QString::fromUtf8(m_externalUrlLoad.secret().data()));
+        } else {
+            // Expected for everything stored by v0.55 or earlier, and whenever
+            // no external URL was entered: there is no such secret.
+            qDebug() << "Credentials: externalUrl not loaded:" << result.errorMessage();
+        }
         // Lengths only -- never the values themselves, the journal is readable
         // by more than just this app.
-        qDebug() << "Credentials: loaded -- baseUrl" << m_baseUrl.length()
+        qDebug() << "Credentials: loaded -- internal URL" << m_internalUrl.length()
+                 << "chars, external URL" << m_externalUrl.length()
                  << "chars, token" << m_token.length() << "chars";
         setLoaded(true);
+        probe();
     });
 
     connect(&m_baseUrlStore, &StoreSecretRequest::statusChanged, this, [this]() {
@@ -114,12 +202,61 @@ Credentials::Credentials(QObject *parent)
                     result.errorMessage());
     });
 
+    connect(&m_externalUrlStore, &StoreSecretRequest::statusChanged, this, [this]() {
+        if (m_externalUrlStore.status() != Request::Finished) {
+            return;
+        }
+        const Result result = m_externalUrlStore.result();
+        finishStore(result.code() == Result::Succeeded,
+                    QStringLiteral("externalUrl"),
+                    result.errorMessage());
+    });
+
     resolvePlugins();
 }
 
 QString Credentials::baseUrl() const
 {
-    return m_baseUrl;
+    return m_effectiveUrl;
+}
+
+QString Credentials::internalUrl() const
+{
+    return m_internalUrl;
+}
+
+QString Credentials::externalUrl() const
+{
+    return m_externalUrl;
+}
+
+bool Credentials::usingExternal() const
+{
+    return m_usingExternal;
+}
+
+bool Credentials::probing() const
+{
+    return !m_probeReply.isNull();
+}
+
+int Credentials::connectionMode() const
+{
+    return m_connectionMode;
+}
+
+void Credentials::setConnectionMode(int connectionMode)
+{
+    if (connectionMode < AutoMode || connectionMode > ExternalOnlyMode) {
+        connectionMode = AutoMode;
+    }
+    if (m_connectionMode == connectionMode) {
+        return;
+    }
+    m_connectionMode = connectionMode;
+    Q_EMIT connectionModeChanged();
+    abortProbe();
+    probe();
 }
 
 QString Credentials::token() const
@@ -203,30 +340,138 @@ void Credentials::choosePlugins(const QVector<PluginInfo> &storage,
 
 void Credentials::save(const QString &baseUrl, const QString &token)
 {
+    save(baseUrl, token, m_externalUrl);
+}
+
+void Credentials::save(const QString &baseUrl, const QString &token, const QString &externalUrl)
+{
     setLastError(QString());
 
     // The app must behave as before the moment Settings is filled in, so the
     // properties change right away; persistence happens in the background.
-    setBaseUrl(baseUrl);
+    setInternalUrl(baseUrl);
+    setExternalUrl(externalUrl.trimmed());
     setToken(token);
 
-    // Two stores make one save; a delete may run before each of them, which is
-    // why the batch is counted here and only closed by finishStore().
+    // Three stores make one save; a delete may run before each of them, which
+    // is why the batch is counted here and only closed by finishStore().
     m_saveFailed = false;
-    m_pendingStores = 2;
+    m_pendingStores = 3;
     setSaveBusy(true);
     setLastSaveOk(false);
 
     deleteThenStore(&m_baseUrlDelete, &m_baseUrlStore, BaseUrlSecretName);
     deleteThenStore(&m_tokenDelete, &m_tokenStore, TokenSecretName);
+    deleteThenStore(&m_externalUrlDelete, &m_externalUrlStore, ExternalUrlSecretName);
+
+    // New URLs/token: whatever the last probe found no longer applies.
+    abortProbe();
+    probe();
 }
 
 void Credentials::reload()
 {
+    abortProbe();
+    m_recheckTimer.stop();
     setLoaded(false);
-    setBaseUrl(QString());
+    setUsingExternal(false);
+    setInternalUrl(QString());
+    setExternalUrl(QString());
     setToken(QString());
     startLoading();
+}
+
+void Credentials::probe()
+{
+    // Nothing to choose between: settle usingExternal from the mode alone.
+    if (m_connectionMode != AutoMode || m_internalUrl.isEmpty() || m_externalUrl.isEmpty()
+            || m_token.isEmpty()) {
+        abortProbe();
+        m_recheckTimer.stop();
+        setUsingExternal(m_connectionMode == ExternalOnlyMode && !m_externalUrl.isEmpty());
+        return;
+    }
+    if (m_probeReply) {
+        return; // one at a time; its answer is just as good
+    }
+
+    m_lastProbeStarted = QDateTime::currentMSecsSinceEpoch();
+
+    QString url = m_internalUrl;
+    while (url.endsWith(QLatin1Char('/'))) {
+        url.chop(1);
+    }
+    // GET /api/ answers {"message": "API running."} with 200 only for a valid
+    // token -- an unrelated host that happens to sit at the same LAN address
+    // on a foreign network won't pass for Home Assistant.
+    QNetworkRequest request(QUrl(url + QStringLiteral("/api/")));
+    request.setRawHeader("Authorization", "Bearer " + m_token.toUtf8());
+
+    // Qt 5.6's QNetworkAccessManager can get stuck believing the network is
+    // "not accessible" after a bearer change and then fails every request
+    // at once without trying -- exactly when a probe matters most.
+    m_network.setNetworkAccessible(QNetworkAccessManager::Accessible);
+    m_probeReply = m_network.get(request);
+    connect(m_probeReply.data(), &QNetworkReply::finished, this, &Credentials::onProbeFinished);
+    m_probeTimeout.start();
+    Q_EMIT probingChanged();
+}
+
+void Credentials::reportConnectionProblem()
+{
+    if (QDateTime::currentMSecsSinceEpoch() - m_lastProbeStarted < ProbeMinIntervalMs) {
+        return;
+    }
+    probe();
+}
+
+void Credentials::abortProbe()
+{
+    m_probeTimeout.stop();
+    if (!m_probeReply) {
+        return;
+    }
+    QNetworkReply *reply = m_probeReply.data();
+    m_probeReply.clear();
+    // Disconnect first: an aborted, no longer wanted probe must not decide
+    // anything in onProbeFinished().
+    disconnect(reply, Q_NULLPTR, this, Q_NULLPTR);
+    reply->abort();
+    reply->deleteLater();
+    Q_EMIT probingChanged();
+}
+
+void Credentials::onProbeFinished()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) {
+        return;
+    }
+    reply->deleteLater();
+    if (reply != m_probeReply.data()) {
+        return; // stale
+    }
+    m_probeTimeout.stop();
+    m_probeReply.clear();
+    Q_EMIT probingChanged();
+
+    const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const bool reachable = reply->error() == QNetworkReply::NoError && status == 200;
+    // Error code and HTTP status only -- errorString() names the host.
+    qDebug() << "Credentials: internal URL" << (reachable ? "reachable" : "not reachable")
+             << "-- network error" << reply->error() << "HTTP" << status;
+
+    // Mode or URLs may have changed while the probe ran; probe() then already
+    // settled the state, and a new probe (if any) is the one that counts.
+    if (m_connectionMode != AutoMode || m_externalUrl.isEmpty()) {
+        return;
+    }
+    setUsingExternal(!reachable);
+    if (reachable) {
+        m_recheckTimer.stop();
+    } else if (!m_recheckTimer.isActive()) {
+        m_recheckTimer.start();
+    }
 }
 
 void Credentials::startLoading()
@@ -241,6 +486,24 @@ void Credentials::startTokenLoad()
     m_tokenLoad.setIdentifier(
         Secret::Identifier(TokenSecretName, QString(), m_storagePluginName));
     m_tokenLoad.startRequest();
+}
+
+void Credentials::startExternalUrlLoad()
+{
+    m_externalUrlLoad.setIdentifier(
+        Secret::Identifier(ExternalUrlSecretName, QString(), m_storagePluginName));
+    m_externalUrlLoad.startRequest();
+}
+
+QString Credentials::valueFor(const StoreSecretRequest *storeRequest) const
+{
+    if (storeRequest == &m_baseUrlStore) {
+        return m_internalUrl;
+    }
+    if (storeRequest == &m_externalUrlStore) {
+        return m_externalUrl;
+    }
+    return m_token;
 }
 
 void Credentials::deleteThenStore(DeleteSecretRequest *request,
@@ -263,8 +526,15 @@ void Credentials::deleteThenStore(DeleteSecretRequest *request,
                         qDebug() << "Credentials: nothing to delete for" << name
                                  << "(" << result.errorMessage() << ")";
                     }
-                    storeOne(storeRequest, name,
-                             storeRequest == &m_baseUrlStore ? m_baseUrl : m_token);
+                    // An empty (optional) external URL is "stored" by the
+                    // delete alone -- no point keeping an empty secret around,
+                    // and the load treats a missing one as empty anyway.
+                    const QString value = valueFor(storeRequest);
+                    if (value.isEmpty()) {
+                        finishStore(true, name + QStringLiteral(" (cleared)"), QString());
+                        return;
+                    }
+                    storeOne(storeRequest, name, value);
                 });
     }
 
@@ -311,12 +581,52 @@ void Credentials::finishStore(bool ok, const QString &what, const QString &error
     }
 }
 
-void Credentials::setBaseUrl(const QString &baseUrl)
+void Credentials::setInternalUrl(const QString &internalUrl)
 {
-    if (m_baseUrl == baseUrl) {
+    if (m_internalUrl == internalUrl) {
         return;
     }
-    m_baseUrl = baseUrl;
+    m_internalUrl = internalUrl;
+    Q_EMIT internalUrlChanged();
+    updateEffectiveUrl();
+}
+
+void Credentials::setExternalUrl(const QString &externalUrl)
+{
+    if (m_externalUrl == externalUrl) {
+        return;
+    }
+    m_externalUrl = externalUrl;
+    Q_EMIT externalUrlChanged();
+    if (m_externalUrl.isEmpty()) {
+        setUsingExternal(false); // also updates the effective URL
+    } else {
+        updateEffectiveUrl();
+    }
+}
+
+void Credentials::setUsingExternal(bool usingExternal)
+{
+    if (m_usingExternal != usingExternal) {
+        m_usingExternal = usingExternal;
+        qDebug() << "Credentials: now using the" << (usingExternal ? "external" : "internal") << "URL";
+        Q_EMIT usingExternalChanged();
+    }
+    updateEffectiveUrl();
+}
+
+QString Credentials::computeEffectiveUrl() const
+{
+    return m_usingExternal && !m_externalUrl.isEmpty() ? m_externalUrl : m_internalUrl;
+}
+
+void Credentials::updateEffectiveUrl()
+{
+    const QString effective = computeEffectiveUrl();
+    if (m_effectiveUrl == effective) {
+        return;
+    }
+    m_effectiveUrl = effective;
     Q_EMIT baseUrlChanged();
 }
 
