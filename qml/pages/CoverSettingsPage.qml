@@ -2,8 +2,9 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Nemo.Configuration 1.0
 
-// Configures the app cover (opened from SettingsPage.qml): up to two
-// CoverActions plus the optional weather line.
+// Settings > Cover & weather (opened from SettingsPage.qml): up to two
+// CoverActions, the weather entity (also used by SensorsView's weather card)
+// and whether the cover shows it.
 // Slot 1 (coverTarget*): empty id means "last used light" -- the v0.52
 // behaviour, fed by RoomsView.qml's coverLastLightId. Slot 2
 // (coverTarget2*): empty id means "no second button". Each slot opens
@@ -55,6 +56,36 @@ Page {
         defaultValue: true
     }
 
+    // Same keys as SensorsView's weather card -- dconf notifies the other
+    // instance, so the card switches as soon as a new entity is picked here.
+    ConfigurationValue {
+        id: weatherEntitySetting
+        key: Credentials.settingsPrefix + "weatherEntity"
+        defaultValue: ""
+    }
+    ConfigurationValue {
+        id: weatherEntityNameSetting
+        key: Credentials.settingsPrefix + "weatherEntityName"
+        defaultValue: ""
+    }
+    function openWeatherPicker() {
+        var picker = pageStack.push(Qt.resolvedUrl("EntityPickerPage.qml"), {
+            headerTitle: qsTr("Weather"),
+            description: qsTr("Shown at the top of the sensor overview and on the app cover."),
+            domains: ["weather"],
+            defaultLabel: qsTr("Automatic"),
+            defaultDescription: qsTr("The first weather entity Home Assistant reports"),
+            currentId: weatherEntitySetting.value,
+            searchPlaceholder: qsTr("Search weather entities"),
+            noMatchesHint: qsTr("No weather entity matches the search."),
+            nothingHint: qsTr("Home Assistant has no weather entities.")
+        })
+        picker.picked.connect(function (entityId, name) {
+            weatherEntitySetting.value = entityId
+            weatherEntityNameSetting.value = entityId.length > 0 ? name : ""
+        })
+    }
+
     function openPicker(slot) {
         var first = slot === 1
         var picker = pageStack.push(Qt.resolvedUrl("EntityPickerPage.qml"), {
@@ -92,19 +123,13 @@ Page {
             width: parent.width
 
             PageHeader {
-                title: qsTr("Cover")
+                //: Settings: page with the cover buttons and the weather entity
+                title: qsTr("Cover & weather")
             }
 
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                wrapMode: Text.Wrap
-                text: qsTr("The app cover can have up to two buttons. Scenes and scripts are run, lights and switches are toggled.")
-                color: Theme.secondaryHighlightColor
-                font.pixelSize: Theme.fontSizeExtraSmall
+            SectionHeader {
+                text: qsTr("Cover")
             }
-
-            Item { width: 1; height: Theme.paddingMedium }
 
             ValueButton {
                 //: Cover settings: the first (left) cover action
@@ -112,6 +137,7 @@ Page {
                 value: targetIdSetting.value.length === 0
                     ? qsTr("Last used light")
                     : (targetNameSetting.value || targetIdSetting.value)
+                description: qsTr("Scenes and scripts are run, lights and switches are toggled.")
                 onClicked: page.openPicker(1)
             }
 
@@ -125,9 +151,23 @@ Page {
                 onClicked: page.openPicker(2)
             }
 
+            SectionHeader {
+                text: qsTr("Weather")
+            }
+
+            ValueButton {
+                label: qsTr("Weather")
+                value: weatherEntitySetting.value.length === 0
+                    ? qsTr("Automatic")
+                    : (weatherEntityNameSetting.value.length > 0 ? weatherEntityNameSetting.value : weatherEntitySetting.value)
+                description: qsTr("Shown at the top of the sensor overview and on the app cover.")
+                onClicked: page.openWeatherPicker()
+            }
+
             TextSwitch {
                 text: qsTr("Show weather")
-                description: qsTr("Current temperature and condition of the weather entity chosen in the sensor overview. Updated whenever the sensor overview refreshes.")
+                //: Cover settings: description of the "Show weather" switch, below the weather entity selector
+                description: qsTr("Shows temperature and condition of this weather entity on the cover.")
                 checked: showWeatherSetting.value === true
                 onClicked: showWeatherSetting.value = checked
             }
