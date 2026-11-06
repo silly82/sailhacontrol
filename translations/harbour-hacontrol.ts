@@ -2,6 +2,72 @@
 <!DOCTYPE TS>
 <TS version="2.1">
 <context>
+    <name>CameraPage</name>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="58"/>
+        <source>Idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="59"/>
+        <source>Recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="60"/>
+        <source>Streaming</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="61"/>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="62"/>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="213"/>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="270"/>
+        <source>The image could not be refreshed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="276"/>
+        <source>Refresh interval</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="280"/>
+        <location filename="../qml/pages/CameraPage.qml" line="281"/>
+        <location filename="../qml/pages/CameraPage.qml" line="282"/>
+        <location filename="../qml/pages/CameraPage.qml" line="283"/>
+        <source>%1 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="297"/>
+        <source>Could not load the image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="299"/>
+        <source>The camera is unavailable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/CameraPage.qml" line="300"/>
+        <source>Pull down to try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CoverDetailPage</name>
     <message>
         <location filename="../qml/pages/CoverDetailPage.qml" line="41"/>
@@ -182,6 +248,14 @@
     </message>
 </context>
 <context>
+    <name>Credentials</name>
+    <message>
+        <location filename="../src/credentials.cpp" line="396"/>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>LightDetailPage</name>
     <message>
         <location filename="../qml/pages/LightDetailPage.qml" line="34"/>
@@ -265,234 +339,256 @@
 <context>
     <name>RoomsView</name>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="82"/>
+        <location filename="../qml/views/RoomsView.qml" line="89"/>
         <source>No room</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="85"/>
+        <location filename="../qml/views/RoomsView.qml" line="92"/>
         <source>Favorites</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="178"/>
+        <location filename="../qml/views/RoomsView.qml" line="188"/>
         <source>Locked</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="179"/>
+        <location filename="../qml/views/RoomsView.qml" line="189"/>
         <source>Unlocked</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="180"/>
+        <location filename="../qml/views/RoomsView.qml" line="190"/>
         <source>Locking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="181"/>
-        <location filename="../qml/views/RoomsView.qml" line="1037"/>
-        <location filename="../qml/views/RoomsView.qml" line="1075"/>
+        <location filename="../qml/views/RoomsView.qml" line="191"/>
+        <location filename="../qml/views/RoomsView.qml" line="1127"/>
+        <location filename="../qml/views/RoomsView.qml" line="1167"/>
         <source>Unlocking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="182"/>
+        <location filename="../qml/views/RoomsView.qml" line="192"/>
         <source>Jammed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="183"/>
+        <location filename="../qml/views/RoomsView.qml" line="193"/>
         <source>Open</source>
         <comment>lock state</comment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="184"/>
-        <location filename="../qml/views/RoomsView.qml" line="1085"/>
+        <location filename="../qml/views/RoomsView.qml" line="194"/>
+        <location filename="../qml/views/RoomsView.qml" line="1177"/>
         <source>Opening</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="185"/>
+        <location filename="../qml/views/RoomsView.qml" line="195"/>
+        <location filename="../qml/views/RoomsView.qml" line="205"/>
         <source>Unavailable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="366"/>
+        <location filename="../qml/views/RoomsView.qml" line="386"/>
         <source>Playing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="367"/>
+        <location filename="../qml/views/RoomsView.qml" line="387"/>
         <source>Paused</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="368"/>
+        <location filename="../qml/views/RoomsView.qml" line="202"/>
+        <location filename="../qml/views/RoomsView.qml" line="388"/>
         <source>Idle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="369"/>
+        <location filename="../qml/views/RoomsView.qml" line="203"/>
+        <source>Recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/RoomsView.qml" line="204"/>
+        <source>Streaming</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/RoomsView.qml" line="206"/>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/RoomsView.qml" line="389"/>
         <source>Off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="370"/>
+        <location filename="../qml/views/RoomsView.qml" line="390"/>
         <source>On</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="371"/>
+        <location filename="../qml/views/RoomsView.qml" line="391"/>
         <source>Buffering</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="372"/>
+        <location filename="../qml/views/RoomsView.qml" line="392"/>
         <source>Standby</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="571"/>
+        <location filename="../qml/views/RoomsView.qml" line="605"/>
         <source>Done</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="574"/>
+        <location filename="../qml/views/RoomsView.qml" line="608"/>
         <source>Running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="574"/>
+        <location filename="../qml/views/RoomsView.qml" line="608"/>
         <source>Run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="577"/>
+        <location filename="../qml/views/RoomsView.qml" line="611"/>
         <source>Press</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="595"/>
-        <location filename="../qml/views/RoomsView.qml" line="605"/>
-        <location filename="../qml/views/RoomsView.qml" line="682"/>
-        <location filename="../qml/views/RoomsView.qml" line="711"/>
+        <location filename="../qml/views/RoomsView.qml" line="629"/>
+        <location filename="../qml/views/RoomsView.qml" line="639"/>
+        <location filename="../qml/views/RoomsView.qml" line="723"/>
+        <location filename="../qml/views/RoomsView.qml" line="752"/>
         <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="649"/>
+        <location filename="../qml/views/RoomsView.qml" line="683"/>
         <source>Home Assistant is not responding.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="866"/>
+        <location filename="../qml/views/RoomsView.qml" line="913"/>
         <source>Home Assistant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="935"/>
+        <location filename="../qml/views/RoomsView.qml" line="1010"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="939"/>
+        <location filename="../qml/views/RoomsView.qml" line="1014"/>
+        <source>To-do lists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/views/RoomsView.qml" line="1018"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="945"/>
+        <location filename="../qml/views/RoomsView.qml" line="1024"/>
         <source>Rooms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="946"/>
+        <location filename="../qml/views/RoomsView.qml" line="1033"/>
         <source>Live</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="952"/>
+        <location filename="../qml/views/RoomsView.qml" line="1042"/>
         <source>Search devices</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="966"/>
+        <location filename="../qml/views/RoomsView.qml" line="1056"/>
         <source>Not configured yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="967"/>
+        <location filename="../qml/views/RoomsView.qml" line="1057"/>
         <source>Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="972"/>
+        <location filename="../qml/views/RoomsView.qml" line="1062"/>
         <source>No connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="978"/>
+        <location filename="../qml/views/RoomsView.qml" line="1068"/>
         <source>No devices</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="979"/>
+        <location filename="../qml/views/RoomsView.qml" line="1069"/>
         <source>Home Assistant reports no controllable entities. Pull down to refresh.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="984"/>
+        <location filename="../qml/views/RoomsView.qml" line="1074"/>
         <source>No matches</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="985"/>
+        <location filename="../qml/views/RoomsView.qml" line="1075"/>
         <source>No device name or entity ID contains &quot;%1&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1054"/>
+        <location filename="../qml/views/RoomsView.qml" line="1146"/>
         <source>Remove from favorites</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1054"/>
+        <location filename="../qml/views/RoomsView.qml" line="1146"/>
         <source>Add to favorites</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1062"/>
+        <location filename="../qml/views/RoomsView.qml" line="1154"/>
         <source>Disable notification</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1062"/>
+        <location filename="../qml/views/RoomsView.qml" line="1154"/>
         <source>Notify on change</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1067"/>
+        <location filename="../qml/views/RoomsView.qml" line="1159"/>
         <source>Lock</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1072"/>
+        <location filename="../qml/views/RoomsView.qml" line="1164"/>
         <source>Unlock</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1082"/>
+        <location filename="../qml/views/RoomsView.qml" line="1174"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1150"/>
+        <location filename="../qml/views/RoomsView.qml" line="1242"/>
         <source>notifies</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="579"/>
+        <location filename="../qml/views/RoomsView.qml" line="613"/>
         <source>Activate</source>
         <translation type="unfinished"></translation>
     </message>
@@ -588,47 +684,47 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="150"/>
+        <location filename="../qml/views/SensorsView.qml" line="157"/>
         <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="185"/>
+        <location filename="../qml/views/SensorsView.qml" line="207"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="189"/>
+        <location filename="../qml/views/SensorsView.qml" line="211"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="195"/>
+        <location filename="../qml/views/SensorsView.qml" line="217"/>
         <source>Sensors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="202"/>
+        <location filename="../qml/views/SensorsView.qml" line="224"/>
         <source>Not configured yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="203"/>
+        <location filename="../qml/views/SensorsView.qml" line="225"/>
         <source>Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="208"/>
+        <location filename="../qml/views/SensorsView.qml" line="230"/>
         <source>No connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="214"/>
+        <location filename="../qml/views/SensorsView.qml" line="236"/>
         <source>No sensors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="215"/>
+        <location filename="../qml/views/SensorsView.qml" line="237"/>
         <source>No sensor is reporting a value right now. Pull down to refresh.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -636,123 +732,169 @@
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="33"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="165"/>
-        <source>SailfishOS Phone</source>
+        <location filename="../qml/pages/SettingsPage.qml" line="69"/>
+        <source>Deleting instance</source>
+        <extracomment>Remorse popup while deleting a Home Assistant instance (profile)</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="60"/>
-        <source>Settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="66"/>
-        <source>Home Assistant URL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="67"/>
-        <source>http://homeassistant.local:8123</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="76"/>
-        <source>External URL (optional)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="77"/>
-        <source>https://example.ui.nabu.casa</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="87"/>
-        <source>Used when the URL above can&apos;t be reached, e.g. away from home: Nabu Casa, Tailscale or a reverse proxy. The same token is used for both.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="95"/>
-        <source>Connection</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="99"/>
-        <source>Automatic</source>
+        <location filename="../qml/pages/SettingsPage.qml" line="98"/>
+        <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="100"/>
-        <source>Internal URL only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="101"/>
-        <source>External URL only</source>
+        <source>e.g. Home, Camper</source>
+        <extracomment>Placeholder for the name of a Home Assistant instance</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="119"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="218"/>
+        <source>Instance</source>
+        <extracomment>Settings: selector for the active Home Assistant instance (profile)</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="144"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="335"/>
+        <source>SailfishOS Phone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="177"/>
+        <source>Delete instance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="182"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="185"/>
+        <source>Rename instance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="194"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="196"/>
+        <source>Add instance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="210"/>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="228"/>
+        <source>Notifications for watched devices only come from the selected instance.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="236"/>
+        <source>Home Assistant URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="237"/>
+        <source>http://homeassistant.local:8123</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="246"/>
+        <source>External URL (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="247"/>
+        <source>https://example.ui.nabu.casa</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="257"/>
+        <source>Used when the URL above can&apos;t be reached, e.g. away from home: Nabu Casa, Tailscale or a reverse proxy. The same token is used for both.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="265"/>
+        <source>Connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="269"/>
+        <source>Automatic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="270"/>
+        <source>Internal URL only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="271"/>
+        <source>External URL only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="289"/>
         <source>Checking whether the internal URL is reachable…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="121"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="291"/>
         <source>Connected via: external URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="122"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="292"/>
         <source>Connected via: internal URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="130"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="300"/>
         <source>Long-Lived Access Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="131"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="301"/>
         <source>create one in HA: Profile → Security</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="143"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="313"/>
         <source>Saving failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="152"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="322"/>
         <source>URL and token are stored encrypted via Sailfish Secrets and bound to the device lock. They are saved as soon as both fields are filled in and lose focus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="158"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="328"/>
         <source>Home Assistant device registration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="164"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="334"/>
         <source>Device name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="175"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="345"/>
         <source>Registered -- appears in HA as its own device (notify.mobile_app_...) with battery and connection sensors.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="176"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="346"/>
         <source>Not registered yet -- will be tried automatically as soon as URL and token are valid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="183"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="353"/>
         <source>Re-register device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="189"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="359"/>
         <source>Cover action</source>
         <translation type="unfinished"></translation>
     </message>
@@ -816,6 +958,187 @@
     </message>
 </context>
 <context>
+    <name>TodoListPage</name>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="37"/>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="42"/>
+        <source>Nothing open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../qml/pages/TodoListPage.qml" line="42"/>
+        <source>%n open</source>
+        <comment>to-do items</comment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="47"/>
+        <source>Home Assistant did not return the list items. To-do lists need a newer Home Assistant version (2024.8 or later).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="49"/>
+        <source>Unknown error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="62"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="66"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="68"/>
+        <source>Due %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="157"/>
+        <source>Unexpected answer from Home Assistant.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="280"/>
+        <source>Home Assistant is not responding.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="331"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="438"/>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="337"/>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="355"/>
+        <source>Remove completed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="357"/>
+        <source>Removing completed items</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="362"/>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="379"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="380"/>
+        <source>Add item</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="410"/>
+        <source>Completed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="445"/>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="459"/>
+        <source>Not configured yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="460"/>
+        <source>Enter the Home Assistant URL and a long-lived access token in Settings first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="466"/>
+        <source>Could not load the list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="473"/>
+        <source>Nothing on this list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListPage.qml" line="474"/>
+        <source>Add an item with the field above.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TodoListsPage</name>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="26"/>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="31"/>
+        <source>Nothing open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../qml/pages/TodoListsPage.qml" line="31"/>
+        <source>%n open</source>
+        <comment>to-do items</comment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="68"/>
+        <source>Unknown error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="78"/>
+        <source>Home Assistant is not responding.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="111"/>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="117"/>
+        <source>To-do lists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="155"/>
+        <source>Not configured yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="156"/>
+        <source>Enter the Home Assistant URL and a long-lived access token in Settings first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="161"/>
+        <source>No connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="167"/>
+        <source>No to-do lists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/TodoListsPage.qml" line="168"/>
+        <source>Home Assistant has no to-do list entities. Add e.g. the Shopping List or Local To-do integration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>UpdatesView</name>
     <message>
         <location filename="../qml/views/UpdatesView.qml" line="97"/>
@@ -823,68 +1146,68 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="117"/>
-        <location filename="../qml/views/UpdatesView.qml" line="142"/>
+        <location filename="../qml/views/UpdatesView.qml" line="122"/>
+        <location filename="../qml/views/UpdatesView.qml" line="147"/>
         <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="176"/>
+        <location filename="../qml/views/UpdatesView.qml" line="197"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="180"/>
+        <location filename="../qml/views/UpdatesView.qml" line="201"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="186"/>
+        <location filename="../qml/views/UpdatesView.qml" line="207"/>
         <source>Updates (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="186"/>
+        <location filename="../qml/views/UpdatesView.qml" line="207"/>
         <source>Updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="193"/>
+        <location filename="../qml/views/UpdatesView.qml" line="214"/>
         <source>Not configured yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="194"/>
+        <location filename="../qml/views/UpdatesView.qml" line="215"/>
         <source>Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="199"/>
+        <location filename="../qml/views/UpdatesView.qml" line="220"/>
         <source>No connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="205"/>
+        <location filename="../qml/views/UpdatesView.qml" line="226"/>
         <source>Everything up to date</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="206"/>
+        <location filename="../qml/views/UpdatesView.qml" line="227"/>
         <source>No device has a pending update. Pull down to refresh.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="223"/>
+        <location filename="../qml/views/UpdatesView.qml" line="244"/>
         <source>Installing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="306"/>
+        <location filename="../qml/views/UpdatesView.qml" line="327"/>
         <source>Installing…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/UpdatesView.qml" line="306"/>
+        <location filename="../qml/views/UpdatesView.qml" line="327"/>
         <source>Install</source>
         <translation type="unfinished"></translation>
     </message>
@@ -892,37 +1215,37 @@
 <context>
     <name>harbour-hacontrol</name>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="132"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="190"/>
         <source>SailfishOS Phone</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="183"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="249"/>
         <source>Battery level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="188"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="254"/>
         <source>Charging</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="192"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="258"/>
         <source>Connection type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="269"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="340"/>
         <source>switched on</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="269"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="340"/>
         <source>switched off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/harbour-hacontrol.qml" line="271"/>
+        <location filename="../qml/harbour-hacontrol.qml" line="342"/>
         <source>Toggle</source>
         <translation type="unfinished"></translation>
     </message>
