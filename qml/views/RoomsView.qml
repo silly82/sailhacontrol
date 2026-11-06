@@ -23,6 +23,14 @@ Item {
         key: "/apps/harbour-hacontrol/watchedEntities"
         defaultValue: ""
     }
+    // Comma-separated entity_ids, same format as watchedEntities -- only
+    // used here. Favorites get a second copy of their row in an always-
+    // expanded group at the top of the list (s. buildEntries()).
+    ConfigurationValue {
+        id: favoritesSetting
+        key: "/apps/harbour-hacontrol/favoriteEntities"
+        defaultValue: ""
+    }
     // Set by harbour-hacontrol.qml's ensureMobileAppRegistered() once this
     // device is registered as a mobile_app entry -- used here to open the
     // real push-notification channel over this same WebSocket connection.
@@ -70,6 +78,21 @@ Item {
     readonly property string noRoomLabel: qsTr("No room")
     // room name -> bool. Missing key == collapsed (rooms start folded).
     property var expandedRooms: ({})
+    readonly property string favoritesLabel: qsTr("Favorites")
+
+    // Suche: searchText folgt dem SearchField sofort, searchQuery erst nach
+    // dem Debounce (searchTimer) -- nur searchQuery löst den Scan über
+    // entriesModel aus. Das Ergebnis liegt als zwei Maps vor, an denen die
+    // Delegates per Lookup ihre Sichtbarkeit festmachen, statt dass jeder
+    // Delegate selbst Strings vergleicht. expandedRooms bleibt dabei
+    // unberührt -- nach dem Leeren des Felds ist der alte Auf-/Zuklapp-
+    // Zustand wieder da.
+    property string searchText: ""
+    property string searchQuery: ""
+    readonly property bool searchActive: searchQuery.length > 0
+    property var searchMatches: ({})     // entityId -> true
+    property var searchRoomCounts: ({})  // room -> number of matches
+    property int searchMatchCount: 0
 
     // "toggle" umfasst alle Domains, die HAs generischen <domain>.toggle-
     // Service unterstützen -- fan/cover haben kein eigenes Submenu, nur
@@ -160,7 +183,138 @@ Item {
             ids.push(entry.entityId)
         }
         watchedSetting.value = ids.join(",")
-        entriesModel.setProperty(index, "notify", pos < 0)
+        // Favoriten stehen doppelt im Model (Raum + Favoriten-Gruppe) --
+        // beide Kopien nachführen.
+        setPropertyForEntity(entry.entityId, "notify", pos < 0)
+    }
+
+    function setPropertyForEntity(entityId, role, value) {
+        for (var i = 0; i < entriesModel.count; i++) {
+            var row = entriesModel.get(i)
+            if (row.rowType === "entity" && row.entityId === entityId) {
+                entriesModel.setProperty(i, role, value)
+            }
+        }
+    }
+
+    function favoriteIds() {
+        return favoritesSetting.value.split(",").map(function (s) { return s.trim() }).filter(function (s) { return s.length > 0 })
+    }
+
+    // Gleiche Reihenfolge wie innerhalb eines Raums: nach kind, dann Name.
+    function compareEntities(x, y) {
+        if (x.kind !== y.kind) {
+            return kindOrder[x.kind] - kindOrder[y.kind]
+        }
+        return x.friendlyName.localeCompare(y.friendlyName)
+    }
+
+    function headerRow(roomName, count, isFavGroup) {
+        return { rowType: "header", room: roomName, count: count, entityId: "", domain: "", kind: "", friendlyName: "", isOn: false, notify: false, favorite: false, favGroup: isFavGroup, value: "", unit: "", hvacMode: "", attributes: ({}) }
+    }
+
+    // Plain-JS-Kopie einer Entity-Zeile (entriesModel.get() liefert ein an
+    // das Model gebundenes Objekt, das nach insert/remove nicht mehr
+    // verlässlich ist).
+    function copyEntityRow(row) {
+        return { rowType: "entity", room: row.room, count: 0, entityId: row.entityId, domain: row.domain, kind: row.kind, friendlyName: row.friendlyName, isOn: row.isOn, notify: row.notify, favorite: row.favorite, favGroup: row.favGroup, value: row.value, unit: row.unit, hvacMode: row.hvacMode, attributes: row.attributes }
+    }
+
+    // Inkrementell statt buildEntries() neu aufzurufen: dafür fehlen hier
+    // die Rohdaten, und ein Neuaufbau über alle Zeilen wäre für einen
+    // einzelnen Stern unnötig teuer. Die Favoriten-Gruppe steht, falls
+    // vorhanden, immer ab Index 0 (Header) mit `count` Zeilen danach.
+    function toggleFavorite(index) {
+        var entry = copyEntityRow(entriesModel.get(index))
+        var ids = favoriteIds()
+        var pos = ids.indexOf(entry.entityId)
+        var nowFavorite = pos < 0
+        if (nowFavorite) {
+            ids.push(entry.entityId)
+        } else {
+            ids.splice(pos, 1)
+        }
+        favoritesSetting.value = ids.join(",")
+
+        var favCount = (entriesModel.count > 0 && entriesModel.get(0).favGroup === true) ? entriesModel.get(0).count : -1
+        if (nowFavorite) {
+            if (favCount < 0) {
+                entriesModel.insert(0, headerRow(favoritesLabel, 0, true))
+                favCount = 0
+            }
+            entry.room = favoritesLabel
+            entry.favGroup = true
+            entry.favorite = true
+            var insertAt = 1 + favCount
+            for (var i = 1; i <= favCount; i++) {
+                if (compareEntities(entry, entriesModel.get(i)) < 0) {
+                    insertAt = i
+                    break
+                }
+            }
+            entriesModel.insert(insertAt, entry)
+            entriesModel.setProperty(0, "count", favCount + 1)
+        } else if (favCount > 0) {
+            for (var j = 1; j <= favCount; j++) {
+                if (entriesModel.get(j).entityId === entry.entityId) {
+                    entriesModel.remove(j)
+                    favCount--
+                    break
+                }
+            }
+            if (favCount === 0) {
+                entriesModel.remove(0)
+            } else {
+                entriesModel.setProperty(0, "count", favCount)
+            }
+        }
+        setPropertyForEntity(entry.entityId, "favorite", nowFavorite)
+    }
+
+    Timer {
+        id: searchTimer
+        interval: 250
+        repeat: false
+        onTriggered: searchQuery = searchText.trim().toLowerCase()
+    }
+
+    onSearchTextChanged: {
+        // Leeren wirkt sofort -- nur das Tippen wird entprellt.
+        if (searchText.trim().length === 0) {
+            searchTimer.stop()
+            searchQuery = ""
+        } else {
+            searchTimer.restart()
+        }
+    }
+
+    onSearchQueryChanged: updateSearch()
+
+    // Ein Durchlauf über entriesModel (~400 Zeilen) pro entprellter
+    // Eingabe. Die Kopien in der Favoriten-Gruppe zählen nicht mit -- die
+    // Gruppe ist während der Suche ausgeblendet, sonst stünden Favoriten
+    // doppelt im Ergebnis.
+    function updateSearch() {
+        var matches = {}
+        var roomCounts = {}
+        var total = 0
+        if (searchQuery.length > 0) {
+            for (var i = 0; i < entriesModel.count; i++) {
+                var row = entriesModel.get(i)
+                if (row.rowType !== "entity" || row.favGroup === true) {
+                    continue
+                }
+                if (row.friendlyName.toLowerCase().indexOf(searchQuery) >= 0
+                        || row.entityId.toLowerCase().indexOf(searchQuery) >= 0) {
+                    matches[row.entityId] = true
+                    roomCounts[row.room] = (roomCounts[row.room] || 0) + 1
+                    total++
+                }
+            }
+        }
+        searchMatches = matches
+        searchRoomCounts = roomCounts
+        searchMatchCount = total
     }
 
     function formatSensorValue(value, unit) {
@@ -198,6 +352,8 @@ Item {
         }
 
         var watched = watchedIds()
+        var favorites = favoriteIds()
+        var favoriteEntities = []
         var rooms = {}
         // Für CoverPage.qml -- im selben Durchlauf mitgezählt statt per
         // separatem O(n)-Scan über das fertig gebaute entriesModel danach
@@ -240,6 +396,7 @@ Item {
                 friendlyName: s.attributes.friendly_name || s.entity_id,
                 isOn: isOnValue,
                 notify: watched.indexOf(s.entity_id) >= 0,
+                favorite: favorites.indexOf(s.entity_id) >= 0,
                 // Bei Thermostaten: Zieltemperatur statt hvac_mode-state
                 // in der Zeile anzeigen, mit "°C" statt der (meist
                 // fehlenden) unit_of_measurement. Als String, da die
@@ -272,22 +429,43 @@ Item {
         for (var k = 0; k < roomNames.length; k++) {
             var roomName = roomNames[k]
             var entities = rooms[roomName]
-            entities.sort(function (x, y) {
-                if (x.kind !== y.kind) {
-                    return kindOrder[x.kind] - kindOrder[y.kind]
-                }
-                return x.friendlyName.localeCompare(y.friendlyName)
-            })
-            entriesModel.append({ rowType: "header", room: roomName, count: entities.length, entityId: "", domain: "", kind: "", friendlyName: "", isOn: false, notify: false, value: "", unit: "", hvacMode: "", attributes: ({}) })
+            entities.sort(compareEntities)
             for (var m = 0; m < entities.length; m++) {
                 var e = entities[m]
                 e.rowType = "entity"
                 e.room = roomName
                 e.count = 0
-                entriesModel.append(e)
+                e.favGroup = false
+                if (e.favorite) {
+                    favoriteEntities.push(e)
+                }
+            }
+        }
+
+        // Favoriten-Gruppe zuerst, als eigene Kopien der Zeilen (die
+        // Raum-Zeile bleibt zusätzlich bestehen).
+        if (favoriteEntities.length > 0) {
+            favoriteEntities.sort(compareEntities)
+            entriesModel.append(headerRow(favoritesLabel, favoriteEntities.length, true))
+            for (var f = 0; f < favoriteEntities.length; f++) {
+                var fav = copyEntityRow(favoriteEntities[f])
+                fav.room = favoritesLabel
+                fav.favGroup = true
+                entriesModel.append(fav)
+            }
+        }
+        for (var r = 0; r < roomNames.length; r++) {
+            var rn = roomNames[r]
+            var list = rooms[rn]
+            entriesModel.append(headerRow(rn, list.length, false))
+            for (var n = 0; n < list.length; n++) {
+                entriesModel.append(list[n])
             }
         }
         coverLightsOnCountSetting.value = lightsOnCount
+        if (searchActive) {
+            updateSearch()
+        }
     }
 
     function openLightDetail(index) {
@@ -452,7 +630,11 @@ Item {
         return url.replace(/\/+$/, "").replace(/^http/, "ws") + "/api/websocket"
     }
 
+    // Favoriten stehen doppelt im Model -- darum kein Abbruch nach dem
+    // ersten Treffer, alle Kopien werden gepatcht. Der Cover-Zähler wird
+    // nur einmal pro Entity nachgeführt (countedLight).
     function applyStateChange(entityId, newState) {
+        var countedLight = false
         for (var i = 0; i < entriesModel.count; i++) {
             var row = entriesModel.get(i)
             if (row.rowType !== "entity" || row.entityId !== entityId) {
@@ -473,9 +655,10 @@ Item {
                     // Rescan pro Event kostete auf einem Gerät mit ~700+
                     // Zeilen und schon hoher Systemlast spürbar GUI-Thread-
                     // Zeit (ANR).
-                    if (wasOn !== nowOn) {
+                    if (wasOn !== nowOn && !countedLight) {
                         coverLightsOnCountSetting.value += nowOn ? 1 : -1
                     }
+                    countedLight = true
                 }
             } else if (row.kind === "sensor") {
                 entriesModel.setProperty(i, "value", newState.state)
@@ -489,7 +672,6 @@ Item {
                 entriesModel.setProperty(i, "value", newState.state)
                 entriesModel.setProperty(i, "attributes", newState.attributes || {})
             }
-            return
         }
     }
 
@@ -633,6 +815,15 @@ Item {
                 title: qsTr("Rooms")
                 description: wsSubscribed ? qsTr("Live") : ""
             }
+
+            SearchField {
+                width: parent.width
+                visible: configured
+                placeholderText: qsTr("Search devices")
+                onTextChanged: root.searchText = text
+                EnterKey.iconSource: "image://theme/icon-m-enter-close"
+                EnterKey.onClicked: focus = false
+            }
         }
 
         // Leere Zustände über Silicas ViewPlaceholder statt über eigene
@@ -657,12 +848,25 @@ Item {
             text: qsTr("No devices")
             hintText: qsTr("Home Assistant reports no controllable entities. Pull down to refresh.")
         }
+        ViewPlaceholder {
+            flickable: listView
+            enabled: configured && errorText.length === 0 && entriesModel.count > 0 && searchActive && searchMatchCount === 0
+            text: qsTr("No matches")
+            hintText: qsTr("No device name or entity ID contains \"%1\".").arg(searchQuery)
+        }
 
         delegate: ListItem {
             id: delegateItem
             width: listView.width
             readonly property bool isHeader: model.rowType === "header"
-            readonly property bool rowVisible: isHeader || expandedRooms[model.room] === true
+            readonly property bool isFavGroup: model.favGroup === true
+            // Während der Suche: Favoriten-Gruppe aus, Räume nur mit
+            // Treffern, und dort nur die Treffer (aufgeklappt, egal ob der
+            // Raum sonst zu ist). Sonst: Favoriten immer offen, Räume nach
+            // expandedRooms.
+            readonly property bool rowVisible: searchActive
+                ? (!isFavGroup && (isHeader ? searchRoomCounts[model.room] > 0 : searchMatches[model.entityId] === true))
+                : (isHeader || isFavGroup || expandedRooms[model.room] === true)
             contentHeight: rowVisible ? (isHeader ? Theme.itemSizeExtraSmall : Theme.itemSizeMedium) : 0
             visible: rowVisible
             clip: true
@@ -670,7 +874,11 @@ Item {
             // Bei Szenen ergibt "bei Änderung benachrichtigen" keinen Sinn
             // -- ihr state ist nur der Zeitpunkt der letzten Aktivierung,
             // kein sinnvoller on/off-Zustand.
-            menu: (!isHeader && (model.kind === "toggle" || model.kind === "climate" || model.kind === "mediaplayer")) ? notifyMenuComponent : null
+            // Favorit geht für alle kinds, "Benachrichtigen" nur für die
+            // drei unten -- eine Menükomponente, der Notify-Eintrag blendet
+            // sich bei Bedarf aus.
+            readonly property bool canNotify: model.kind === "toggle" || model.kind === "climate" || model.kind === "mediaplayer"
+            menu: !isHeader ? entityMenuComponent : null
 
             // Bei Lichtern/Thermostaten/Media-Playern: Tap auf den Namen
             // öffnet das jeweilige Submenu. Bei Szenen aktiviert der Tap
@@ -694,9 +902,17 @@ Item {
             }
 
             Component {
-                id: notifyMenuComponent
+                id: entityMenuComponent
                 ContextMenu {
                     MenuItem {
+                        text: model.favorite ? qsTr("Remove from favorites") : qsTr("Add to favorites")
+                        // Erst nach dem Schliessen des Menüs: das Entfernen
+                        // kann genau diese Zeile (Kopie in der Favoriten-
+                        // Gruppe) aus dem Model löschen.
+                        onDelayedClick: toggleFavorite(index)
+                    }
+                    MenuItem {
+                        visible: delegateItem.canNotify
                         text: model.notify ? qsTr("Disable notification") : qsTr("Notify on change")
                         onClicked: toggleWatch(index)
                     }
@@ -712,19 +928,21 @@ Item {
                 spacing: Theme.paddingSmall
 
                 Label {
-                    text: expandedRooms[model.room] === true ? "▾" : "▸"
+                    text: delegateItem.isFavGroup ? "★" : ((searchActive || expandedRooms[model.room] === true) ? "▾" : "▸")
                     color: Theme.highlightColor
                     font.pixelSize: Theme.fontSizeMedium
                 }
                 Label {
-                    text: model.room + " (" + model.count + ")"
+                    text: model.room + " (" + (searchActive ? (searchRoomCounts[model.room] || 0) : model.count) + ")"
                     color: Theme.highlightColor
                     font.pixelSize: Theme.fontSizeMedium
                 }
             }
             MouseArea {
                 anchors.fill: parent
-                enabled: delegateItem.isHeader
+                // Favoriten sind immer offen; während der Suche ist das
+                // Aufklappen durch die Treffer bestimmt.
+                enabled: delegateItem.isHeader && !delegateItem.isFavGroup && !searchActive
                 onClicked: toggleRoom(model.room)
             }
 
