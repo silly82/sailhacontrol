@@ -147,37 +147,37 @@
         <translation>Szenen, Skripte, Lichter, Schalter suchen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="239"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="242"/>
         <source>Not configured yet</source>
         <translation>Noch nicht konfiguriert</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="240"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="243"/>
         <source>Enter the Home Assistant URL and a long-lived access token in Settings first.</source>
         <translation>Zuerst in den Einstellungen die Home-Assistant-URL und einen Long-Lived Access Token eintragen.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="245"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="251"/>
         <source>No connection</source>
         <translation>Keine Verbindung</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="251"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="260"/>
         <source>No matches</source>
         <translation>Keine Treffer</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="251"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="260"/>
         <source>Nothing to choose from</source>
         <translation>Nichts zur Auswahl</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="253"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="262"/>
         <source>No scene, script, light or switch matches the search.</source>
         <translation>Keine Szene, kein Skript, Licht oder Schalter passt zur Suche.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="254"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="263"/>
         <source>Home Assistant has no scenes, scripts, lights or switches.</source>
         <translation>Home Assistant hat keine Szenen, Skripte, Lichter oder Schalter.</translation>
     </message>

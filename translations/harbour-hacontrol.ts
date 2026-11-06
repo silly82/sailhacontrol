@@ -146,37 +146,37 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="239"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="242"/>
         <source>Not configured yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="240"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="243"/>
         <source>Enter the Home Assistant URL and a long-lived access token in Settings first.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="245"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="251"/>
         <source>No connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="251"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="260"/>
         <source>No matches</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="251"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="260"/>
         <source>Nothing to choose from</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="253"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="262"/>
         <source>No scene, script, light or switch matches the search.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/CoverSettingsPage.qml" line="254"/>
+        <location filename="../qml/pages/CoverSettingsPage.qml" line="263"/>
         <source>Home Assistant has no scenes, scripts, lights or switches.</source>
         <translation type="unfinished"></translation>
     </message>
