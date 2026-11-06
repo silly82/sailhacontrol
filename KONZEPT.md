@@ -1314,3 +1314,12 @@ emulator in a dark (extrasail) and a light (glacial, `darkonlight`) ambience.
 - The attributes role only ever receives plain objects (`plainAttributes()`),
   after a one-off `Can't assign to existing role 'attributes' of different
   type [List -> VariantMap]` warning that could not be reproduced.
+- **Found on the real device**: the first v0.57 build froze at startup on the
+  Jolla Phone (lipstick "not responding"; main thread in `futex_wait`, render
+  thread busy in GPU polls) but ran fine on the emulator. Bisected on the
+  phone over Tailscale: v0.56 was fine; removing the page dots'
+  `Behavior on opacity { FadeAnimator {} }` from the installed QML fixed it.
+  It is a `NumberAnimation` now. Lesson: render-thread animators need a test
+  on the Mali device before release. The same build also confirmed on the
+  device that v0.55 credentials survive the upgrade (profile 0, nothing
+  re-entered) and that sailjaild writes the `ExecDBus` activation file.
