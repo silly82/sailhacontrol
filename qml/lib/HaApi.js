@@ -51,6 +51,31 @@ function callService(baseUrl, token, domain, service, serviceData, onSuccess, on
     request("POST", baseUrl, token, "/api/services/" + domain + "/" + service, serviceData, onSuccess, onError)
 }
 
+// POST /api/services/<domain>/<service>?return_response -- for services that
+// return data (e.g. todo.get_items). HA answers with
+// {changed_states: [...], service_response: {...}}; onSuccess only receives
+// service_response. Home Assistant versions without REST service responses
+// ignore the query parameter and return a plain array of changed states
+// instead -- reported via onError with code "no_service_response" so the
+// caller can show a clear message.
+function callServiceWithResponse(baseUrl, token, domain, service, serviceData, onSuccess, onError) {
+    request("POST", baseUrl, token, "/api/services/" + domain + "/" + service + "?return_response", serviceData,
+        function (result) {
+            if (!result || typeof result !== "object" || Array.isArray(result)
+                    || result.service_response === undefined || result.service_response === null) {
+                if (onError) {
+                    onError({ hint: "no service_response from Home Assistant", code: "no_service_response",
+                              detail: JSON.stringify(result) })
+                }
+                return
+            }
+            if (onSuccess) {
+                onSuccess(result.service_response)
+            }
+        },
+        onError)
+}
+
 // GET /api/history/period/<start>?filter_entity_id=<id>&end_time=<end>
 // &minimal_response&no_attributes -- state history of ONE entity between two
 // Dates. end_time is passed explicitly because HA otherwise defaults to

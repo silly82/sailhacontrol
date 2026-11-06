@@ -967,6 +967,10 @@ Item {
                     onClicked: pageStack.push(Qt.resolvedUrl("../pages/SettingsPage.qml"))
                 }
                 MenuItem {
+                    text: qsTr("To-do lists")
+                    onClicked: pageStack.push(Qt.resolvedUrl("../pages/TodoListsPage.qml"), { stateSource: root })
+                }
+                MenuItem {
                     text: qsTr("Refresh")
                     onClicked: root.refreshRequested()
                 }
