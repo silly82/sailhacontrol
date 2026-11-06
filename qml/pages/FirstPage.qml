@@ -155,7 +155,11 @@ Page {
         opacity: shown || swipeContainer.moving || snapAnimation.running ? 1 : 0
         enabled: opacity > 0
         visible: opacity > 0
-        Behavior on opacity { FadeAnimator { duration: 400 } }
+        // NumberAnimation, not FadeAnimator: the render-thread animator froze
+        // the app on the Jolla Phone's Mali GPU at startup (main thread stuck
+        // waiting for the render thread, "not responding") -- fine on the
+        // emulator, so test opacity animators on real hardware first.
+        Behavior on opacity { NumberAnimation { duration: 400 } }
         Timer {
             id: indicatorHideTimer
             interval: 4000
