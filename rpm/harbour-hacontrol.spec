@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS
-Version:    0.55
+Version:    0.56
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -77,6 +77,17 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Nov 06 2026 silly82 <siliwalker@gmail.com> - 0.56-1
+- Favorites: long-press an entity to pin it to a group at the top of the
+  room view.
+- Search field in the room view (name or entity ID, across all rooms).
+- New entity types: input_boolean, script, button/input_button, locks
+  (unlock/open with a cancel window) and covers with a position slider.
+- Sensor history chart (6 h / 24 h / 7 d) when tapping a sensor.
+- The cover action can be set to any scene, script, light or switch.
+- Optional external URL for access away from home, with automatic
+  switching between the home and the external URL.
+
 * Wed Nov 04 2026 silly82 <siliwalker@gmail.com> - 0.55-1
 - All texts in the app are now English in the source, with a complete
   German translation. Before, some texts were German only and the

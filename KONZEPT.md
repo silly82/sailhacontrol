@@ -1136,3 +1136,62 @@ paired with a `nohup sh -c 'sleep 150; iptables -D ...' &` safety net so a
 forgotten rule cannot linger. The placeholder appears after 15s instead of a
 spinning indicator, and the room list returns by itself once the rule is
 dropped.
+
+## 26. Update 2026-11-04: English source strings and a translation workflow, v0.55
+
+Prompted by two requests on the Sailfish OS forum. Half of the `qsTr()` source
+strings were German and `harbour-hacontrol-de.ts` was an empty template, so the
+UI was a mix of both languages whatever the phone's locale. All source strings
+are now English and the German file is complete. The cover's "lights on" text
+uses `%n` plural forms, and the save error uses `%1` instead of concatenation so
+other languages can reorder it. `harbour-hacontrol.pro` picks up every
+`translations/harbour-hacontrol-*.ts` via `$$files()`, so a contributor only
+adds a file; `TRANSLATING.md` and `translations/new-language.sh` describe the
+steps. The default device name "SailfishOS Phone" stays untranslated in German
+on purpose: it is the name registered in Home Assistant.
+
+## 27. Update 2026-11-06: favorites, search, more entity types, sensor history, cover action, remote access, v0.56
+
+Six features, built in parallel on separate branches and merged afterwards.
+
+- **Favorites** (`RoomsView.qml`): stored as a comma-separated list in
+  `/apps/harbour-hacontrol/favoriteEntities`, like `watchedEntities`. Favorite
+  rows are *copies* in a "Favorites" group at index 0 (`favGroup: true`), so
+  `applyStateChange()` and `toggleWatch()` now update every row with a given
+  entity ID instead of stopping at the first match. The cover's lights-on
+  counter is still adjusted once per event (`countedLight`). Adding/removing a
+  favorite edits the model in place on `onDelayedClick`, because removing can
+  delete the very row whose context menu was open.
+- **Search**: a `SearchField` in the list header, 250 ms debounce, one pass
+  over the model per query that fills lookup maps; delegates only look
+  themselves up. `expandedRooms` is never touched, so clearing the field
+  restores the previous expand/collapse state.
+- **Entity types**: `input_boolean` joins `toggleDomains`; `script`, `button`
+  and `input_button` reuse the scene row (Run / Press, "Done" feedback for 2 s).
+  Locks are a new kind: locking is immediate, unlock/open go through
+  `remorseAction` with the entity ID captured (same reasoning as the install
+  remorse in section 24). Locks deliberately get no "Notify on change": the
+  notification's Toggle action would unlock without confirmation, and `lock`
+  has no `toggle` service. Covers with SET_POSITION or `current_position` open
+  `CoverDetailPage.qml` (slider + Open/Stop/Close by feature bits); the page
+  follows live updates through a new `liveStateReceived` signal.
+- **Sensor history** (`SensorHistoryPage.qml`): `/api/history/period/<start>`
+  with explicit `end_time` (without it HA ends at start + 1 day, which cut the
+  7-day view), `minimal_response` and `no_attributes`. Drawn once per data set
+  on a `Canvas`; points in the same pixel column collapse into a min/max stroke,
+  non-numeric states break the line. Timestamps are parsed by regex because
+  Qt 5.6's `Date.parse` is not trusted with microseconds and `+00:00`.
+- **Cover action** (`CoverSettingsPage.qml`): target stored in
+  `coverTargetId` / `coverTargetName` / `coverTargetDomain`; empty means the old
+  "last used light" behavior. Scenes/scripts run with `icon-cover-play`,
+  lights/switches toggle. The cover still never polls HA itself.
+- **Remote access** (`src/credentials.*`): the external URL is a third Sailfish
+  secret (`harbour-hacontrol-externalUrl`); data stored by v0.55 has none and
+  loads unchanged. `Credentials.baseUrl` now returns the *effective* URL and
+  emits `baseUrlChanged` on a switch, so no call site changed; the WebSocket
+  reconnects on that signal. In Auto mode a probe (`GET <internal>/api/` with
+  the token, 3 s, only HTTP 200 counts) decides; it runs after loading, on
+  save, on mode change, on network changes (`QNetworkConfigurationManager`,
+  debounced), on a WebSocket error and on the 15 s request timeout, and every
+  60 s while on the external URL to switch back. The mode (Auto / internal
+  only / external only) is not secret and lives in dconf.
