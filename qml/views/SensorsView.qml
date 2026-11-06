@@ -47,6 +47,13 @@ Item {
         id: weatherEntitySetting
         key: Credentials.settingsPrefix + "weatherEntity"
         defaultValue: ""
+        // Also fires when the entity is picked in Settings.
+        onValueChanged: chooseWeather()
+    }
+    ConfigurationValue {
+        id: weatherEntityNameSetting
+        key: Credentials.settingsPrefix + "weatherEntityName"
+        defaultValue: ""
     }
     // Read by CoverPage.qml (the cover never polls HA itself) -- same
     // pattern as RoomsView.qml's coverLightsOnCount.
@@ -248,9 +255,9 @@ Item {
             noMatchesHint: qsTr("No weather entity matches the search."),
             nothingHint: qsTr("Home Assistant has no weather entities.")
         })
-        picker.picked.connect(function (entityId) {
+        picker.picked.connect(function (entityId, name) {
             weatherEntitySetting.value = entityId
-            chooseWeather()
+            weatherEntityNameSetting.value = entityId.length > 0 ? name : ""
         })
     }
 

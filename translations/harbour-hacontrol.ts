@@ -1056,230 +1056,230 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="67"/>
+        <location filename="../qml/views/SensorsView.qml" line="74"/>
         <source>Clear night</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="68"/>
+        <location filename="../qml/views/SensorsView.qml" line="75"/>
         <source>Cloudy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="69"/>
+        <location filename="../qml/views/SensorsView.qml" line="76"/>
         <source>Exceptional</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="70"/>
+        <location filename="../qml/views/SensorsView.qml" line="77"/>
         <source>Fog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="71"/>
+        <location filename="../qml/views/SensorsView.qml" line="78"/>
         <source>Hail</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="72"/>
+        <location filename="../qml/views/SensorsView.qml" line="79"/>
         <source>Thunderstorm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="73"/>
+        <location filename="../qml/views/SensorsView.qml" line="80"/>
         <source>Thunderstorm, rain</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="74"/>
+        <location filename="../qml/views/SensorsView.qml" line="81"/>
         <source>Partly cloudy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="75"/>
+        <location filename="../qml/views/SensorsView.qml" line="82"/>
         <source>Pouring rain</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="76"/>
+        <location filename="../qml/views/SensorsView.qml" line="83"/>
         <source>Rainy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="77"/>
+        <location filename="../qml/views/SensorsView.qml" line="84"/>
         <source>Snowy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="78"/>
+        <location filename="../qml/views/SensorsView.qml" line="85"/>
         <source>Sleet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="79"/>
+        <location filename="../qml/views/SensorsView.qml" line="86"/>
         <source>Sunny</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="80"/>
+        <location filename="../qml/views/SensorsView.qml" line="87"/>
         <source>Windy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="81"/>
+        <location filename="../qml/views/SensorsView.qml" line="88"/>
         <source>Windy, cloudy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="82"/>
+        <location filename="../qml/views/SensorsView.qml" line="89"/>
         <source>Unavailable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="97"/>
+        <location filename="../qml/views/SensorsView.qml" line="104"/>
         <source>N</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="97"/>
+        <location filename="../qml/views/SensorsView.qml" line="104"/>
         <source>NE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="97"/>
+        <location filename="../qml/views/SensorsView.qml" line="104"/>
         <source>E</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="97"/>
+        <location filename="../qml/views/SensorsView.qml" line="104"/>
         <source>SE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="98"/>
+        <location filename="../qml/views/SensorsView.qml" line="105"/>
         <source>S</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="98"/>
+        <location filename="../qml/views/SensorsView.qml" line="105"/>
         <source>SW</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="98"/>
+        <location filename="../qml/views/SensorsView.qml" line="105"/>
         <source>W</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="98"/>
+        <location filename="../qml/views/SensorsView.qml" line="105"/>
         <source>NW</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="118"/>
+        <location filename="../qml/views/SensorsView.qml" line="125"/>
         <source>Humidity %1 %</source>
         <extracomment>Weather card, %1 = relative humidity in percent</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="125"/>
+        <location filename="../qml/views/SensorsView.qml" line="132"/>
         <source>Wind %1</source>
         <extracomment>Weather card, %1 = wind speed with unit and direction, e.g. &quot;12 km/h SW&quot;</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="232"/>
+        <location filename="../qml/views/SensorsView.qml" line="239"/>
         <source>Today</source>
         <extracomment>Weather forecast column for the current day</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="241"/>
+        <location filename="../qml/views/SensorsView.qml" line="248"/>
         <source>Weather</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="242"/>
+        <location filename="../qml/views/SensorsView.qml" line="249"/>
         <source>Shown at the top of the sensor overview and on the app cover.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="244"/>
+        <location filename="../qml/views/SensorsView.qml" line="251"/>
         <source>Automatic</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="245"/>
+        <location filename="../qml/views/SensorsView.qml" line="252"/>
         <source>The first weather entity Home Assistant reports</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="247"/>
+        <location filename="../qml/views/SensorsView.qml" line="254"/>
         <source>Search weather entities</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="248"/>
+        <location filename="../qml/views/SensorsView.qml" line="255"/>
         <source>No weather entity matches the search.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="249"/>
+        <location filename="../qml/views/SensorsView.qml" line="256"/>
         <source>Home Assistant has no weather entities.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="335"/>
+        <location filename="../qml/views/SensorsView.qml" line="342"/>
         <source>Home Assistant is not responding.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="374"/>
+        <location filename="../qml/views/SensorsView.qml" line="381"/>
         <source>Unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="427"/>
+        <location filename="../qml/views/SensorsView.qml" line="434"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="434"/>
+        <location filename="../qml/views/SensorsView.qml" line="441"/>
         <source>Choose weather</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="438"/>
+        <location filename="../qml/views/SensorsView.qml" line="445"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="444"/>
+        <location filename="../qml/views/SensorsView.qml" line="451"/>
         <source>Sensors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="554"/>
+        <location filename="../qml/views/SensorsView.qml" line="561"/>
         <source>Not configured yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="555"/>
+        <location filename="../qml/views/SensorsView.qml" line="562"/>
         <source>Open Settings in the pull-down menu and enter the Home Assistant URL and a long-lived access token.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="560"/>
+        <location filename="../qml/views/SensorsView.qml" line="567"/>
         <source>No connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="568"/>
+        <location filename="../qml/views/SensorsView.qml" line="575"/>
         <source>No sensors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/SensorsView.qml" line="569"/>
+        <location filename="../qml/views/SensorsView.qml" line="576"/>
         <source>No sensor is reporting a value right now. Pull down to refresh.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1305,161 +1305,196 @@
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="121"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="226"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="256"/>
         <source>Instance</source>
         <extracomment>Settings: selector for the active Home Assistant instance (profile)</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="146"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="343"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="373"/>
         <source>SailfishOS Phone</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="185"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="215"/>
         <source>Delete instance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="190"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="193"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="220"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="223"/>
         <source>Rename instance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="202"/>
-        <location filename="../qml/pages/SettingsPage.qml" line="204"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="232"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="234"/>
         <source>Add instance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="218"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="248"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="236"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="266"/>
         <source>Notifications for watched devices only come from the selected instance.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="244"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="274"/>
         <source>Home Assistant URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="245"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="275"/>
         <source>http://homeassistant.local:8123</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="254"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="284"/>
         <source>External URL (optional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="255"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="285"/>
         <source>https://example.ui.nabu.casa</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="265"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="295"/>
         <source>Used when the URL above can&apos;t be reached, e.g. away from home: Nabu Casa, Tailscale or a reverse proxy. The same token is used for both.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="273"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="303"/>
         <source>Connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="277"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="190"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="307"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="409"/>
         <source>Automatic</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="278"/>
-        <source>Internal URL only</source>
+        <location filename="../qml/pages/SettingsPage.qml" line="187"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="403"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="407"/>
+        <source>Weather</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="279"/>
-        <source>External URL only</source>
+        <location filename="../qml/pages/SettingsPage.qml" line="188"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="411"/>
+        <source>Shown at the top of the sensor overview and on the app cover.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="297"/>
-        <source>Checking whether the internal URL is reachable…</source>
+        <location filename="../qml/pages/SettingsPage.qml" line="191"/>
+        <source>The first weather entity Home Assistant reports</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="299"/>
-        <source>Connected via: external URL</source>
+        <location filename="../qml/pages/SettingsPage.qml" line="193"/>
+        <source>Search weather entities</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="300"/>
-        <source>Connected via: internal URL</source>
+        <location filename="../qml/pages/SettingsPage.qml" line="194"/>
+        <source>No weather entity matches the search.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="195"/>
+        <source>Home Assistant has no weather entities.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="308"/>
-        <source>Long-Lived Access Token</source>
+        <source>Internal URL only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="309"/>
-        <source>create one in HA: Profile → Security</source>
+        <source>External URL only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="321"/>
-        <source>Saving failed: %1</source>
+        <location filename="../qml/pages/SettingsPage.qml" line="327"/>
+        <source>Checking whether the internal URL is reachable…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="329"/>
+        <source>Connected via: external URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="330"/>
+        <source>Connected via: internal URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="338"/>
+        <source>Long-Lived Access Token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="339"/>
+        <source>create one in HA: Profile → Security</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="351"/>
+        <source>Saving failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/SettingsPage.qml" line="360"/>
         <source>URL and token are stored encrypted via Sailfish Secrets and bound to the device lock. They are saved as soon as both fields are filled in and lose focus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="336"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="366"/>
         <source>Home Assistant device registration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="342"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="372"/>
         <source>Device name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="353"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="383"/>
         <source>Registered -- appears in HA as its own device (notify.mobile_app_...) with battery and connection sensors.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="354"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="384"/>
         <source>Not registered yet -- will be tried automatically as soon as URL and token are valid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="361"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="391"/>
         <source>Re-register device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="366"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="396"/>
         <source>Report location to Home Assistant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="367"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="397"/>
         <source>Sends this phone&apos;s position to this instance as its device tracker -- only at app start, on refresh and every 10 minutes in the background, never continuously. Off by default; turning it off stops reporting but doesn&apos;t delete positions already stored in Home Assistant.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/SettingsPage.qml" line="374"/>
+        <location filename="../qml/pages/SettingsPage.qml" line="417"/>
         <source>Cover action</source>
         <translation type="unfinished"></translation>
     </message>

@@ -51,7 +51,7 @@ Page {
         "favoriteEntities", "coverLightsOnCount", "coverLastLightId",
         "coverLastLightName", "coverTargetId", "coverTargetName", "coverTargetDomain",
         "coverTarget2Id", "coverTarget2Name", "coverTarget2Domain", "coverShowWeather",
-        "coverWeatherText", "weatherEntity", "reportLocation"
+        "coverWeatherText", "weatherEntity", "weatherEntityName", "reportLocation"
     ]
     function clearProfileSettings(id) {
         var prefix = Credentials.settingsPrefixFor(id)
@@ -170,6 +170,36 @@ Page {
         defaultValue: ""
     }
     // Same key as in harbour-hacontrol.qml (opt-in location reporting).
+    // Same keys as SensorsView's weather card -- dconf notifies the other
+    // instance, so the card switches as soon as a new entity is picked here.
+    ConfigurationValue {
+        id: weatherEntitySetting
+        key: Credentials.settingsPrefix + "weatherEntity"
+        defaultValue: ""
+    }
+    ConfigurationValue {
+        id: weatherEntityNameSetting
+        key: Credentials.settingsPrefix + "weatherEntityName"
+        defaultValue: ""
+    }
+    function openWeatherPicker() {
+        var picker = pageStack.push(Qt.resolvedUrl("EntityPickerPage.qml"), {
+            headerTitle: qsTr("Weather"),
+            description: qsTr("Shown at the top of the sensor overview and on the app cover."),
+            domains: ["weather"],
+            defaultLabel: qsTr("Automatic"),
+            defaultDescription: qsTr("The first weather entity Home Assistant reports"),
+            currentId: weatherEntitySetting.value,
+            searchPlaceholder: qsTr("Search weather entities"),
+            noMatchesHint: qsTr("No weather entity matches the search."),
+            nothingHint: qsTr("Home Assistant has no weather entities.")
+        })
+        picker.picked.connect(function (entityId, name) {
+            weatherEntitySetting.value = entityId
+            weatherEntityNameSetting.value = entityId.length > 0 ? name : ""
+        })
+    }
+
     ConfigurationValue {
         id: reportLocationSetting
         key: Credentials.settingsPrefix + "reportLocation"
@@ -367,6 +397,19 @@ Page {
                 description: qsTr("Sends this phone's position to this instance as its device tracker -- only at app start, on refresh and every 10 minutes in the background, never continuously. Off by default; turning it off stops reporting but doesn't delete positions already stored in Home Assistant.")
                 checked: reportLocationSetting.value === true
                 onClicked: reportLocationSetting.value = checked
+            }
+
+            SectionHeader {
+                text: qsTr("Weather")
+            }
+
+            ValueButton {
+                label: qsTr("Weather")
+                value: weatherEntitySetting.value.length === 0
+                    ? qsTr("Automatic")
+                    : (weatherEntityNameSetting.value.length > 0 ? weatherEntityNameSetting.value : weatherEntitySetting.value)
+                description: qsTr("Shown at the top of the sensor overview and on the app cover.")
+                onClicked: openWeatherPicker()
             }
 
             Button {
