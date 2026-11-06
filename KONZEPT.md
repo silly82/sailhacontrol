@@ -1272,3 +1272,45 @@ Six features, built in parallel on separate branches and merged afterwards.
 - Testing note: on the emulator, app output goes to the journal
   (`journalctl | grep harbour-hacontrol[`), not to stdout/stderr of a process
   started over SSH -- an empty redirected log does not mean "no warnings".
+
+## 28. Update 2026-11-06 (part 2): UI pass, v0.57
+
+After v0.56 added about twenty features in two days, a pass on consistency
+rather than more functions. Four parallel branches, merged and checked on the
+emulator in a dark (extrasail) and a light (glacial, `darkonlight`) ambience.
+
+- **Settings** became an overview (instance + three navigation rows with a
+  one-line summary) and sub-pages `ConnectionSettingsPage.qml`,
+  `DeviceSettingsPage.qml` and the existing `CoverSettingsPage.qml` (now
+  "Cover & weather", with the weather picker). `profileScopedSettings` stays
+  in one place on the overview. The long-standing
+  `TextField.qml:87: Binding loop detected for property "width"` came from
+  TextFields that already had text while being created (Qt's implicitWidth
+  getter re-entering the layout); text is now assigned in
+  `Component.onCompleted` and kept in sync via `Connections`.
+- **Room list**: `RoomSectionHeader.qml` (loaded only for header rows, the
+  flat single-ListModel design stays) and a leading icon per entity. The
+  domain -> icon mapping lives in `qml/lib/EntityIcons.js` and is shared with
+  the detail pages. It was chosen by pulling the actual images out of the
+  emulator's theme (`/usr/share/themes/sailfish-default/silica/z1.0/
+  icons-monochrome`) into a contact sheet -- several first picks only matched
+  by name (a flashlight for lights, a battery-like bolt for switches, a bell
+  that reads as an alarm clock). Idle icons use `secondaryColor`, active ones
+  `highlightColor`, errors `errorColor`. A toggle row subtracted the hidden
+  "notifies" label and colour swatch from the name width, which cut names
+  after ~20 characters -- only visible items are subtracted now.
+- **To-do**: completed items fold to height 0 under "Completed (n)". As a
+  ListView `section.delegate` that header was drawn twice by Qt 5.6 once the
+  rows around it had height 0, so it is now part of the first completed row's
+  delegate. The expanded state is kept per list for the session
+  (`qml/lib/TodoUiState.js`).
+- **Page dots** in `FirstPage.qml` follow `contentX`, jump on tap and fade
+  out four seconds after start or a page change so they don't cover the
+  bottom row.
+- **Detail pages**: shared `DetailPageHeader`, `DetailStatusBlock`,
+  `DetailErrorLabel`, `ActionButtonGrid` (actions passed as data; Qt 5.6
+  drops functions from array models, so the Repeater counts) and
+  `ServiceCaller` (busy state, 15 s timeout, never logs service data).
+- The attributes role only ever receives plain objects (`plainAttributes()`),
+  after a one-off `Can't assign to existing role 'attributes' of different
+  type [List -> VariantMap]` warning that could not be reproduced.

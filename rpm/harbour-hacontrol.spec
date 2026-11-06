@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS
-Version:    0.56
+Version:    0.57
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -80,6 +80,20 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Nov 06 2026 silly82 <siliwalker@gmail.com> - 0.57-1
+- Settings is now an overview with sub-pages: Connection, Device &
+  sensors, Cover & weather. Shorter hint texts in the usual secondary
+  colour instead of red.
+- Room list: section-style room headers and a small icon per entity that
+  is highlighted while the device is on.
+- Detail pages share one layout: status block with icon and main value,
+  action buttons, controls. Light and thermostat pages update live; the
+  light page has an on/off button.
+- Completed to-do items are collapsed under "Completed (n)".
+- Page dots show which of the three swipe pages is open.
+- Fixed: device names in switch rows were cut off early; a binding-loop
+  warning on the Settings page.
+
 * Fri Nov 06 2026 silly82 <siliwalker@gmail.com> - 0.56-1
 - Favorites: long-press an entity to pin it to a group at the top of the
   room view.
