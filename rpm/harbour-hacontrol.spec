@@ -94,6 +94,17 @@ desktop-file-install --delete-original       \
 - Home Assistant to-do and shopping lists (check, add, rename, delete).
 - Multiple Home Assistant instances, each with its own favorites,
   notifications, cover action and device registration.
+- Assist: type commands and questions for Home Assistant in a chat view.
+- Weather card with a five-day forecast in the sensor overview; the
+  weather entity can be chosen in Settings.
+- Alarm panels (with PIN keypad), vacuums, and media player source,
+  mute, power, cover art and an inline play/pause button.
+- Up to two cover buttons, optional weather line on the cover.
+- Actionable push notifications (actions, tag, clear_notification).
+- Notification buttons also work when the app is closed (D-Bus
+  activation via Sailjail ExecDBus).
+- New device sensors: Wi-Fi network and signal, free storage, and
+  opt-in location reporting.
 
 * Wed Nov 04 2026 silly82 <siliwalker@gmail.com> - 0.55-1
 - All texts in the app are now English in the source, with a complete

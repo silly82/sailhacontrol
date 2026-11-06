@@ -1226,3 +1226,49 @@ Six features, built in parallel on separate branches and merged afterwards.
 - Verified on the emulator against the real instance: upgrade from v0.56 data
   keeps the configuration (it becomes profile 0 "Home"), cameras, to-do lists,
   sensor history and the new Settings page all work with real data.
+
+### 27c. Same release: Assist, more device sensors, alarm/vacuum/media, weather, two cover buttons, notification actions
+
+- **Assist** (`AssistPage.qml`): `POST /api/conversation/process` with the
+  phone's language (only if it looks like an ISO code, so a "C" locale falls
+  back to HA's default) and the `conversation_id` of the previous answer while
+  the page is open. Agent selection is left out: HA only lists agents over the
+  WebSocket. Silica's ApplicationWindow already shrinks the page while the
+  keyboard is open, so the input field simply anchors to the page bottom.
+- **Device sensors**: Wi-Fi SSID/strength come from connman's `GetServices`
+  through `Nemo.DBus` (Harbour-allowed; the Connman QML modules are not), which
+  the Internet permission already covers. Free storage via `QStorageInfo` in a
+  tiny `DeviceInfo` context object. Location is opt-in per instance
+  (`QtPositioning 5.4`, sailjail `Location` permission), one fix ≤ 500 m per
+  report, never continuous. New sensors are registered once per session per
+  webhook id, so existing installs pick them up without re-registering.
+- **Alarm panels / vacuums**: new row kinds and detail pages, buttons by
+  `supported_features`. The alarm code lives only in a page property and is
+  cleared before every call. Alarms may be watched, but their notification
+  gets no Toggle button; the D-Bus `toggleEntity` endpoint also checks an
+  allowlist (`toggleNotificationDomains`), because any process in the session
+  can call it and must never be able to disarm an alarm or open a lock.
+- **Media players**: source, mute, power, artwork (relative `entity_picture`
+  prefixed with the effective base URL), inline play/pause in the row.
+- **Weather**: `weather.get_forecasts` (daily, or twice_daily day parts) with
+  fallback to `attributes.forecast`; the entity is chosen in Settings or by
+  tapping the card (same per-instance keys, the view follows `valueChanged`).
+  The cover's weather line is written by SensorsView; the cover never polls.
+- **Two cover buttons**: `CoverAction` has no `visible`, so CoverPage keeps
+  three `CoverActionList`s (first only, second only, both) and enables one.
+  The picker became a generic `EntityPickerPage.qml`.
+- **Notification actions** (`PushNotifications.qml`): `data.actions` become
+  remote actions on the existing `org.example.hacontrol` D-Bus path and fire
+  `mobile_app_notification_action` through the webhook of the instance the
+  push came from (its URLs read from Secrets if it is not the active one;
+  internal first, external only if there was no answer at all, so an event is
+  never sent twice). A nonce per notification, remembered in dconf, prevents
+  double execution. `tag` replacement finds the old notification through
+  `Notification.notifications()`.
+- **D-Bus activation**: Harbour rejects own `.service` files, but accepts
+  `ExecDBus=harbour-hacontrol` in `[X-Sailjail]`; sailjaild then writes the
+  activation file itself (with invoker and `--single-instance`). Calls that
+  arrive before Secrets has loaded wait in `whenLoaded()`.
+- Testing note: on the emulator, app output goes to the journal
+  (`journalctl | grep harbour-hacontrol[`), not to stdout/stderr of a process
+  started over SSH -- an empty redirected log does not mean "no warnings".
