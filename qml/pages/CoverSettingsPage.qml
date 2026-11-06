@@ -235,18 +235,27 @@ Page {
 
         ViewPlaceholder {
             flickable: listView
+            // Der Listen-Header (Erklärtext, Standard-Eintrag, Suche) ist
+            // hoch -- ohne Versatz läge der Platzhalter darüber.
+            verticalOffset: listView.headerItem ? listView.headerItem.height + Theme.itemSizeSmall : 0
             enabled: !configured
             text: qsTr("Not configured yet")
             hintText: qsTr("Enter the Home Assistant URL and a long-lived access token in Settings first.")
         }
         ViewPlaceholder {
             flickable: listView
+            // Der Listen-Header (Erklärtext, Standard-Eintrag, Suche) ist
+            // hoch -- ohne Versatz läge der Platzhalter darüber.
+            verticalOffset: listView.headerItem ? listView.headerItem.height + Theme.itemSizeSmall : 0
             enabled: configured && errorText.length > 0 && !loading
             text: qsTr("No connection")
             hintText: errorText
         }
         ViewPlaceholder {
             flickable: listView
+            // Der Listen-Header (Erklärtext, Standard-Eintrag, Suche) ist
+            // hoch -- ohne Versatz läge der Platzhalter darüber.
+            verticalOffset: listView.headerItem ? listView.headerItem.height + Theme.itemSizeSmall : 0
             enabled: configured && loadedOnce && !loading && errorText.length === 0 && candidatesModel.count === 0
             text: page.searchText.length > 0 ? qsTr("No matches") : qsTr("Nothing to choose from")
             hintText: page.searchText.length > 0
