@@ -2,6 +2,9 @@
 
 #include <QDateTime>
 #include <QDebug>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QNetworkRequest>
 #include <QUrl>
 #include <QVector>
@@ -25,6 +28,10 @@ static const QLatin1String TokenSecretName("harbour-hacontrol-token");
 // URL keeps living under the old "baseUrl" name for the same reason.
 static const QLatin1String ExternalUrlSecretName("harbour-hacontrol-externalUrl");
 
+// Instance-specific dconf settings. Profile 0 keeps the pre-profile keys
+// directly below the app's directory.
+static const QLatin1String SettingsRoot("/apps/harbour-hacontrol/");
+
 // Short on purpose: this decides how long a start away from home talks to an
 // unreachable internal host before switching to the external URL.
 static const int ProbeTimeoutMs = 3000;
@@ -45,6 +52,13 @@ Credentials::Credentials(QObject *parent)
     , m_saveBusy(false)
     , m_lastSaveOk(false)
     , m_saveFailed(false)
+    , m_activeProfileId(0)
+    , m_nextProfileId(1)
+    , m_profilesRestored(false)
+    , m_loadProfileId(0)
+    , m_loadInFlight(false)
+    , m_loadAgain(false)
+    , m_savedDuringLoad(false)
     , m_lastProbeStarted(0)
     , m_storagePluginName(SecretManager::DefaultStoragePluginName)
     , m_encryptionPluginName(SecretManager::DefaultEncryptionPluginName)
@@ -62,6 +76,12 @@ Credentials::Credentials(QObject *parent)
     m_tokenDelete.setManager(&m_manager);
     m_externalUrlDelete.setManager(&m_manager);
     m_pluginInfo.setManager(&m_manager);
+
+    // Until QML restores the stored list (restoreProfiles()): the single
+    // pre-profile instance.
+    Profile first;
+    first.id = 0;
+    m_profiles.append(first);
 
     // System-mediated interaction, no in-app prompts: reading our own secrets
     // back must not require the user to unlock anything by hand.
@@ -136,7 +156,7 @@ Credentials::Credentials(QObject *parent)
         }
         const Result result = m_baseUrlLoad.result();
         if (result.code() == Result::Succeeded) {
-            setInternalUrl(QString::fromUtf8(m_baseUrlLoad.secret().data()));
+            m_loadInternalUrl = QString::fromUtf8(m_baseUrlLoad.secret().data());
         } else {
             // "nothing stored yet" on a fresh install lands here as well -- not
             // an error the user needs to see, the empty Settings fields are
@@ -154,7 +174,7 @@ Credentials::Credentials(QObject *parent)
         }
         const Result result = m_tokenLoad.result();
         if (result.code() == Result::Succeeded) {
-            setToken(QString::fromUtf8(m_tokenLoad.secret().data()));
+            m_loadToken = QString::fromUtf8(m_tokenLoad.secret().data());
         } else {
             qDebug() << "Credentials: token not loaded:" << result.errorMessage();
         }
@@ -167,19 +187,13 @@ Credentials::Credentials(QObject *parent)
         }
         const Result result = m_externalUrlLoad.result();
         if (result.code() == Result::Succeeded) {
-            setExternalUrl(QString::fromUtf8(m_externalUrlLoad.secret().data()));
+            m_loadExternalUrl = QString::fromUtf8(m_externalUrlLoad.secret().data());
         } else {
             // Expected for everything stored by v0.55 or earlier, and whenever
             // no external URL was entered: there is no such secret.
             qDebug() << "Credentials: externalUrl not loaded:" << result.errorMessage();
         }
-        // Lengths only -- never the values themselves, the journal is readable
-        // by more than just this app.
-        qDebug() << "Credentials: loaded -- internal URL" << m_internalUrl.length()
-                 << "chars, external URL" << m_externalUrl.length()
-                 << "chars, token" << m_token.length() << "chars";
-        setLoaded(true);
-        probe();
+        finishLoading();
     });
 
     connect(&m_baseUrlStore, &StoreSecretRequest::statusChanged, this, [this]() {
@@ -338,6 +352,233 @@ void Credentials::choosePlugins(const QVector<PluginInfo> &storage,
     startLoading();
 }
 
+QVariantList Credentials::profiles() const
+{
+    QVariantList list;
+    for (const Profile &profile : m_profiles) {
+        QVariantMap entry;
+        entry.insert(QStringLiteral("id"), profile.id);
+        entry.insert(QStringLiteral("name"), displayName(profile));
+        list.append(entry);
+    }
+    return list;
+}
+
+QString Credentials::profilesConfig() const
+{
+    QJsonArray list;
+    for (const Profile &profile : m_profiles) {
+        QJsonObject entry;
+        entry.insert(QStringLiteral("id"), profile.id);
+        entry.insert(QStringLiteral("name"), profile.name);
+        list.append(entry);
+    }
+    QJsonObject config;
+    config.insert(QStringLiteral("nextId"), m_nextProfileId);
+    config.insert(QStringLiteral("profiles"), list);
+    return QString::fromUtf8(QJsonDocument(config).toJson(QJsonDocument::Compact));
+}
+
+int Credentials::activeProfileId() const
+{
+    return m_activeProfileId;
+}
+
+QString Credentials::activeProfileName() const
+{
+    const int index = indexOfProfile(m_activeProfileId);
+    return index >= 0 ? displayName(m_profiles.at(index)) : QString();
+}
+
+QString Credentials::displayName(const Profile &profile) const
+{
+    // Profile 0 of an upgraded install has no name yet.
+    return profile.name.isEmpty() ? tr("Home") : profile.name;
+}
+
+QString Credentials::settingsPrefix() const
+{
+    return settingsPrefixFor(m_activeProfileId);
+}
+
+QString Credentials::settingsPrefixFor(int id) const
+{
+    if (id == 0) {
+        return SettingsRoot;
+    }
+    return SettingsRoot + QStringLiteral("profiles/") + QString::number(id) + QLatin1Char('/');
+}
+
+int Credentials::indexOfProfile(int id) const
+{
+    for (int i = 0; i < m_profiles.size(); ++i) {
+        if (m_profiles.at(i).id == id) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+QString Credentials::secretName(const QString &base, int profileId)
+{
+    if (profileId == 0) {
+        return base;
+    }
+    return base + QStringLiteral("-p") + QString::number(profileId);
+}
+
+void Credentials::restoreProfiles(const QString &config, int activeId)
+{
+    QVector<Profile> restored;
+    int nextId = 1;
+    const QJsonObject object = QJsonDocument::fromJson(config.toUtf8()).object();
+    const QJsonArray list = object.value(QStringLiteral("profiles")).toArray();
+    for (const QJsonValue &value : list) {
+        const QJsonObject entry = value.toObject();
+        if (!entry.contains(QStringLiteral("id"))) {
+            continue;
+        }
+        Profile profile;
+        profile.id = entry.value(QStringLiteral("id")).toInt(-1);
+        profile.name = entry.value(QStringLiteral("name")).toString();
+        if (profile.id < 0) {
+            continue;
+        }
+        bool duplicate = false;
+        for (const Profile &other : restored) {
+            duplicate = duplicate || other.id == profile.id;
+        }
+        if (duplicate) {
+            continue;
+        }
+        restored.append(profile);
+        nextId = qMax(nextId, profile.id + 1);
+    }
+    // Nothing stored (every install up to v0.56) or unreadable: the single
+    // pre-profile instance, i.e. exactly what was there before.
+    if (restored.isEmpty()) {
+        Profile first;
+        first.id = 0;
+        restored.append(first);
+    }
+    nextId = qMax(nextId, object.value(QStringLiteral("nextId")).toInt(1));
+
+    m_profiles = restored;
+    m_nextProfileId = nextId;
+    const int previousActive = m_activeProfileId;
+    m_activeProfileId = indexOfProfile(activeId) >= 0 ? activeId : m_profiles.first().id;
+    qDebug() << "Credentials:" << m_profiles.size() << "profile(s), active id" << m_activeProfileId;
+
+    Q_EMIT profilesChanged();
+    if (previousActive != m_activeProfileId) {
+        Q_EMIT activeProfileIdChanged();
+    }
+    Q_EMIT activeProfileNameChanged();
+
+    if (!m_profilesRestored) {
+        m_profilesRestored = true;
+        startLoading();
+    } else {
+        // A second call (not done by the app itself): load whatever is
+        // active now.
+        reload();
+    }
+}
+
+int Credentials::addProfile(const QString &name)
+{
+    Profile profile;
+    profile.id = m_nextProfileId++;
+    profile.name = name.trimmed();
+    m_profiles.append(profile);
+    Q_EMIT profilesChanged();
+    return profile.id;
+}
+
+bool Credentials::removeProfile(int id)
+{
+    const int index = indexOfProfile(id);
+    if (index < 0 || m_profiles.size() <= 1) {
+        return false;
+    }
+    if (id == m_activeProfileId) {
+        // The next one in the list, or the previous one if it was the last.
+        const int neighbour = index + 1 < m_profiles.size() ? index + 1 : index - 1;
+        setActiveProfile(m_profiles.at(neighbour).id);
+    }
+    m_profiles.remove(indexOfProfile(id));
+    Q_EMIT profilesChanged();
+
+    deleteSecret(secretName(BaseUrlSecretName, id));
+    deleteSecret(secretName(TokenSecretName, id));
+    deleteSecret(secretName(ExternalUrlSecretName, id));
+    return true;
+}
+
+void Credentials::renameProfile(int id, const QString &name)
+{
+    const int index = indexOfProfile(id);
+    if (index < 0 || m_profiles.at(index).name == name.trimmed()) {
+        return;
+    }
+    m_profiles[index].name = name.trimmed();
+    Q_EMIT profilesChanged();
+    if (id == m_activeProfileId) {
+        Q_EMIT activeProfileNameChanged();
+    }
+}
+
+void Credentials::setActiveProfile(int id)
+{
+    if (id == m_activeProfileId || indexOfProfile(id) < 0) {
+        return;
+    }
+    qDebug() << "Credentials: switching to profile id" << id;
+
+    // Clear everything *before* announcing the switch: every listener then
+    // sees baseUrl/token go empty and come back, i.e. a baseUrlChanged() even
+    // if both instances happen to use the same URL (homeassistant.local), so
+    // the WebSocket always reconnects -- and nothing is ever a mix of the old
+    // profile's URL and the new one's token.
+    abortProbe();
+    m_recheckTimer.stop();
+    m_activeProfileId = id;
+    setLoaded(false);
+    setLastError(QString());
+    setUsingExternal(false);
+    setInternalUrl(QString());
+    setExternalUrl(QString());
+    setToken(QString());
+
+    Q_EMIT activeProfileIdChanged();
+    Q_EMIT activeProfileNameChanged();
+
+    startLoading();
+}
+
+void Credentials::deleteSecret(const QString &name)
+{
+    DeleteSecretRequest *request = new DeleteSecretRequest(this);
+    request->setManager(&m_manager);
+    request->setIdentifier(Secret::Identifier(name, QString(), m_storagePluginName));
+    request->setUserInteractionMode(SecretManager::SystemInteraction);
+    connect(request, &DeleteSecretRequest::statusChanged, this, [request, name]() {
+        if (request->status() != Request::Finished) {
+            return;
+        }
+        // Fails harmlessly for secrets that were never stored (e.g. no
+        // external URL) -- logged for diagnosis only.
+        const Result result = request->result();
+        if (result.code() == Result::Succeeded) {
+            qDebug() << "Credentials: deleted" << name;
+        } else {
+            qDebug() << "Credentials: nothing deleted for" << name << "(" << result.errorMessage() << ")";
+        }
+        request->deleteLater();
+    });
+    request->startRequest();
+}
+
 void Credentials::save(const QString &baseUrl, const QString &token)
 {
     save(baseUrl, token, m_externalUrl);
@@ -346,6 +587,9 @@ void Credentials::save(const QString &baseUrl, const QString &token)
 void Credentials::save(const QString &baseUrl, const QString &token, const QString &externalUrl)
 {
     setLastError(QString());
+    if (m_loadInFlight) {
+        m_savedDuringLoad = true;
+    }
 
     // The app must behave as before the moment Settings is filled in, so the
     // properties change right away; persistence happens in the background.
@@ -360,9 +604,13 @@ void Credentials::save(const QString &baseUrl, const QString &token, const QStri
     setSaveBusy(true);
     setLastSaveOk(false);
 
-    deleteThenStore(&m_baseUrlDelete, &m_baseUrlStore, BaseUrlSecretName);
-    deleteThenStore(&m_tokenDelete, &m_tokenStore, TokenSecretName);
-    deleteThenStore(&m_externalUrlDelete, &m_externalUrlStore, ExternalUrlSecretName);
+    // Always into the active profile.
+    deleteThenStore(&m_baseUrlDelete, &m_baseUrlStore,
+                    secretName(BaseUrlSecretName, m_activeProfileId), m_internalUrl);
+    deleteThenStore(&m_tokenDelete, &m_tokenStore,
+                    secretName(TokenSecretName, m_activeProfileId), m_token);
+    deleteThenStore(&m_externalUrlDelete, &m_externalUrlStore,
+                    secretName(ExternalUrlSecretName, m_activeProfileId), m_externalUrl);
 
     // New URLs/token: whatever the last probe found no longer applies.
     abortProbe();
@@ -371,6 +619,7 @@ void Credentials::save(const QString &baseUrl, const QString &token, const QStri
 
 void Credentials::reload()
 {
+    // Reloads the active profile.
     abortProbe();
     m_recheckTimer.stop();
     setLoaded(false);
@@ -476,49 +725,93 @@ void Credentials::onProbeFinished()
 
 void Credentials::startLoading()
 {
+    // Needs both the daemon's plugin names and the profile list from dconf.
+    if (!m_pluginsResolved || !m_profilesRestored) {
+        return;
+    }
+    // The requests are members and can't run twice at once: let the running
+    // chain finish and start over in finishLoading().
+    if (m_loadInFlight) {
+        m_loadAgain = true;
+        return;
+    }
+    m_loadInFlight = true;
+    m_loadAgain = false;
+    m_savedDuringLoad = false;
+    m_loadProfileId = m_activeProfileId;
+    m_loadInternalUrl.clear();
+    m_loadExternalUrl.clear();
+    m_loadToken.clear();
     m_baseUrlLoad.setIdentifier(
-        Secret::Identifier(BaseUrlSecretName, QString(), m_storagePluginName));
+        Secret::Identifier(secretName(BaseUrlSecretName, m_loadProfileId), QString(), m_storagePluginName));
     m_baseUrlLoad.startRequest();
 }
 
 void Credentials::startTokenLoad()
 {
     m_tokenLoad.setIdentifier(
-        Secret::Identifier(TokenSecretName, QString(), m_storagePluginName));
+        Secret::Identifier(secretName(TokenSecretName, m_loadProfileId), QString(), m_storagePluginName));
     m_tokenLoad.startRequest();
 }
 
 void Credentials::startExternalUrlLoad()
 {
     m_externalUrlLoad.setIdentifier(
-        Secret::Identifier(ExternalUrlSecretName, QString(), m_storagePluginName));
+        Secret::Identifier(secretName(ExternalUrlSecretName, m_loadProfileId), QString(), m_storagePluginName));
     m_externalUrlLoad.startRequest();
 }
 
-QString Credentials::valueFor(const StoreSecretRequest *storeRequest) const
+void Credentials::finishLoading()
 {
-    if (storeRequest == &m_baseUrlStore) {
-        return m_internalUrl;
+    m_loadInFlight = false;
+    if (m_loadAgain || m_loadProfileId != m_activeProfileId) {
+        // Read for a profile that is no longer active (or reload() asked to
+        // start over) -- discard, read again.
+        m_loadAgain = false;
+        startLoading();
+        return;
     }
-    if (storeRequest == &m_externalUrlStore) {
-        return m_externalUrl;
+    if (!m_savedDuringLoad) {
+        // All three at once: a half-applied set (new URL, old token) would
+        // send one instance's token to another instance's host.
+        setInternalUrl(m_loadInternalUrl);
+        setExternalUrl(m_loadExternalUrl);
+        setToken(m_loadToken);
     }
-    return m_token;
+    m_savedDuringLoad = false;
+    m_loadInternalUrl.clear();
+    m_loadExternalUrl.clear();
+    m_loadToken.clear();
+    // Lengths only -- never the values themselves, the journal is readable
+    // by more than just this app.
+    qDebug() << "Credentials: loaded profile" << m_activeProfileId
+             << "-- internal URL" << m_internalUrl.length()
+             << "chars, external URL" << m_externalUrl.length()
+             << "chars, token" << m_token.length() << "chars";
+    setLoaded(true);
+    probe();
 }
 
 void Credentials::deleteThenStore(DeleteSecretRequest *request,
                                   StoreSecretRequest *storeRequest,
-                                  const QString &name)
+                                  const QString &name, const QString &value)
 {
+    // What to write once the delete is through. Kept on the request rather
+    // than captured by the lambda: the handler is connected only once, and
+    // both name (per profile) and value differ from save to save.
+    request->setProperty("hacontrolName", name);
+    request->setProperty("hacontrolValue", value);
+
     // Connected once per request here; guarded so a second save() while a
     // delete is still in flight doesn't queue up duplicate handlers.
     if (!request->property("hacontrolConnected").toBool()) {
         request->setProperty("hacontrolConnected", true);
         connect(request, &DeleteSecretRequest::statusChanged, this,
-                [this, request, storeRequest, name]() {
+                [this, request, storeRequest]() {
                     if (request->status() != Request::Finished) {
                         return;
                     }
+                    const QString name = request->property("hacontrolName").toString();
                     // A delete of a secret that was never stored fails; that is
                     // expected on the first save and not worth reporting.
                     const Result result = request->result();
@@ -529,7 +822,7 @@ void Credentials::deleteThenStore(DeleteSecretRequest *request,
                     // An empty (optional) external URL is "stored" by the
                     // delete alone -- no point keeping an empty secret around,
                     // and the load treats a missing one as empty anyway.
-                    const QString value = valueFor(storeRequest);
+                    const QString value = request->property("hacontrolValue").toString();
                     if (value.isEmpty()) {
                         finishStore(true, name + QStringLiteral(" (cleared)"), QString());
                         return;

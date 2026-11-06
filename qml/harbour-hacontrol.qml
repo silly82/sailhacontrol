@@ -65,6 +65,10 @@ ApplicationWindow {
         if (!Credentials.loaded || Credentials.saveBusy) {
             return
         }
+        // The plaintext predecessor only ever knew one instance -- profile 0.
+        if (Credentials.activeProfileId !== 0) {
+            return
+        }
         if (Credentials.baseUrl.length > 0 || Credentials.token.length > 0) {
             return
         }
@@ -89,12 +93,63 @@ ApplicationWindow {
         }
     }
 
+    // Several Home Assistant instances (profiles, see src/credentials.h).
+    // The list ({id, name}, JSON) and the active id are not secret: plain
+    // dconf, handed to Credentials once at startup (restoreProfiles() in
+    // Component.onCompleted, before the secrets load starts) and written back
+    // whenever Credentials changes them. Both empty/0 on every install up to
+    // v0.56, which Credentials reads as "profile 0 only" -- the very instance
+    // stored under the old secret names and dconf keys.
+    //
+    // Instance-specific values (favorites, watched entities, last known
+    // states, cover target/counters, connection mode, mobile_app webhookId)
+    // are keyed per profile: `Credentials.settingsPrefix + "<name>"`, which is
+    // the old key for profile 0 and /apps/harbour-hacontrol/profiles/<id>/
+    // otherwise. deviceId/deviceName stay global: one phone, one identity,
+    // registered separately with each instance (each gets its own webhookId).
+    // The list of those names is kept in SettingsPage.qml
+    // (profileScopedSettings), which clears them when a profile is deleted.
+    ConfigurationValue {
+        id: profileListSetting
+        key: "/apps/harbour-hacontrol/profileList"
+        defaultValue: ""
+    }
+    ConfigurationValue {
+        id: activeProfileSetting
+        key: "/apps/harbour-hacontrol/activeProfile"
+        defaultValue: 0
+    }
+    Connections {
+        target: Credentials
+        onProfilesChanged: {
+            if (profileListSetting.value !== Credentials.profilesConfig) {
+                profileListSetting.value = Credentials.profilesConfig
+            }
+        }
+        onActiveProfileIdChanged: {
+            if (activeProfileSetting.value !== Credentials.activeProfileId) {
+                activeProfileSetting.value = Credentials.activeProfileId
+            }
+        }
+    }
+
+    // Writes one instance-specific value of a profile that may no longer be
+    // the active one (an async answer arriving after a switch).
+    function setProfileValue(profileId, name, value) {
+        var item = Qt.createQmlObject('import Nemo.Configuration 1.0\nConfigurationValue {}', appWindow, "ProfileValue")
+        item.key = Credentials.settingsPrefixFor(profileId) + name
+        item.value = value
+        item.destroy()
+    }
+
     // Internal/external URL selection (0 = automatic, 1 = internal only,
     // 2 = external only; Credentials.ConnectionMode in src/credentials.h).
     // Not a secret, so plain dconf; Credentials only holds it in memory.
+    // Per profile; the key switches with the active profile and the Binding
+    // pushes that profile's mode in.
     ConfigurationValue {
         id: connectionModeSetting
-        key: "/apps/harbour-hacontrol/connectionMode"
+        key: Credentials.settingsPrefix + "connectionMode"
         defaultValue: 0
     }
     Binding {
@@ -103,16 +158,19 @@ ApplicationWindow {
         value: connectionModeSetting.value
     }
 
+    // Background poll and notifications cover the *active* profile only: the
+    // poll below reads the active instance's watched entities and URL. A
+    // second instance is not polled while it isn't selected.
     ConfigurationValue {
         id: watchedSetting
-        key: "/apps/harbour-hacontrol/watchedEntities"
+        key: Credentials.settingsPrefix + "watchedEntities"
         defaultValue: ""
     }
     // JSON-Map entityId -> letzter bekannter state-String, um Benachrichtigungen
     // nur bei tatsächlicher Änderung zu feuern (und nicht bei jedem Poll).
     ConfigurationValue {
         id: lastKnownStatesSetting
-        key: "/apps/harbour-hacontrol/lastKnownStates"
+        key: Credentials.settingsPrefix + "lastKnownStates"
         defaultValue: "{}"
     }
 
@@ -133,7 +191,7 @@ ApplicationWindow {
     }
     ConfigurationValue {
         id: webhookIdSetting
-        key: "/apps/harbour-hacontrol/webhookId"
+        key: Credentials.settingsPrefix + "webhookId"
         defaultValue: ""
     }
 
@@ -162,8 +220,16 @@ ApplicationWindow {
         if (deviceIdSetting.value.length === 0) {
             deviceIdSetting.value = randomDeviceId()
         }
+        // Each instance gets its own registration (webhookId is per profile).
+        // If the user switched instances meanwhile, the answer still belongs
+        // to the one it was sent to.
+        var profileId = Credentials.activeProfileId
         HaApi.registerMobileApp(baseUrl, token, deviceIdSetting.value, deviceNameSetting.value,
             function (result) {
+                if (profileId !== Credentials.activeProfileId) {
+                    setProfileValue(profileId, "webhookId", result.webhook_id)
+                    return
+                }
                 webhookIdSetting.value = result.webhook_id
                 registerDeviceSensors()
             },
@@ -238,7 +304,12 @@ ApplicationWindow {
         target: webhookIdSetting
         onValueChanged: ensureMobileAppRegistered()
     }
-    Component.onCompleted: ensureMobileAppRegistered()
+    Component.onCompleted: {
+        // Before anything else talks to Credentials: decides which profile's
+        // secrets get loaded.
+        Credentials.restoreProfiles(profileListSetting.value, activeProfileSetting.value)
+        ensureMobileAppRegistered()
+    }
 
     // D-Bus-Endpunkt für den "Umschalten"-Button auf der Benachrichtigung
     // (s. notifyStateChange() unten) -- rein in QML über Nemo.DBus'
@@ -294,8 +365,16 @@ ApplicationWindow {
                 return
             }
 
+            var profileId = Credentials.activeProfileId
             HaApi.getStates(baseUrl, token,
                 function (states) {
+                    // Switched instances meanwhile: these states belong to
+                    // the other one, and lastKnownStatesSetting already
+                    // points at the new profile's key.
+                    if (profileId !== Credentials.activeProfileId) {
+                        pollActivity.finished()
+                        return
+                    }
                     var lastKnown = {}
                     try {
                         lastKnown = JSON.parse(lastKnownStatesSetting.value)
