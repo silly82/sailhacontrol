@@ -127,15 +127,21 @@ Item {
         errorText = ""
         busyIndicator.running = true
         requestTimeout.restart()
+        // Answers from the previous instance after a profile switch are
+        // dropped (the profile-switch handler below cleared the view).
+        var profileId = Credentials.activeProfileId
         HaApi.getStates(Credentials.baseUrl, Credentials.token,
             function (states) {
+                if (profileId !== Credentials.activeProfileId) return
                 HaApi.getAreaMap(Credentials.baseUrl, Credentials.token,
                     function (areaPairs) {
+                        if (profileId !== Credentials.activeProfileId) return
                         requestTimeout.stop()
                         busyIndicator.running = false
                         buildEntries(states, areaPairs)
                     },
                     function (error) {
+                        if (profileId !== Credentials.activeProfileId) return
                         // Area-Zuordnung ist ein Komfort-Feature, kein Muss --
                         // bei Fehlschlag landet einfach alles unter "Ohne
                         // Raum" statt die Seite zu blockieren.
@@ -145,6 +151,7 @@ Item {
                     })
             },
             function (error) {
+                if (profileId !== Credentials.activeProfileId) return
                 requestTimeout.stop()
                 busyIndicator.running = false
                 errorText = error.hint || qsTr("Unknown error")
@@ -171,6 +178,21 @@ Item {
     Component.onCompleted: loadIfNeeded()
     onViewActiveChanged: loadIfNeeded()
     onConfiguredChanged: loadIfNeeded()
+
+    // Another Home Assistant instance (profile switch): clear and load again
+    // lazily, like on startup -- see RoomsView.qml.
+    Connections {
+        target: Credentials
+        onActiveProfileIdChanged: {
+            requestTimeout.stop()
+            busyIndicator.running = false
+            errorText = ""
+            entriesModel.clear()
+            expandedRooms = ({})
+            loadedOnce = false
+            loadIfNeeded()
+        }
+    }
 
     SilicaListView {
         id: listView

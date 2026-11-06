@@ -9,6 +9,8 @@
 #include <QSet>
 #include <QString>
 #include <QTimer>
+#include <QVariantList>
+#include <QVector>
 
 #include <Secrets/deletesecretrequest.h>
 #include <Secrets/plugininforequest.h>
@@ -40,6 +42,17 @@
 // one (see probe()). Every call site reads `baseUrl`, so a switch is just a
 // baseUrlChanged() -- REST callers use the new host from their next request
 // on, and RoomsView's WebSocket, whose url is bound to it, reconnects.
+//
+// Profiles (several Home Assistant instances, e.g. home + camper van): every
+// property above refers to the *active* profile, so call sites stay as they
+// are. Only the active profile's secrets are loaded. Profile 0 keeps the
+// secret names used up to v0.56 (an upgrade shows the same instance, nothing
+// to re-enter); any other profile uses the same names with a "-p<id>" suffix.
+// Ids are stable (never reused, never shifted by a delete). The list of
+// {id, name} and the active id are not secret and live in dconf -- persisted
+// by QML (harbour-hacontrol.qml) like connectionMode, so the C++ side needs no
+// dconf library: QML hands the stored state in via restoreProfiles() and
+// writes profilesConfig / activeProfileId back whenever they change.
 class Credentials : public QObject
 {
     Q_OBJECT
@@ -68,6 +81,19 @@ class Credentials : public QObject
     Q_PROPERTY(bool saveBusy READ saveBusy NOTIFY saveBusyChanged)
     Q_PROPERTY(bool lastSaveOk READ lastSaveOk NOTIFY lastSaveOkChanged)
 
+    // [{id: int, name: string}, ...] in display order.
+    Q_PROPERTY(QVariantList profiles READ profiles NOTIFY profilesChanged)
+    // The same list as a JSON string, for QML to persist in dconf.
+    Q_PROPERTY(QString profilesConfig READ profilesConfig NOTIFY profilesChanged)
+    Q_PROPERTY(int activeProfileId READ activeProfileId NOTIFY activeProfileIdChanged)
+    Q_PROPERTY(QString activeProfileName READ activeProfileName NOTIFY activeProfileNameChanged)
+    // dconf key prefix for instance-specific settings (favorites, watched
+    // entities, cover target, mobile_app webhook, ...): profile 0 keeps the
+    // pre-profile keys "/apps/harbour-hacontrol/<name>", any other profile
+    // uses "/apps/harbour-hacontrol/profiles/<id>/<name>". QML binds
+    // ConfigurationValue keys to `Credentials.settingsPrefix + "<name>"`.
+    Q_PROPERTY(QString settingsPrefix READ settingsPrefix NOTIFY activeProfileIdChanged)
+
 public:
     enum ConnectionMode {
         AutoMode = 0,
@@ -89,6 +115,11 @@ public:
     QString lastError() const;
     bool saveBusy() const;
     bool lastSaveOk() const;
+    QVariantList profiles() const;
+    QString profilesConfig() const;
+    int activeProfileId() const;
+    QString activeProfileName() const;
+    QString settingsPrefix() const;
 
     // Sets the in-memory values immediately (so the app reconnects at once,
     // same behaviour as before) and writes them to the secrets daemon
@@ -108,6 +139,20 @@ public:
     // so a reconnect loop doesn't turn into a probe loop.
     Q_INVOKABLE void reportConnectionProblem();
 
+    // Called once by QML at startup with what dconf holds (empty config ==
+    // pre-profile install: a single profile 0). Loading the secrets waits for
+    // this, so the right profile is loaded first.
+    Q_INVOKABLE void restoreProfiles(const QString &config, int activeId);
+    // Returns the new profile's id. Does not switch to it.
+    Q_INVOKABLE int addProfile(const QString &name);
+    // Refuses to remove the last profile. Removing the active one switches to
+    // a neighbour first. Also deletes the profile's secrets; its dconf
+    // settings are cleared by QML (see harbour-hacontrol.qml).
+    Q_INVOKABLE bool removeProfile(int id);
+    Q_INVOKABLE void renameProfile(int id, const QString &name);
+    Q_INVOKABLE void setActiveProfile(int id);
+    Q_INVOKABLE QString settingsPrefixFor(int id) const;
+
 Q_SIGNALS:
     void baseUrlChanged();
     void internalUrlChanged();
@@ -120,8 +165,22 @@ Q_SIGNALS:
     void lastErrorChanged();
     void saveBusyChanged();
     void lastSaveOkChanged();
+    void profilesChanged();
+    void activeProfileIdChanged();
+    void activeProfileNameChanged();
 
 private:
+    struct Profile {
+        int id;
+        QString name;
+    };
+    int indexOfProfile(int id) const;
+    QString displayName(const Profile &profile) const;
+    // Secret name for a profile: the pre-profile name for id 0, otherwise
+    // "<base>-p<id>".
+    static QString secretName(const QString &base, int profileId);
+    void deleteSecret(const QString &name);
+
     // Which plugins to talk to is not knowable in advance: the daemon refuses
     // requests naming a plugin the image doesn't register (on the Jolla Phone,
     // "No such storage plugin exists:
@@ -138,15 +197,18 @@ private:
     void startLoading();
     void startTokenLoad();
     void startExternalUrlLoad();
+    // Applies what the load chain read, unless the active profile changed
+    // meanwhile (then it loads again for the new one).
+    void finishLoading();
     void storeOne(Sailfish::Secrets::StoreSecretRequest *request, const QString &name, const QString &value);
     // Deleting first makes the write an upsert; the daemon reports
     // SecretAlreadyExistsError if a value is simply overwritten, and deleting a
-    // non-existent secret only yields a (ignored) error result.
+    // non-existent secret only yields a (ignored) error result. Name and value
+    // are captured at call time: a profile switch while the delete is in
+    // flight must not redirect the write to the other profile.
     void deleteThenStore(Sailfish::Secrets::DeleteSecretRequest *request,
                          Sailfish::Secrets::StoreSecretRequest *storeRequest,
-                         const QString &name);
-    // Value to persist for a given store request.
-    QString valueFor(const Sailfish::Secrets::StoreSecretRequest *storeRequest) const;
+                         const QString &name, const QString &value);
     void setInternalUrl(const QString &internalUrl);
     void setExternalUrl(const QString &externalUrl);
     void setUsingExternal(bool usingExternal);
@@ -192,6 +254,22 @@ private:
     bool m_saveBusy;
     bool m_lastSaveOk;
     bool m_saveFailed;
+
+    QVector<Profile> m_profiles;
+    int m_activeProfileId;
+    int m_nextProfileId;
+    bool m_profilesRestored;
+    // Load chain state: which profile it is reading, the values read so far
+    // (applied together at the end), whether one is running, and whether it
+    // has to start over (active profile changed / reload() while running).
+    int m_loadProfileId;
+    bool m_loadInFlight;
+    bool m_loadAgain;
+    // A save() while the load chain runs wins over what the chain reads.
+    bool m_savedDuringLoad;
+    QString m_loadInternalUrl;
+    QString m_loadExternalUrl;
+    QString m_loadToken;
 
     // Reachability probe of the internal URL (GET <internal>/api/).
     QNetworkAccessManager m_network;

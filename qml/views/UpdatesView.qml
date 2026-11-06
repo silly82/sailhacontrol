@@ -105,13 +105,18 @@ Item {
         errorText = ""
         busyIndicator.running = true
         requestTimeout.restart()
+        // Answers from the previous instance after a profile switch are
+        // dropped (the profile-switch handler below cleared the view).
+        var profileId = Credentials.activeProfileId
         HaApi.getStates(Credentials.baseUrl, Credentials.token,
             function (states) {
+                if (profileId !== Credentials.activeProfileId) return
                 requestTimeout.stop()
                 busyIndicator.running = false
                 buildEntries(states)
             },
             function (error) {
+                if (profileId !== Credentials.activeProfileId) return
                 requestTimeout.stop()
                 busyIndicator.running = false
                 errorText = error.hint || qsTr("Unknown error")
@@ -162,6 +167,22 @@ Item {
     Component.onCompleted: loadIfNeeded()
     onViewActiveChanged: loadIfNeeded()
     onConfiguredChanged: loadIfNeeded()
+
+    // Another Home Assistant instance (profile switch): clear and load again
+    // lazily, like on startup -- see RoomsView.qml.
+    Connections {
+        target: Credentials
+        onActiveProfileIdChanged: {
+            requestTimeout.stop()
+            postInstallRefreshTimer.stop()
+            busyIndicator.running = false
+            errorText = ""
+            entriesModel.clear()
+            anyInProgress = false
+            loadedOnce = false
+            loadIfNeeded()
+        }
+    }
 
     SilicaListView {
         id: listView

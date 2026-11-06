@@ -22,9 +22,12 @@ Item {
 
     // Comma-separated entity_ids -- shared with the BackgroundJob poller
     // in harbour-hacontrol.qml (Ausbaustufe 3, Variante B).
+    // All instance-specific values below are keyed per profile
+    // (Credentials.settingsPrefix: unchanged keys for profile 0, see
+    // src/credentials.h); ConfigurationValue re-reads when its key changes.
     ConfigurationValue {
         id: watchedSetting
-        key: "/apps/harbour-hacontrol/watchedEntities"
+        key: Credentials.settingsPrefix + "watchedEntities"
         defaultValue: ""
     }
     // Comma-separated entity_ids, same format as watchedEntities -- only
@@ -32,7 +35,7 @@ Item {
     // expanded group at the top of the list (s. buildEntries()).
     ConfigurationValue {
         id: favoritesSetting
-        key: "/apps/harbour-hacontrol/favoriteEntities"
+        key: Credentials.settingsPrefix + "favoriteEntities"
         defaultValue: ""
     }
     // Set by harbour-hacontrol.qml's ensureMobileAppRegistered() once this
@@ -40,7 +43,7 @@ Item {
     // real push-notification channel over this same WebSocket connection.
     ConfigurationValue {
         id: webhookIdSetting
-        key: "/apps/harbour-hacontrol/webhookId"
+        key: Credentials.settingsPrefix + "webhookId"
         defaultValue: ""
     }
     // Read by CoverPage.qml (separate ConfigurationValue instances on the
@@ -49,17 +52,17 @@ Item {
     // own HA query while minimized.
     ConfigurationValue {
         id: coverLightsOnCountSetting
-        key: "/apps/harbour-hacontrol/coverLightsOnCount"
+        key: Credentials.settingsPrefix + "coverLightsOnCount"
         defaultValue: 0
     }
     ConfigurationValue {
         id: coverLastLightIdSetting
-        key: "/apps/harbour-hacontrol/coverLastLightId"
+        key: Credentials.settingsPrefix + "coverLastLightId"
         defaultValue: ""
     }
     ConfigurationValue {
         id: coverLastLightNameSetting
-        key: "/apps/harbour-hacontrol/coverLastLightName"
+        key: Credentials.settingsPrefix + "coverLastLightName"
         defaultValue: ""
     }
 
@@ -79,6 +82,10 @@ Item {
     // unlike state_changed events), used to tell the two apart in
     // onTextMessageReceived. 0 == not subscribed yet.
     property int pushChannelMsgId: 0
+    // Profile the socket authenticated for -- the webhookId key switches
+    // with the profile before the old socket is gone, see
+    // subscribePushChannelIfReady().
+    property int wsProfileId: -1
     readonly property string noRoomLabel: qsTr("No room")
     // room name -> bool. Missing key == collapsed (rooms start folded).
     property var expandedRooms: ({})
@@ -685,15 +692,21 @@ Item {
         errorText = ""
         busyIndicator.running = true
         requestTimeout.restart()
+        // Answers from the previous instance after a profile switch are
+        // dropped (resetForProfileSwitch() already cleared the view).
+        var profileId = Credentials.activeProfileId
         HaApi.getStates(Credentials.baseUrl, Credentials.token,
             function (states) {
+                if (profileId !== Credentials.activeProfileId) return
                 HaApi.getAreaMap(Credentials.baseUrl, Credentials.token,
                     function (areaPairs) {
+                        if (profileId !== Credentials.activeProfileId) return
                         requestTimeout.stop()
                         busyIndicator.running = false
                         buildEntries(states, areaPairs)
                     },
                     function (error) {
+                        if (profileId !== Credentials.activeProfileId) return
                         // Area-Zuordnung ist ein Komfort-Feature, kein Muss --
                         // bei Fehlschlag (z.B. zu alte HA-Version) landet
                         // einfach alles unter "Ohne Raum" statt die Seite zu
@@ -704,6 +717,7 @@ Item {
                     })
             },
             function (error) {
+                if (profileId !== Credentials.activeProfileId) return
                 requestTimeout.stop()
                 busyIndicator.running = false
                 errorText = error.hint || qsTr("Unknown error")
@@ -822,7 +836,8 @@ Item {
     // silently miss the push channel for the rest of that connection's
     // lifetime. Guarded so it only ever sends once per connection.
     function subscribePushChannelIfReady() {
-        if (!wsSubscribed || pushChannelMsgId > 0 || webhookIdSetting.value.length === 0) {
+        if (!wsSubscribed || pushChannelMsgId > 0 || webhookIdSetting.value.length === 0
+                || wsProfileId !== Credentials.activeProfileId) {
             return
         }
         pushChannelMsgId = wsMessageId
@@ -872,6 +887,7 @@ Item {
                 wsMessageId = 1
                 sendTextMessage(JSON.stringify({ id: wsMessageId, type: "subscribe_events", event_type: "state_changed" }))
                 wsMessageId += 1
+                wsProfileId = Credentials.activeProfileId
                 wsSubscribed = true
                 subscribePushChannelIfReady()
             } else if (msg.type === "auth_invalid") {
@@ -924,6 +940,34 @@ Item {
     Connections {
         target: Credentials
         onBaseUrlChanged: if (configured) reconnectSocket()
+        onActiveProfileIdChanged: resetForProfileSwitch()
+    }
+
+    // Another Home Assistant instance: forget everything shown so far and
+    // load again as on startup (lazily, once credentials are loaded and the
+    // page is visible). Credentials cleared baseUrl/token before announcing
+    // the switch, so the socket is already going down and reconnects to the
+    // new instance via onBaseUrlChanged. The counter reset only blanks the
+    // cover until buildEntries() writes the real count; should it run before
+    // the key binding moved on, it zeroes the old profile's count instead,
+    // which is recomputed the next time that profile loads -- harmless
+    // either way.
+    function resetForProfileSwitch() {
+        requestTimeout.stop()
+        postToggleRefreshTimer.stop()
+        reconnectRefresh.stop()
+        busyIndicator.running = false
+        errorText = ""
+        wsSubscribed = false
+        pushChannelMsgId = 0
+        entriesModel.clear()
+        expandedRooms = ({})
+        searchMatches = ({})
+        searchRoomCounts = ({})
+        searchMatchCount = 0
+        coverLightsOnCountSetting.value = 0
+        loadedOnce = false
+        loadIfNeeded()
     }
 
     // Lädt beim ersten Sichtbarwerden, sobald Zugangsdaten da sind. Beides
@@ -978,7 +1022,18 @@ Item {
 
             PageHeader {
                 title: qsTr("Rooms")
-                description: wsSubscribed ? qsTr("Live") : ""
+                // "Camper · Live" -- the instance name only once there is
+                // more than one to tell apart.
+                description: {
+                    var parts = []
+                    if (Credentials.profiles.length > 1) {
+                        parts.push(Credentials.activeProfileName)
+                    }
+                    if (wsSubscribed) {
+                        parts.push(qsTr("Live"))
+                    }
+                    return parts.join(" \u00b7 ")
+                }
             }
 
             SearchField {

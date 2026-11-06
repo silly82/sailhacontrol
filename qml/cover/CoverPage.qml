@@ -17,17 +17,17 @@ CoverBackground {
 
     ConfigurationValue {
         id: lightsOnCountSetting
-        key: "/apps/harbour-hacontrol/coverLightsOnCount"
+        key: Credentials.settingsPrefix + "coverLightsOnCount"
         defaultValue: 0
     }
     ConfigurationValue {
         id: lastLightIdSetting
-        key: "/apps/harbour-hacontrol/coverLastLightId"
+        key: Credentials.settingsPrefix + "coverLastLightId"
         defaultValue: ""
     }
     ConfigurationValue {
         id: lastLightNameSetting
-        key: "/apps/harbour-hacontrol/coverLastLightName"
+        key: Credentials.settingsPrefix + "coverLastLightName"
         defaultValue: ""
     }
     // Configured in CoverSettingsPage.qml. Empty id == "last used light"
@@ -35,17 +35,17 @@ CoverBackground {
     // directly. Name/domain are stored with it so nothing has to be fetched.
     ConfigurationValue {
         id: targetIdSetting
-        key: "/apps/harbour-hacontrol/coverTargetId"
+        key: Credentials.settingsPrefix + "coverTargetId"
         defaultValue: ""
     }
     ConfigurationValue {
         id: targetNameSetting
-        key: "/apps/harbour-hacontrol/coverTargetName"
+        key: Credentials.settingsPrefix + "coverTargetName"
         defaultValue: ""
     }
     ConfigurationValue {
         id: targetDomainSetting
-        key: "/apps/harbour-hacontrol/coverTargetDomain"
+        key: Credentials.settingsPrefix + "coverTargetDomain"
         defaultValue: ""
     }
 

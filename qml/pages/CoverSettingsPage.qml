@@ -25,17 +25,17 @@ Page {
 
     ConfigurationValue {
         id: targetIdSetting
-        key: "/apps/harbour-hacontrol/coverTargetId"
+        key: Credentials.settingsPrefix + "coverTargetId"
         defaultValue: ""
     }
     ConfigurationValue {
         id: targetNameSetting
-        key: "/apps/harbour-hacontrol/coverTargetName"
+        key: Credentials.settingsPrefix + "coverTargetName"
         defaultValue: ""
     }
     ConfigurationValue {
         id: targetDomainSetting
-        key: "/apps/harbour-hacontrol/coverTargetDomain"
+        key: Credentials.settingsPrefix + "coverTargetDomain"
         defaultValue: ""
     }
 

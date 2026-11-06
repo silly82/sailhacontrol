@@ -13,6 +13,11 @@ Page {
     // damit ein halb ausgefülltes Feld den gültigen Satz nicht überschreibt.
     // Ausgelöst beim Fokusverlust und beim Verlassen der Seite.
     function saveCredentialsIfComplete() {
+        // While a profile switch loads the new instance's secrets the fields
+        // are being refilled -- nothing of the user's to save yet.
+        if (!Credentials.loaded) {
+            return
+        }
         if (baseUrlField.text.length === 0 || tokenField.text.length === 0) {
             return
         }
@@ -27,6 +32,112 @@ Page {
 
     onStatusChanged: if (status === PageStatus.Deactivating) saveCredentialsIfComplete()
 
+    // --- Instances (profiles, see src/credentials.h) ---------------------
+    // The fields below always edit the active instance; switching first
+    // saves what was typed for the current one.
+    function switchProfile(id) {
+        if (id === Credentials.activeProfileId) {
+            return
+        }
+        saveCredentialsIfComplete()
+        Credentials.setActiveProfile(id)
+    }
+
+    // Every setting stored under Credentials.settingsPrefix (grep for it in
+    // qml/). Cleared when a profile is deleted -- profile ids are never
+    // reused, so this is tidying up rather than a correctness requirement.
+    readonly property var profileScopedSettings: [
+        "connectionMode", "watchedEntities", "lastKnownStates", "webhookId",
+        "favoriteEntities", "coverLightsOnCount", "coverLastLightId",
+        "coverLastLightName", "coverTargetId", "coverTargetName", "coverTargetDomain"
+    ]
+    function clearProfileSettings(id) {
+        var prefix = Credentials.settingsPrefixFor(id)
+        for (var i = 0; i < profileScopedSettings.length; i++) {
+            var item = Qt.createQmlObject('import Nemo.Configuration 1.0\nConfigurationValue {}', page, "ProfileValue")
+            item.key = prefix + profileScopedSettings[i]
+            item.value = undefined // unsets the dconf key
+            item.destroy()
+        }
+    }
+
+    function deleteActiveProfile() {
+        // Captured now: the remorse runs for a few seconds, and the ids must
+        // not depend on what is active once it fires.
+        var id = Credentials.activeProfileId
+        //: Remorse popup while deleting a Home Assistant instance (profile)
+        remorse.execute(qsTr("Deleting instance"), function () {
+            if (Credentials.removeProfile(id)) {
+                clearProfileSettings(id)
+            }
+        })
+    }
+
+    RemorsePopup {
+        id: remorse
+    }
+
+    Component {
+        id: nameDialogComponent
+        Dialog {
+            id: nameDialog
+            property string profileName
+            property string dialogTitle
+            canAccept: nameField.text.trim().length > 0
+            onAccepted: profileName = nameField.text.trim()
+
+            Column {
+                width: parent.width
+                DialogHeader {
+                    title: nameDialog.dialogTitle
+                }
+                TextField {
+                    id: nameField
+                    width: parent.width
+                    focus: true
+                    label: qsTr("Name")
+                    //: Placeholder for the name of a Home Assistant instance
+                    placeholderText: qsTr("e.g. Home, Camper")
+                    text: nameDialog.profileName
+                    EnterKey.enabled: text.trim().length > 0
+                    EnterKey.iconSource: "image://theme/icon-m-enter-accept"
+                    EnterKey.onClicked: nameDialog.accept()
+                }
+            }
+        }
+    }
+
+    Component {
+        id: profilePickerComponent
+        Page {
+            id: pickerPage
+            allowedOrientations: Orientation.All
+            SilicaListView {
+                anchors.fill: parent
+                model: Credentials.profiles
+                header: PageHeader {
+                    title: qsTr("Instance")
+                }
+                delegate: BackgroundItem {
+                    highlighted: down || modelData.id === Credentials.activeProfileId
+                    Label {
+                        x: Theme.horizontalPageMargin
+                        width: parent.width - 2 * Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        truncationMode: TruncationMode.Fade
+                        text: modelData.name
+                        color: highlighted ? Theme.highlightColor : Theme.primaryColor
+                    }
+                    onClicked: {
+                        page.switchProfile(modelData.id)
+                        pageStack.pop()
+                    }
+                }
+                VerticalScrollDecorator {}
+            }
+        }
+    }
+
     ConfigurationValue {
         id: deviceNameSetting
         key: "/apps/harbour-hacontrol/deviceName"
@@ -38,18 +149,57 @@ Page {
     // Same key as in harbour-hacontrol.qml, which pushes it into Credentials.
     ConfigurationValue {
         id: connectionModeSetting
-        key: "/apps/harbour-hacontrol/connectionMode"
+        key: Credentials.settingsPrefix + "connectionMode"
         defaultValue: 0
+    }
+    // The key follows the active profile; a click on the box broke its
+    // currentIndex binding, so re-sync explicitly when the value moves.
+    Connections {
+        target: connectionModeSetting
+        onValueChanged: {
+            if (connectionModeBox.currentIndex !== connectionModeSetting.value) {
+                connectionModeBox.currentIndex = connectionModeSetting.value
+            }
+        }
     }
     ConfigurationValue {
         id: webhookIdSetting
-        key: "/apps/harbour-hacontrol/webhookId"
+        key: Credentials.settingsPrefix + "webhookId"
         defaultValue: ""
     }
 
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: column.height
+
+        PullDownMenu {
+            MenuItem {
+                text: qsTr("Delete instance")
+                enabled: Credentials.profiles.length > 1 && !Credentials.saveBusy
+                onClicked: page.deleteActiveProfile()
+            }
+            MenuItem {
+                text: qsTr("Rename instance")
+                onClicked: {
+                    var dialog = pageStack.push(nameDialogComponent, {
+                        dialogTitle: qsTr("Rename instance"), profileName: Credentials.activeProfileName
+                    })
+                    var id = Credentials.activeProfileId
+                    dialog.accepted.connect(function () {
+                        Credentials.renameProfile(id, dialog.profileName)
+                    })
+                }
+            }
+            MenuItem {
+                text: qsTr("Add instance")
+                onClicked: {
+                    var dialog = pageStack.push(nameDialogComponent, { dialogTitle: qsTr("Add instance"), profileName: "" })
+                    dialog.accepted.connect(function () {
+                        page.switchProfile(Credentials.addProfile(dialog.profileName))
+                    })
+                }
+            }
+        }
 
         Column {
             id: column
@@ -58,6 +208,26 @@ Page {
 
             PageHeader {
                 title: qsTr("Settings")
+            }
+
+            // Which Home Assistant instance the fields below (and the whole
+            // app) work with.
+            ValueButton {
+                width: parent.width
+                //: Settings: selector for the active Home Assistant instance (profile)
+                label: qsTr("Instance")
+                value: Credentials.activeProfileName
+                onClicked: pageStack.push(profilePickerComponent)
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                wrapMode: Text.Wrap
+                visible: Credentials.profiles.length > 1
+                text: qsTr("Notifications for watched devices only come from the selected instance.")
+                color: Theme.secondaryHighlightColor
+                font.pixelSize: Theme.fontSizeExtraSmall
             }
 
             TextField {
