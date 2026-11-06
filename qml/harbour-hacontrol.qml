@@ -394,22 +394,63 @@ ApplicationWindow {
 
         function toggleEntity(entityId) {
             var domain = entityId.split(".")[0]
+            // Nur Domains, deren Benachrichtigung überhaupt einen Toggle-
+            // Button trägt -- dieser D-Bus-Endpunkt ist für jeden Prozess
+            // der Session erreichbar, eine Alarmanlage (alarm_control_panel)
+            // oder ein Schloss darf darüber nie umgeschaltet werden.
+            if (appWindow.toggleNotificationDomains.indexOf(domain) < 0) {
+                return
+            }
             HaApi.callService(Credentials.baseUrl, Credentials.token, domain, "toggle", { entity_id: entityId },
                 function () {},
                 function (error) {})
         }
     }
 
-    function notifyStateChange(entityId, friendlyName, isOn) {
+    // Domains, deren "Notify on change"-Benachrichtigung einen Toggle-Button
+    // bekommt (alle mit <domain>.toggle-Service, die RoomsView.qml für
+    // Notify zulässt). alarm_control_panel bewusst nicht: Benachrichtigung
+    // ja, Umschalten per Benachrichtigung nie.
+    readonly property var toggleNotificationDomains: ["light", "switch", "fan", "cover", "input_boolean", "climate", "media_player"]
+
+    function alarmStateLabel(state) {
+        switch (state) {
+        case "disarmed": return qsTr("Disarmed")
+        case "armed_home": return qsTr("Armed home")
+        case "armed_away": return qsTr("Armed away")
+        case "armed_night": return qsTr("Armed night")
+        case "armed_vacation": return qsTr("Armed vacation")
+        case "armed_custom_bypass": return qsTr("Armed custom bypass")
+        case "arming": return qsTr("Arming")
+        case "disarming": return qsTr("Disarming")
+        case "pending": return qsTr("Pending")
+        case "triggered": return qsTr("Triggered")
+        case "unavailable": return qsTr("Unavailable")
+        default: return state
+        }
+    }
+
+    function notifyStateChange(entityId, friendlyName, isOn, newState) {
+        var domain = entityId.split(".")[0]
         var component = 'import QtQuick 2.0\nimport Nemo.Notifications 1.0\nNotification { appName: "HA Control"; category: "x-nemo.example" }'
         var notification = Qt.createQmlObject(component, appWindow, "HaControlNotification")
         notification.summary = friendlyName
-        notification.body = isOn ? qsTr("switched on") : qsTr("switched off")
-        notification.remoteActions = [
-            notification.remoteAction("toggle", qsTr("Toggle"),
-                "org.example.hacontrol", "/org/example/hacontrol", "org.example.hacontrol",
-                "toggleEntity", [entityId])
-        ]
+        if (domain === "alarm_control_panel") {
+            notification.body = alarmStateLabel(newState)
+            // "triggered" soll auffallen.
+            if (newState === "triggered") {
+                notification.urgency = Notification.Critical
+            }
+        } else {
+            notification.body = isOn ? qsTr("switched on") : qsTr("switched off")
+        }
+        if (toggleNotificationDomains.indexOf(domain) >= 0) {
+            notification.remoteActions = [
+                notification.remoteAction("toggle", qsTr("Toggle"),
+                    "org.example.hacontrol", "/org/example/hacontrol", "org.example.hacontrol",
+                    "toggleEntity", [entityId])
+            ]
+        }
         notification.publish()
     }
 
@@ -456,7 +497,7 @@ ApplicationWindow {
                         }
                         var previous = lastKnown[s.entity_id]
                         if (previous !== undefined && previous !== s.state) {
-                            notifyStateChange(s.entity_id, s.attributes.friendly_name || s.entity_id, s.state === "on")
+                            notifyStateChange(s.entity_id, s.attributes.friendly_name || s.entity_id, s.state === "on", s.state)
                         }
                         lastKnown[s.entity_id] = s.state
                     }
