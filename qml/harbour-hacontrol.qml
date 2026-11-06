@@ -89,6 +89,20 @@ ApplicationWindow {
         }
     }
 
+    // Internal/external URL selection (0 = automatic, 1 = internal only,
+    // 2 = external only; Credentials.ConnectionMode in src/credentials.h).
+    // Not a secret, so plain dconf; Credentials only holds it in memory.
+    ConfigurationValue {
+        id: connectionModeSetting
+        key: "/apps/harbour-hacontrol/connectionMode"
+        defaultValue: 0
+    }
+    Binding {
+        target: Credentials
+        property: "connectionMode"
+        value: connectionModeSetting.value
+    }
+
     ConfigurationValue {
         id: watchedSetting
         key: "/apps/harbour-hacontrol/watchedEntities"

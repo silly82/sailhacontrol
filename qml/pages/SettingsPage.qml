@@ -16,10 +16,13 @@ Page {
         if (baseUrlField.text.length === 0 || tokenField.text.length === 0) {
             return
         }
-        if (baseUrlField.text === Credentials.baseUrl && tokenField.text === Credentials.token) {
+        // Against internalUrl, not baseUrl: baseUrl is the *effective* URL
+        // and may currently be the external one.
+        if (baseUrlField.text === Credentials.internalUrl && tokenField.text === Credentials.token
+                && externalUrlField.text.trim() === Credentials.externalUrl) {
             return
         }
-        Credentials.save(baseUrlField.text, tokenField.text)
+        Credentials.save(baseUrlField.text, tokenField.text, externalUrlField.text.trim())
     }
 
     onStatusChanged: if (status === PageStatus.Deactivating) saveCredentialsIfComplete()
@@ -32,6 +35,12 @@ Page {
     // Cleared here to trigger harbour-hacontrol.qml's ensureMobileAppRegistered()
     // to re-run (it watches this value, see there) -- kept empty until a
     // registration actually succeeds.
+    // Same key as in harbour-hacontrol.qml, which pushes it into Credentials.
+    ConfigurationValue {
+        id: connectionModeSetting
+        key: "/apps/harbour-hacontrol/connectionMode"
+        defaultValue: 0
+    }
     ConfigurationValue {
         id: webhookIdSetting
         key: "/apps/harbour-hacontrol/webhookId"
@@ -57,8 +66,62 @@ Page {
                 label: qsTr("Home Assistant URL")
                 placeholderText: qsTr("http://homeassistant.local:8123")
                 inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase
-                text: Credentials.baseUrl
+                text: Credentials.internalUrl
                 onActiveFocusChanged: if (!activeFocus) page.saveCredentialsIfComplete()
+            }
+
+            TextField {
+                id: externalUrlField
+                width: parent.width
+                label: qsTr("External URL (optional)")
+                placeholderText: qsTr("https://example.ui.nabu.casa")
+                inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase
+                text: Credentials.externalUrl
+                onActiveFocusChanged: if (!activeFocus) page.saveCredentialsIfComplete()
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                wrapMode: Text.Wrap
+                text: qsTr("Used when the URL above can't be reached, e.g. away from home: Nabu Casa, Tailscale or a reverse proxy. The same token is used for both.")
+                color: Theme.secondaryHighlightColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+            }
+
+            ComboBox {
+                id: connectionModeBox
+                width: parent.width
+                label: qsTr("Connection")
+                enabled: Credentials.externalUrl.length > 0
+                currentIndex: connectionModeSetting.value
+                menu: ContextMenu {
+                    MenuItem { text: qsTr("Automatic") }
+                    MenuItem { text: qsTr("Internal URL only") }
+                    MenuItem { text: qsTr("External URL only") }
+                }
+                onCurrentIndexChanged: {
+                    if (connectionModeSetting.value !== currentIndex) {
+                        connectionModeSetting.value = currentIndex
+                    }
+                    // Also directly, so the switch doesn't wait for the dconf
+                    // round trip to harbour-hacontrol.qml's Binding.
+                    Credentials.connectionMode = currentIndex
+                }
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                wrapMode: Text.Wrap
+                visible: Credentials.externalUrl.length > 0 && Credentials.internalUrl.length > 0
+                text: Credentials.probing
+                    ? qsTr("Checking whether the internal URL is reachable…")
+                    : (Credentials.usingExternal
+                       ? qsTr("Connected via: external URL")
+                       : qsTr("Connected via: internal URL"))
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeExtraSmall
             }
 
             TextField {

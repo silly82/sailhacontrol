@@ -25,6 +25,11 @@ CONFIG += link_pkgconfig c++11
 # SailfishApp::createView()").
 PKGCONFIG += sailfishsecrets sailfishapp
 
+# Reachability probe of the internal URL + network-change detection for the
+# internal/external URL switch (src/credentials.cpp). Qt5Network is on the
+# Harbour allowed-libraries list.
+QT += network
+
 SOURCES += src/harbour-hacontrol.cpp \
     src/credentials.cpp
 
