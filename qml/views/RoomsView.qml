@@ -127,10 +127,15 @@ Item {
     // camera: Tap öffnet CameraPage.qml mit dem Standbild; die Zeile zeigt
     // nur den Zustand (idle/recording/streaming).
     readonly property var cameraDomains: ["camera"]
+    // alarm_control_panel: Zeile zeigt den Zustand, Tap öffnet AlarmPage.qml
+    // (Scharf-Modi, Unscharf, ggf. Code-Eingabe).
+    readonly property var alarmDomains: ["alarm_control_panel"]
+    // vacuum: Zeile zeigt Zustand + Akku, Tap öffnet VacuumPage.qml.
+    readonly property var vacuumDomains: ["vacuum"]
     readonly property var sensorDeviceClasses: ["temperature", "humidity", "pressure", "atmospheric_pressure", "battery", "energy", "power"]
     // Reihenfolge innerhalb eines Raums: steuerbare Entities zuerst,
     // read-only Sensoren zuletzt.
-    readonly property var kindOrder: ({ toggle: 0, lock: 1, climate: 2, mediaplayer: 3, camera: 4, scene: 5, sensor: 6 })
+    readonly property var kindOrder: ({ toggle: 0, lock: 1, climate: 2, mediaplayer: 3, camera: 4, scene: 5, sensor: 6, alarm: 7, vacuum: 8 })
     readonly property real colorSwatchDiameter: Theme.iconSizeExtraSmall
 
     // "Aus"-Gegenstück ist bei den meisten toggle-Domains state === "on",
@@ -195,6 +200,59 @@ Item {
         case "unavailable": return qsTr("Unavailable")
         default: return state
         }
+    }
+
+    function alarmStateLabel(state) {
+        switch (state) {
+        case "disarmed": return qsTr("Disarmed")
+        case "armed_home": return qsTr("Armed home")
+        case "armed_away": return qsTr("Armed away")
+        case "armed_night": return qsTr("Armed night")
+        case "armed_vacation": return qsTr("Armed vacation")
+        case "armed_custom_bypass": return qsTr("Armed custom bypass")
+        case "arming": return qsTr("Arming")
+        case "disarming": return qsTr("Disarming")
+        case "pending": return qsTr("Pending")
+        case "triggered": return qsTr("Triggered")
+        case "unavailable": return qsTr("Unavailable")
+        default: return state
+        }
+    }
+
+    function vacuumStateLabel(state) {
+        switch (state) {
+        case "cleaning": return qsTr("Cleaning")
+        case "docked": return qsTr("Docked")
+        case "returning": return qsTr("Returning")
+        case "paused": return qsTr("Paused")
+        case "idle": return qsTr("Idle")
+        case "error": return qsTr("Error")
+        case "unavailable": return qsTr("Unavailable")
+        default: return state
+        }
+    }
+
+    // "Reinigt · 80 %" -- Akku nur, wenn der Roboter battery_level meldet.
+    function vacuumRowText(state, attrs) {
+        var text = vacuumStateLabel(state)
+        if (attrs && attrs.battery_level !== undefined && attrs.battery_level !== null) {
+            text += " \u00b7 " + Math.round(attrs.battery_level) + " %"
+        }
+        return text
+    }
+
+    // Inline-Play/Pause in der Media-Player-Zeile: nur bei laufender oder
+    // pausierter Wiedergabe (bei off/idle gäbe es nichts fortzusetzen).
+    // MediaPlayerEntityFeature PAUSE = 1, PLAY = 16384; fehlt
+    // supported_features, trotzdem anbieten.
+    function mediaCanPlayPause(state, attrs) {
+        if (state !== "playing" && state !== "paused") {
+            return false
+        }
+        if (!attrs || attrs.supported_features === undefined || attrs.supported_features === null) {
+            return true
+        }
+        return (attrs.supported_features & (state === "playing" ? 1 : 16384)) !== 0
     }
 
     function cameraStateLabel(state) {
@@ -436,6 +494,10 @@ Item {
                 kind = "lock"
             } else if (cameraDomains.indexOf(domain) >= 0) {
                 kind = "camera"
+            } else if (alarmDomains.indexOf(domain) >= 0) {
+                kind = "alarm"
+            } else if (vacuumDomains.indexOf(domain) >= 0) {
+                kind = "vacuum"
             } else if (domain === "sensor" && sensorDeviceClasses.indexOf(deviceClass) >= 0) {
                 kind = "sensor"
             }
@@ -479,8 +541,11 @@ Item {
                 // openMediaPlayerDetail().
                 // cover: supported_features/current_position für
                 // CoverDetailPage.qml, lock: supported_features (OPEN),
-                // camera: access_token für CameraPage.qml.
-                attributes: (domain === "light" || domain === "climate" || domain === "media_player" || domain === "cover" || domain === "lock" || domain === "camera") ? s.attributes : ({})
+                // camera: access_token für CameraPage.qml,
+                // alarm_control_panel: supported_features/code_format für
+                // AlarmPage.qml, vacuum: battery_level/fan_speed_list.
+                attributes: (domain === "light" || domain === "climate" || domain === "media_player" || domain === "cover" || domain === "lock" || domain === "camera"
+                             || domain === "alarm_control_panel" || domain === "vacuum") ? s.attributes : ({})
             })
         }
 
@@ -559,8 +624,38 @@ Item {
             entityId: entry.entityId,
             entityName: entry.friendlyName,
             entityState: entry.value,
-            attributes: entry.attributes
+            attributes: entry.attributes,
+            stateSource: root
         })
+    }
+
+    function openAlarmDetail(index) {
+        var entry = entriesModel.get(index)
+        pageStack.push(Qt.resolvedUrl("../pages/AlarmPage.qml"), {
+            entityId: entry.entityId,
+            entityName: entry.friendlyName,
+            entityState: entry.value,
+            attributes: entry.attributes,
+            stateSource: root
+        })
+    }
+
+    function openVacuumDetail(index) {
+        var entry = entriesModel.get(index)
+        pageStack.push(Qt.resolvedUrl("../pages/VacuumPage.qml"), {
+            entityId: entry.entityId,
+            entityName: entry.friendlyName,
+            entityState: entry.value,
+            attributes: entry.attributes,
+            stateSource: root
+        })
+    }
+
+    function mediaPlayPause(entityId) {
+        HaApi.callService(Credentials.baseUrl, Credentials.token,
+            "media_player", "media_play_pause", { entity_id: entityId },
+            function () {},
+            function (error) { errorText = error.hint || qsTr("Unknown error") })
     }
 
     function openCoverDetail(index) {
@@ -823,6 +918,9 @@ Item {
                 entriesModel.setProperty(i, "attributes", newState.attributes || {})
             } else if (row.kind === "camera") {
                 // attributes tragen den rotierenden access_token.
+                entriesModel.setProperty(i, "value", newState.state)
+                entriesModel.setProperty(i, "attributes", newState.attributes || {})
+            } else if (row.kind === "alarm" || row.kind === "vacuum") {
                 entriesModel.setProperty(i, "value", newState.state)
                 entriesModel.setProperty(i, "attributes", newState.attributes || {})
             }
@@ -1097,7 +1195,10 @@ Item {
             // Favorit geht für alle kinds, "Benachrichtigen" nur für die
             // drei unten -- eine Menükomponente, der Notify-Eintrag blendet
             // sich bei Bedarf aus.
-            readonly property bool canNotify: model.kind === "toggle" || model.kind === "climate" || model.kind === "mediaplayer"
+            // alarm: ja (v.a. "triggered"), die Benachrichtigung bietet für
+            // alarm_control_panel aber keinen "Toggle"-Button an (s.
+            // notifyStateChange() in harbour-hacontrol.qml).
+            readonly property bool canNotify: model.kind === "toggle" || model.kind === "climate" || model.kind === "mediaplayer" || model.kind === "alarm"
             menu: !isHeader ? entityMenuComponent : null
             // Schlösser: kein "Notify on change" (canNotify schliesst lock
             // aus) -- die Benachrichtigung bietet "Toggle" an, das liefe
@@ -1136,6 +1237,10 @@ Item {
                     activateScene(index)
                 } else if (model.kind === "camera") {
                     openCameraDetail(index)
+                } else if (model.kind === "alarm") {
+                    openAlarmDetail(index)
+                } else if (model.kind === "vacuum") {
+                    openVacuumDetail(index)
                 }
             }
 
@@ -1295,8 +1400,23 @@ Item {
                 visible: !delegateItem.isHeader && model.kind === "mediaplayer"
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin - mediaValueLabel.width - Theme.paddingSmall
+                    - (mediaPlayPauseButton.visible ? mediaPlayPauseButton.width + Theme.paddingSmall : 0)
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
+            }
+            // Kompaktes Play/Pause direkt in der Zeile -- fängt Taps auf
+            // seiner eigenen Fläche ab (wie der Switch bei toggle-Zeilen),
+            // der Rest der Zeile öffnet weiterhin die Detailseite.
+            IconButton {
+                id: mediaPlayPauseButton
+                visible: !delegateItem.isHeader && model.kind === "mediaplayer" && mediaCanPlayPause(model.value, model.attributes)
+                anchors.right: mediaValueLabel.left
+                anchors.rightMargin: Theme.paddingSmall
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.iconSizeMedium
+                height: Theme.iconSizeMedium
+                icon.source: model.value === "playing" ? "image://theme/icon-m-pause" : "image://theme/icon-m-play"
+                onClicked: mediaPlayPause(model.entityId)
             }
             Label {
                 id: mediaValueLabel
@@ -1363,6 +1483,44 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: cameraStateLabel(model.value)
                 color: (model.value === "recording" || model.value === "streaming") ? Theme.highlightColor : Theme.secondaryHighlightColor
+            }
+
+            // -- Entity row: alarm_control_panel -- Tap öffnet AlarmPage.qml.
+            ScrollingLabel {
+                visible: !delegateItem.isHeader && model.kind === "alarm"
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin - alarmValueLabel.width - Theme.paddingSmall
+                anchors.verticalCenter: parent.verticalCenter
+                text: model.friendlyName || ""
+            }
+            Label {
+                id: alarmValueLabel
+                visible: !delegateItem.isHeader && model.kind === "alarm"
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.horizontalPageMargin
+                anchors.verticalCenter: parent.verticalCenter
+                text: alarmStateLabel(model.value)
+                color: model.value === "triggered" ? Theme.errorColor
+                    : ((model.value === "disarmed" || model.value === "unavailable") ? Theme.secondaryHighlightColor : Theme.highlightColor)
+            }
+
+            // -- Entity row: vacuum -- Tap öffnet VacuumPage.qml.
+            ScrollingLabel {
+                visible: !delegateItem.isHeader && model.kind === "vacuum"
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin - vacuumValueLabel.width - Theme.paddingSmall
+                anchors.verticalCenter: parent.verticalCenter
+                text: model.friendlyName || ""
+            }
+            Label {
+                id: vacuumValueLabel
+                visible: !delegateItem.isHeader && model.kind === "vacuum"
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.horizontalPageMargin
+                anchors.verticalCenter: parent.verticalCenter
+                text: vacuumRowText(model.value, model.attributes)
+                color: model.value === "error" ? Theme.errorColor
+                    : ((model.value === "cleaning" || model.value === "returning") ? Theme.highlightColor : Theme.secondaryHighlightColor)
             }
         }
 
