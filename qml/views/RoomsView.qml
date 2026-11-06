@@ -1369,235 +1369,250 @@ Item {
                 }
             }
 
-            // -- Entity row: leading kind/domain icon (s. entityIconName()) --
-            Image {
-                visible: !delegateItem.isHeader
-                x: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.iconSizeSmallPlus
-                height: Theme.iconSizeSmallPlus
-                sourceSize.width: Theme.iconSizeSmallPlus
-                sourceSize.height: Theme.iconSizeSmallPlus
-                asynchronous: true
-                source: delegateItem.isHeader ? ""
-                    : "image://theme/" + entityIconName(model.domain, model.kind, model.entityId, model.unit) + "?"
-                      + (delegateItem.highlighted ? Theme.highlightColor
-                         : entityIconColor(model.kind, model.domain, model.value, model.isOn, model.attributes, model.entityId))
-            }
+            // Row content only exists while the row is shown. Collapsed
+            // rows have height 0, so the ListView instantiates a delegate for
+            // every one of them (~520 on the real instance); building the full
+            // row (icon, switch, nine labels) for each made opening or closing
+            // a room take seconds on the phone. Hidden rows are now empty
+            // ListItems.
+            Loader {
+                anchors.fill: parent
+                active: delegateItem.rowVisible && !delegateItem.isHeader
+                sourceComponent: Component {
+                    Item {
+                        anchors.fill: parent
+                    // -- Entity row: leading kind/domain icon (s. entityIconName()) --
+                    Image {
+                        visible: !delegateItem.isHeader
+                        x: Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.iconSizeSmallPlus
+                        height: Theme.iconSizeSmallPlus
+                        sourceSize.width: Theme.iconSizeSmallPlus
+                        sourceSize.height: Theme.iconSizeSmallPlus
+                        asynchronous: true
+                        source: delegateItem.isHeader ? ""
+                            : "image://theme/" + entityIconName(model.domain, model.kind, model.entityId, model.unit) + "?"
+                              + (delegateItem.highlighted ? Theme.highlightColor
+                                 : entityIconColor(model.kind, model.domain, model.value, model.isOn, model.attributes, model.entityId))
+                    }
 
-            // -- Entity row: toggle (light/switch) --
-            ScrollingLabel {
-                visible: !delegateItem.isHeader && model.kind === "toggle"
-                x: delegateItem.labelX
-                // Only subtract what is actually shown -- the hidden "notifies" label
-                // and swatch used to eat a third of the row on every switch.
-                width: parent.width - delegateItem.labelX - toggleSwitch.width
-                       - (notifyLabel.visible ? notifyLabel.width + Theme.paddingSmall : 0)
-                       - (colorSwatch.visible ? colorSwatchDiameter + Theme.paddingSmall : 0)
-                anchors.verticalCenter: parent.verticalCenter
-                text: model.friendlyName || ""
-            }
-            // Farbvorschau bei Lichtern mit bekannter Farbe/Farbtemperatur --
-            // nur sichtbar wenn an (HA liefert rgb_color/color_temp_kelvin
-            // sonst als null, s. colorForLight()).
-            Rectangle {
-                id: colorSwatch
-                readonly property var swatchColor: !delegateItem.isHeader && model.kind === "toggle" && model.domain === "light"
-                    ? colorForLight(model.attributes, model.isOn) : null
-                visible: swatchColor !== null
-                anchors.right: notifyLabel.left
-                anchors.rightMargin: Theme.paddingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                width: colorSwatchDiameter
-                height: colorSwatchDiameter
-                radius: width / 2
-                color: swatchColor || "transparent"
-                border.width: 1
-                border.color: Theme.primaryColor
-            }
-            Label {
-                id: notifyLabel
-                visible: !delegateItem.isHeader && model.kind === "toggle" && model.notify === true
-                anchors.right: toggleSwitch.left
-                anchors.rightMargin: Theme.paddingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("notifies")
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.secondaryHighlightColor
-            }
-            Switch {
-                id: toggleSwitch
-                visible: !delegateItem.isHeader && model.kind === "toggle"
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                checked: model.isOn === true
-                onClicked: toggle(index)
-            }
+                    // -- Entity row: toggle (light/switch) --
+                    ScrollingLabel {
+                        visible: !delegateItem.isHeader && model.kind === "toggle"
+                        x: delegateItem.labelX
+                        // Only subtract what is actually shown -- the hidden "notifies" label
+                        // and swatch used to eat a third of the row on every switch.
+                        width: parent.width - delegateItem.labelX - toggleSwitch.width
+                               - (notifyLabel.visible ? notifyLabel.width + Theme.paddingSmall : 0)
+                               - (colorSwatch.visible ? colorSwatchDiameter + Theme.paddingSmall : 0)
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.friendlyName || ""
+                    }
+                    // Farbvorschau bei Lichtern mit bekannter Farbe/Farbtemperatur --
+                    // nur sichtbar wenn an (HA liefert rgb_color/color_temp_kelvin
+                    // sonst als null, s. colorForLight()).
+                    Rectangle {
+                        id: colorSwatch
+                        readonly property var swatchColor: !delegateItem.isHeader && model.kind === "toggle" && model.domain === "light"
+                            ? colorForLight(model.attributes, model.isOn) : null
+                        visible: swatchColor !== null
+                        anchors.right: notifyLabel.left
+                        anchors.rightMargin: Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: colorSwatchDiameter
+                        height: colorSwatchDiameter
+                        radius: width / 2
+                        color: swatchColor || "transparent"
+                        border.width: 1
+                        border.color: Theme.primaryColor
+                    }
+                    Label {
+                        id: notifyLabel
+                        visible: !delegateItem.isHeader && model.kind === "toggle" && model.notify === true
+                        anchors.right: toggleSwitch.left
+                        anchors.rightMargin: Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: qsTr("notifies")
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        color: Theme.secondaryHighlightColor
+                    }
+                    Switch {
+                        id: toggleSwitch
+                        visible: !delegateItem.isHeader && model.kind === "toggle"
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        checked: model.isOn === true
+                        onClicked: toggle(index)
+                    }
 
-            // -- Entity row: read-only sensor (Temperatur/Feuchte/Luftdruck) --
-            ScrollingLabel {
-                visible: !delegateItem.isHeader && model.kind === "sensor"
-                x: delegateItem.labelX
-                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - sensorValueLabel.width - Theme.paddingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                text: model.friendlyName || ""
-            }
-            Label {
-                id: sensorValueLabel
-                visible: !delegateItem.isHeader && model.kind === "sensor"
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                text: formatSensorValue(model.value, model.unit)
-                color: Theme.secondaryHighlightColor
-            }
+                    // -- Entity row: read-only sensor (Temperatur/Feuchte/Luftdruck) --
+                    ScrollingLabel {
+                        visible: !delegateItem.isHeader && model.kind === "sensor"
+                        x: delegateItem.labelX
+                        width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - sensorValueLabel.width - Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.friendlyName || ""
+                    }
+                    Label {
+                        id: sensorValueLabel
+                        visible: !delegateItem.isHeader && model.kind === "sensor"
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: formatSensorValue(model.value, model.unit)
+                        color: Theme.secondaryHighlightColor
+                    }
 
-            // -- Entity row: climate (Thermostat) -- Tap öffnet Submenu mit
-            // Zieltemperatur-Regler + Modus, wie bei Lichtern.
-            ScrollingLabel {
-                visible: !delegateItem.isHeader && model.kind === "climate"
-                x: delegateItem.labelX
-                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - climateValueLabel.width - Theme.paddingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                text: model.friendlyName || ""
-            }
-            Label {
-                id: climateValueLabel
-                visible: !delegateItem.isHeader && model.kind === "climate"
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                text: formatSensorValue(model.value, model.unit)
-                color: model.attributes && model.attributes.hvac_action === "heating" ? Theme.highlightColor : Theme.secondaryHighlightColor
-            }
+                    // -- Entity row: climate (Thermostat) -- Tap öffnet Submenu mit
+                    // Zieltemperatur-Regler + Modus, wie bei Lichtern.
+                    ScrollingLabel {
+                        visible: !delegateItem.isHeader && model.kind === "climate"
+                        x: delegateItem.labelX
+                        width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - climateValueLabel.width - Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.friendlyName || ""
+                    }
+                    Label {
+                        id: climateValueLabel
+                        visible: !delegateItem.isHeader && model.kind === "climate"
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: formatSensorValue(model.value, model.unit)
+                        color: model.attributes && model.attributes.hvac_action === "heating" ? Theme.highlightColor : Theme.secondaryHighlightColor
+                    }
 
-            // -- Entity row: media_player -- Tap öffnet Submenu mit
-            // Play/Pause und Lautstärke, wie bei Lichtern/Thermostaten.
-            ScrollingLabel {
-                visible: !delegateItem.isHeader && model.kind === "mediaplayer"
-                x: delegateItem.labelX
-                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - mediaValueLabel.width - Theme.paddingSmall
-                    - (mediaPlayPauseButton.visible ? mediaPlayPauseButton.width + Theme.paddingSmall : 0)
-                anchors.verticalCenter: parent.verticalCenter
-                text: model.friendlyName || ""
-            }
-            // Kompaktes Play/Pause direkt in der Zeile -- fängt Taps auf
-            // seiner eigenen Fläche ab (wie der Switch bei toggle-Zeilen),
-            // der Rest der Zeile öffnet weiterhin die Detailseite.
-            IconButton {
-                id: mediaPlayPauseButton
-                visible: !delegateItem.isHeader && model.kind === "mediaplayer" && mediaCanPlayPause(model.value, model.attributes)
-                anchors.right: mediaValueLabel.left
-                anchors.rightMargin: Theme.paddingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.iconSizeMedium
-                height: Theme.iconSizeMedium
-                icon.source: model.value === "playing" ? "image://theme/icon-m-pause" : "image://theme/icon-m-play"
-                onClicked: mediaPlayPause(model.entityId)
-            }
-            Label {
-                id: mediaValueLabel
-                visible: !delegateItem.isHeader && model.kind === "mediaplayer"
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                text: mediaStateLabel(model.value)
-                color: model.value === "playing" ? Theme.highlightColor : Theme.secondaryHighlightColor
-            }
+                    // -- Entity row: media_player -- Tap öffnet Submenu mit
+                    // Play/Pause und Lautstärke, wie bei Lichtern/Thermostaten.
+                    ScrollingLabel {
+                        visible: !delegateItem.isHeader && model.kind === "mediaplayer"
+                        x: delegateItem.labelX
+                        width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - mediaValueLabel.width - Theme.paddingSmall
+                            - (mediaPlayPauseButton.visible ? mediaPlayPauseButton.width + Theme.paddingSmall : 0)
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.friendlyName || ""
+                    }
+                    // Kompaktes Play/Pause direkt in der Zeile -- fängt Taps auf
+                    // seiner eigenen Fläche ab (wie der Switch bei toggle-Zeilen),
+                    // der Rest der Zeile öffnet weiterhin die Detailseite.
+                    IconButton {
+                        id: mediaPlayPauseButton
+                        visible: !delegateItem.isHeader && model.kind === "mediaplayer" && mediaCanPlayPause(model.value, model.attributes)
+                        anchors.right: mediaValueLabel.left
+                        anchors.rightMargin: Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.iconSizeMedium
+                        height: Theme.iconSizeMedium
+                        icon.source: model.value === "playing" ? "image://theme/icon-m-pause" : "image://theme/icon-m-play"
+                        onClicked: mediaPlayPause(model.entityId)
+                    }
+                    Label {
+                        id: mediaValueLabel
+                        visible: !delegateItem.isHeader && model.kind === "mediaplayer"
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: mediaStateLabel(model.value)
+                        color: model.value === "playing" ? Theme.highlightColor : Theme.secondaryHighlightColor
+                    }
 
-            // -- Entity row: scene -- kein on/off, Tap aktiviert direkt.
-            ScrollingLabel {
-                visible: !delegateItem.isHeader && model.kind === "scene"
-                x: delegateItem.labelX
-                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - sceneHintLabel.width - Theme.paddingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                text: model.friendlyName || ""
-            }
-            Label {
-                id: sceneHintLabel
-                visible: !delegateItem.isHeader && model.kind === "scene"
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                text: runHintFor(model.domain, model.value, model.entityId)
-                color: model.entityId === triggeredEntityId || (model.domain === "script" && model.value === "on")
-                    ? Theme.highlightColor : Theme.secondaryHighlightColor
-            }
+                    // -- Entity row: scene -- kein on/off, Tap aktiviert direkt.
+                    ScrollingLabel {
+                        visible: !delegateItem.isHeader && model.kind === "scene"
+                        x: delegateItem.labelX
+                        width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - sceneHintLabel.width - Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.friendlyName || ""
+                    }
+                    Label {
+                        id: sceneHintLabel
+                        visible: !delegateItem.isHeader && model.kind === "scene"
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: runHintFor(model.domain, model.value, model.entityId)
+                        color: model.entityId === triggeredEntityId || (model.domain === "script" && model.value === "on")
+                            ? Theme.highlightColor : Theme.secondaryHighlightColor
+                    }
 
-            // -- Entity row: lock -- Tap schliesst ab bzw. (mit Remorse)
-            // auf, Long-Press-Menü für Lock/Unlock/Open.
-            ScrollingLabel {
-                visible: !delegateItem.isHeader && model.kind === "lock"
-                x: delegateItem.labelX
-                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - lockValueLabel.width - Theme.paddingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                text: model.friendlyName || ""
-            }
-            Label {
-                id: lockValueLabel
-                visible: !delegateItem.isHeader && model.kind === "lock"
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                text: lockStateLabel(model.value)
-                color: model.value === "jammed" ? Theme.errorColor
-                    : ((model.value === "unlocked" || model.value === "open") ? Theme.highlightColor : Theme.secondaryHighlightColor)
-            }
+                    // -- Entity row: lock -- Tap schliesst ab bzw. (mit Remorse)
+                    // auf, Long-Press-Menü für Lock/Unlock/Open.
+                    ScrollingLabel {
+                        visible: !delegateItem.isHeader && model.kind === "lock"
+                        x: delegateItem.labelX
+                        width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - lockValueLabel.width - Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.friendlyName || ""
+                    }
+                    Label {
+                        id: lockValueLabel
+                        visible: !delegateItem.isHeader && model.kind === "lock"
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: lockStateLabel(model.value)
+                        color: model.value === "jammed" ? Theme.errorColor
+                            : ((model.value === "unlocked" || model.value === "open") ? Theme.highlightColor : Theme.secondaryHighlightColor)
+                    }
 
-            // -- Entity row: camera -- Tap öffnet CameraPage.qml.
-            ScrollingLabel {
-                visible: !delegateItem.isHeader && model.kind === "camera"
-                x: delegateItem.labelX
-                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - cameraValueLabel.width - Theme.paddingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                text: model.friendlyName || ""
-            }
-            Label {
-                id: cameraValueLabel
-                visible: !delegateItem.isHeader && model.kind === "camera"
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                text: cameraStateLabel(model.value)
-                color: (model.value === "recording" || model.value === "streaming") ? Theme.highlightColor : Theme.secondaryHighlightColor
-            }
+                    // -- Entity row: camera -- Tap öffnet CameraPage.qml.
+                    ScrollingLabel {
+                        visible: !delegateItem.isHeader && model.kind === "camera"
+                        x: delegateItem.labelX
+                        width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - cameraValueLabel.width - Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.friendlyName || ""
+                    }
+                    Label {
+                        id: cameraValueLabel
+                        visible: !delegateItem.isHeader && model.kind === "camera"
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: cameraStateLabel(model.value)
+                        color: (model.value === "recording" || model.value === "streaming") ? Theme.highlightColor : Theme.secondaryHighlightColor
+                    }
 
-            // -- Entity row: alarm_control_panel -- Tap öffnet AlarmPage.qml.
-            ScrollingLabel {
-                visible: !delegateItem.isHeader && model.kind === "alarm"
-                x: delegateItem.labelX
-                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - alarmValueLabel.width - Theme.paddingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                text: model.friendlyName || ""
-            }
-            Label {
-                id: alarmValueLabel
-                visible: !delegateItem.isHeader && model.kind === "alarm"
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                text: alarmStateLabel(model.value)
-                color: model.value === "triggered" ? Theme.errorColor
-                    : ((model.value === "disarmed" || model.value === "unavailable") ? Theme.secondaryHighlightColor : Theme.highlightColor)
-            }
+                    // -- Entity row: alarm_control_panel -- Tap öffnet AlarmPage.qml.
+                    ScrollingLabel {
+                        visible: !delegateItem.isHeader && model.kind === "alarm"
+                        x: delegateItem.labelX
+                        width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - alarmValueLabel.width - Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.friendlyName || ""
+                    }
+                    Label {
+                        id: alarmValueLabel
+                        visible: !delegateItem.isHeader && model.kind === "alarm"
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: alarmStateLabel(model.value)
+                        color: model.value === "triggered" ? Theme.errorColor
+                            : ((model.value === "disarmed" || model.value === "unavailable") ? Theme.secondaryHighlightColor : Theme.highlightColor)
+                    }
 
-            // -- Entity row: vacuum -- Tap öffnet VacuumPage.qml.
-            ScrollingLabel {
-                visible: !delegateItem.isHeader && model.kind === "vacuum"
-                x: delegateItem.labelX
-                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - vacuumValueLabel.width - Theme.paddingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                text: model.friendlyName || ""
-            }
-            Label {
-                id: vacuumValueLabel
-                visible: !delegateItem.isHeader && model.kind === "vacuum"
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                text: vacuumRowText(model.value, model.attributes)
-                color: model.value === "error" ? Theme.errorColor
-                    : ((model.value === "cleaning" || model.value === "returning") ? Theme.highlightColor : Theme.secondaryHighlightColor)
+                    // -- Entity row: vacuum -- Tap öffnet VacuumPage.qml.
+                    ScrollingLabel {
+                        visible: !delegateItem.isHeader && model.kind === "vacuum"
+                        x: delegateItem.labelX
+                        width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - vacuumValueLabel.width - Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.friendlyName || ""
+                    }
+                    Label {
+                        id: vacuumValueLabel
+                        visible: !delegateItem.isHeader && model.kind === "vacuum"
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: vacuumRowText(model.value, model.attributes)
+                        color: model.value === "error" ? Theme.errorColor
+                            : ((model.value === "cleaning" || model.value === "returning") ? Theme.highlightColor : Theme.secondaryHighlightColor)
+                    }
+                    }
+                }
             }
         }
 

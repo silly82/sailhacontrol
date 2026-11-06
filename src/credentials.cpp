@@ -110,28 +110,12 @@ Credentials::Credentials(QObject *parent)
         abortProbe();
         probe();
     });
-    // Plain QtNetwork bearer management (Qt5Network is a Harbour-allowed
-    // library). If the image ships no bearer plugin these simply never fire;
-    // the WebSocket-error path (reportConnectionProblem) and the recheck timer
-    // still cover switching then, just less promptly.
-    connect(&m_networkConfig, &QNetworkConfigurationManager::onlineStateChanged,
-            this, [this](bool) { m_networkChangeDebounce.start(); });
-    connect(&m_networkConfig, &QNetworkConfigurationManager::configurationChanged,
-            this, [this](const QNetworkConfiguration &config) {
-                // configurationChanged also fires for every WLAN scan result
-                // (Discovered flags); only a link going up or down matters.
-                const bool active = config.state().testFlag(QNetworkConfiguration::Active);
-                const bool wasActive = m_activeConfigs.contains(config.identifier());
-                if (active == wasActive) {
-                    return;
-                }
-                if (active) {
-                    m_activeConfigs.insert(config.identifier());
-                } else {
-                    m_activeConfigs.remove(config.identifier());
-                }
-                m_networkChangeDebounce.start();
-            });
+    // No QNetworkConfigurationManager here: on the Jolla Phone (Qt 5.6,
+    // connman bearer plugin) its configurationChanged() handling deadlocked
+    // the main thread on a mutex inside libQt5Network, intermittently, right
+    // at startup ("not responding"; found with gdb on the device). Network
+    // changes are reported from QML instead (app becoming active), plus the
+    // WebSocket-error path (reportConnectionProblem) and the recheck timer.
 
     connect(&m_pluginInfo, &PluginInfoRequest::statusChanged, this, [this]() {
         if (m_pluginInfo.status() != Request::Finished) {
@@ -716,6 +700,11 @@ void Credentials::probe()
     connect(m_probeReply.data(), &QNetworkReply::finished, this, &Credentials::onProbeFinished);
     m_probeTimeout.start();
     Q_EMIT probingChanged();
+}
+
+void Credentials::networkMayHaveChanged()
+{
+    m_networkChangeDebounce.start();
 }
 
 void Credentials::reportConnectionProblem()

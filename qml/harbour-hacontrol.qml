@@ -535,4 +535,17 @@ ApplicationWindow {
                 })
         }
     }
+
+    // Network changes (Wi-Fi <-> mobile, home <-> away) usually happen while
+    // the phone is in the pocket; re-check which URL to use when the app comes
+    // back to the foreground. Replaces QNetworkConfigurationManager, which
+    // deadlocked on the device (see src/credentials.cpp).
+    Connections {
+        target: Qt.application
+        onStateChanged: {
+            if (Qt.application.state === Qt.ApplicationActive) {
+                Credentials.networkMayHaveChanged()
+            }
+        }
+    }
 }

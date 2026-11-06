@@ -4,7 +4,6 @@
 #include <functional>
 
 #include <QNetworkAccessManager>
-#include <QNetworkConfigurationManager>
 #include <QNetworkReply>
 #include <QObject>
 #include <QPointer>
@@ -136,6 +135,9 @@ public:
     // accordingly. Only probes in AutoMode with both URLs set; otherwise it
     // just settles usingExternal from the mode.
     Q_INVOKABLE void probe();
+    // Called from QML when the network may have changed (e.g. the app comes
+    // back to the foreground): probes again after a short debounce.
+    Q_INVOKABLE void networkMayHaveChanged();
     // For QML call sites that just saw the connection fail (WebSocket error,
     // request timeout): probes, but not more often than every few seconds,
     // so a reconnect loop doesn't turn into a probe loop.
@@ -282,7 +284,6 @@ private:
 
     // Reachability probe of the internal URL (GET <internal>/api/).
     QNetworkAccessManager m_network;
-    QNetworkConfigurationManager m_networkConfig;
     QPointer<QNetworkReply> m_probeReply;
     QTimer m_probeTimeout;
     // While on the external URL: look every now and then whether the internal
@@ -292,9 +293,6 @@ private:
     // once, and the new link needs a moment for DHCP/DNS); probe once after
     // they settled.
     QTimer m_networkChangeDebounce;
-    // Identifiers of the network configurations currently Active, to tell a
-    // real link change from the many scan-result configurationChanged()s.
-    QSet<QString> m_activeConfigs;
     qint64 m_lastProbeStarted;
 
     // Standalone device-lock secrets: kept unlocked once the device itself is
