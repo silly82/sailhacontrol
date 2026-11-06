@@ -38,6 +38,13 @@ function getStates(baseUrl, token, onSuccess, onError) {
     request("GET", baseUrl, token, "/api/states", null, onSuccess, onError)
 }
 
+// GET /api/states/<entity_id> -- current state + attributes of ONE entity.
+// Used by CameraPage.qml to pick up a rotated camera access_token after a
+// failed snapshot load without waiting for the next WebSocket event.
+function getState(baseUrl, token, entityId, onSuccess, onError) {
+    request("GET", baseUrl, token, "/api/states/" + encodeURIComponent(entityId), null, onSuccess, onError)
+}
+
 // POST /api/services/<domain>/<service> -- e.g. callService(..., "light",
 // "toggle", { entity_id: "light.kitchen" }, ...)
 function callService(baseUrl, token, domain, service, serviceData, onSuccess, onError) {

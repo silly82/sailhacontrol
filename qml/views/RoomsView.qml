@@ -117,10 +117,13 @@ Item {
     // lock: Zustand anzeigen, Abschliessen direkt, Aufschliessen/Öffnen nur
     // mit Remorse-Frist (s. Delegate).
     readonly property var lockDomains: ["lock"]
+    // camera: Tap öffnet CameraPage.qml mit dem Standbild; die Zeile zeigt
+    // nur den Zustand (idle/recording/streaming).
+    readonly property var cameraDomains: ["camera"]
     readonly property var sensorDeviceClasses: ["temperature", "humidity", "pressure", "atmospheric_pressure", "battery", "energy", "power"]
     // Reihenfolge innerhalb eines Raums: steuerbare Entities zuerst,
     // read-only Sensoren zuletzt.
-    readonly property var kindOrder: ({ toggle: 0, lock: 1, climate: 2, mediaplayer: 3, scene: 4, sensor: 5 })
+    readonly property var kindOrder: ({ toggle: 0, lock: 1, climate: 2, mediaplayer: 3, camera: 4, scene: 5, sensor: 6 })
     readonly property real colorSwatchDiameter: Theme.iconSizeExtraSmall
 
     // "Aus"-Gegenstück ist bei den meisten toggle-Domains state === "on",
@@ -184,6 +187,16 @@ Item {
         case "opening": return qsTr("Opening")
         case "unavailable": return qsTr("Unavailable")
         default: return state
+        }
+    }
+
+    function cameraStateLabel(state) {
+        switch (state) {
+        case "idle": return qsTr("Idle")
+        case "recording": return qsTr("Recording")
+        case "streaming": return qsTr("Streaming")
+        case "unavailable": return qsTr("Unavailable")
+        default: return qsTr("Camera")
         }
     }
 
@@ -414,6 +427,8 @@ Item {
                 kind = "scene"
             } else if (lockDomains.indexOf(domain) >= 0) {
                 kind = "lock"
+            } else if (cameraDomains.indexOf(domain) >= 0) {
+                kind = "camera"
             } else if (domain === "sensor" && sensorDeviceClasses.indexOf(deviceClass) >= 0) {
                 kind = "sensor"
             }
@@ -456,8 +471,9 @@ Item {
                 // Submenu -- s.u. openLightDetail()/openThermostatDetail()/
                 // openMediaPlayerDetail().
                 // cover: supported_features/current_position für
-                // CoverDetailPage.qml, lock: supported_features (OPEN).
-                attributes: (domain === "light" || domain === "climate" || domain === "media_player" || domain === "cover" || domain === "lock") ? s.attributes : ({})
+                // CoverDetailPage.qml, lock: supported_features (OPEN),
+                // camera: access_token für CameraPage.qml.
+                attributes: (domain === "light" || domain === "climate" || domain === "media_player" || domain === "cover" || domain === "lock" || domain === "camera") ? s.attributes : ({})
             })
         }
 
@@ -543,6 +559,17 @@ Item {
     function openCoverDetail(index) {
         var entry = entriesModel.get(index)
         pageStack.push(Qt.resolvedUrl("../pages/CoverDetailPage.qml"), {
+            entityId: entry.entityId,
+            entityName: entry.friendlyName,
+            entityState: entry.value,
+            attributes: entry.attributes,
+            stateSource: root
+        })
+    }
+
+    function openCameraDetail(index) {
+        var entry = entriesModel.get(index)
+        pageStack.push(Qt.resolvedUrl("../pages/CameraPage.qml"), {
             entityId: entry.entityId,
             entityName: entry.friendlyName,
             entityState: entry.value,
@@ -778,6 +805,10 @@ Item {
                 // der Zeitpunkt, schadet aber nicht.
                 entriesModel.setProperty(i, "value", newState.state)
             } else if (row.kind === "lock") {
+                entriesModel.setProperty(i, "value", newState.state)
+                entriesModel.setProperty(i, "attributes", newState.attributes || {})
+            } else if (row.kind === "camera") {
+                // attributes tragen den rotierenden access_token.
                 entriesModel.setProperty(i, "value", newState.state)
                 entriesModel.setProperty(i, "attributes", newState.attributes || {})
             }
@@ -1044,6 +1075,8 @@ Item {
                     openMediaPlayerDetail(index)
                 } else if (model.kind === "scene") {
                     activateScene(index)
+                } else if (model.kind === "camera") {
+                    openCameraDetail(index)
                 }
             }
 
@@ -1253,6 +1286,24 @@ Item {
                 text: lockStateLabel(model.value)
                 color: model.value === "jammed" ? Theme.errorColor
                     : ((model.value === "unlocked" || model.value === "open") ? Theme.highlightColor : Theme.secondaryHighlightColor)
+            }
+
+            // -- Entity row: camera -- Tap öffnet CameraPage.qml.
+            ScrollingLabel {
+                visible: !delegateItem.isHeader && model.kind === "camera"
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin - cameraValueLabel.width - Theme.paddingSmall
+                anchors.verticalCenter: parent.verticalCenter
+                text: model.friendlyName || ""
+            }
+            Label {
+                id: cameraValueLabel
+                visible: !delegateItem.isHeader && model.kind === "camera"
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.horizontalPageMargin
+                anchors.verticalCenter: parent.verticalCenter
+                text: cameraStateLabel(model.value)
+                color: (model.value === "recording" || model.value === "streaming") ? Theme.highlightColor : Theme.secondaryHighlightColor
             }
         }
 
