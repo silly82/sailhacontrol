@@ -44,6 +44,24 @@ function callService(baseUrl, token, domain, service, serviceData, onSuccess, on
     request("POST", baseUrl, token, "/api/services/" + domain + "/" + service, serviceData, onSuccess, onError)
 }
 
+// GET /api/history/period/<start>?filter_entity_id=<id>&end_time=<end>
+// &minimal_response&no_attributes -- state history of ONE entity between two
+// Dates. end_time is passed explicitly because HA otherwise defaults to
+// start + 1 day (a 7-day request would silently stop after the first day).
+// minimal_response: every entry after the first only carries state +
+// last_changed; no_attributes drops the attribute blob -- both keep the JSON
+// small for chatty power/energy sensors. Timestamps go out as UTC ISO strings
+// ("...Z", no "+" that a query string would turn into a space).
+// Returns onSuccess([[{state, last_changed, ...}, ...]]) -- an outer array
+// with one inner array per entity (empty outer array if there is no data).
+function getHistory(baseUrl, token, entityId, startDate, endDate, onSuccess, onError) {
+    var path = "/api/history/period/" + startDate.toISOString() +
+        "?filter_entity_id=" + encodeURIComponent(entityId) +
+        "&end_time=" + encodeURIComponent(endDate.toISOString()) +
+        "&minimal_response&no_attributes"
+    request("GET", baseUrl, token, path, null, onSuccess, onError)
+}
+
 // POST /api/mobile_app/registrations -- registers this device as a
 // mobile_app entry, same REST auth as the calls above. app_data.push_websocket_channel
 // (any truthy value, verified against home-assistant/core's mobile_app/util.py

@@ -78,6 +78,7 @@ Item {
                 rooms[room] = []
             }
             rooms[room].push({
+                entityId: st.entity_id,
                 friendlyName: st.attributes.friendly_name || st.entity_id,
                 value: st.state,
                 unit: st.attributes.unit_of_measurement || ""
@@ -96,7 +97,7 @@ Item {
             var matches = rooms[roomName]
             matches.sort(function (a, b) { return a.friendlyName.localeCompare(b.friendlyName) })
 
-            entriesModel.append({ rowType: "header", room: roomName, count: matches.length, friendlyName: "", value: "", unit: "" })
+            entriesModel.append({ rowType: "header", room: roomName, count: matches.length, entityId: "", friendlyName: "", value: "", unit: "" })
             for (var m = 0; m < matches.length; m++) {
                 var e = matches[m]
                 e.rowType = "entity"
@@ -226,6 +227,15 @@ Item {
             onClicked: {
                 if (isHeader) {
                     toggleRoom(model.room)
+                } else {
+                    // Only numeric sensors make it into this list (see
+                    // buildEntries), so every row can show a graph.
+                    pageStack.push(Qt.resolvedUrl("../pages/SensorHistoryPage.qml"), {
+                        entityId: model.entityId,
+                        entityName: model.friendlyName,
+                        unit: model.unit,
+                        currentValue: model.value
+                    })
                 }
             }
 

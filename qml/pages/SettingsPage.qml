@@ -120,6 +120,12 @@ Page {
                 text: qsTr("Re-register device")
                 onClicked: webhookIdSetting.value = ""
             }
+
+            Button {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Cover action")
+                onClicked: pageStack.push(Qt.resolvedUrl("CoverSettingsPage.qml"))
+            }
         }
     }
 }

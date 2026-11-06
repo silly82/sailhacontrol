@@ -9,6 +9,9 @@ import "../lib/HaApi.js" as HaApi
 // webhookIdSetting: separate ConfigurationValue-Instanzen auf denselben
 // dconf-Keys), damit der Cover selbst keine eigene HA-Abfrage braucht,
 // während die App im Hintergrund ist.
+// Since CoverSettingsPage.qml the action can instead target a fixed scene,
+// script, light or switch (coverTarget* values); "last used light" stays the
+// default when nothing is configured.
 CoverBackground {
     id: cover
 
@@ -27,6 +30,32 @@ CoverBackground {
         key: "/apps/harbour-hacontrol/coverLastLightName"
         defaultValue: ""
     }
+    // Configured in CoverSettingsPage.qml. Empty id == "last used light"
+    // (the lastLight* values above); otherwise the stored entity is triggered
+    // directly. Name/domain are stored with it so nothing has to be fetched.
+    ConfigurationValue {
+        id: targetIdSetting
+        key: "/apps/harbour-hacontrol/coverTargetId"
+        defaultValue: ""
+    }
+    ConfigurationValue {
+        id: targetNameSetting
+        key: "/apps/harbour-hacontrol/coverTargetName"
+        defaultValue: ""
+    }
+    ConfigurationValue {
+        id: targetDomainSetting
+        key: "/apps/harbour-hacontrol/coverTargetDomain"
+        defaultValue: ""
+    }
+
+    readonly property bool useLastLight: targetIdSetting.value.length === 0
+    readonly property string actionEntityId: useLastLight ? lastLightIdSetting.value : targetIdSetting.value
+    readonly property string actionName: useLastLight ? lastLightNameSetting.value : targetNameSetting.value
+    readonly property string actionDomain: useLastLight
+        ? actionEntityId.split(".")[0]
+        : (targetDomainSetting.value || actionEntityId.split(".")[0])
+    readonly property bool runsOnce: actionDomain === "scene" || actionDomain === "script"
 
     Column {
         anchors.centerIn: parent
@@ -55,6 +84,19 @@ CoverBackground {
                 return qsTr("%n light(s) on", "", count)
             }
         }
+        Label {
+            // Name of whatever the cover button triggers, so it is clear
+            // what tapping it will do.
+            visible: cover.actionEntityId.length > 0
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            truncationMode: TruncationMode.Elide
+            maximumLineCount: 2
+            wrapMode: Text.Wrap
+            font.pixelSize: Theme.fontSizeExtraSmall
+            color: Theme.highlightColor
+            text: cover.actionName || cover.actionEntityId
+        }
     }
 
     CoverActionList {
@@ -64,16 +106,20 @@ CoverBackground {
         // previous(-song),record,refresh,reject,search,shuffle,subview,
         // sync,timer,transfers,unmute} -- per sfdk tools exec geprüft,
         // s. sailfishos-sdk-workflow-Memory). icon-cover-favorite passt
-        // semantisch am ehesten ("dein zuletzt benutztes Licht").
-        enabled: lastLightIdSetting.value.length > 0
+        // semantisch am ehesten ("dein zuletzt benutztes Licht") und bleibt
+        // für alles, was umgeschaltet wird (light/switch); Szenen und
+        // Skripte werden "abgespielt" -> icon-cover-play.
+        enabled: cover.actionEntityId.length > 0
 
         CoverAction {
-            iconSource: "image://theme/icon-cover-favorite"
+            iconSource: cover.runsOnce ? "image://theme/icon-cover-play"
+                                       : "image://theme/icon-cover-favorite"
             onTriggered: {
-                var entityId = lastLightIdSetting.value
-                var domain = entityId.split(".")[0]
+                var entityId = cover.actionEntityId
+                var domain = cover.actionDomain
                 HaApi.callService(Credentials.baseUrl, Credentials.token,
-                    domain, "toggle", { entity_id: entityId },
+                    domain, cover.runsOnce ? "turn_on" : "toggle",
+                    { entity_id: entityId },
                     function () {}, function () {})
             }
         }
