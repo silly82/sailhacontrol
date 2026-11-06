@@ -649,7 +649,8 @@ Item {
             entityId: entry.entityId,
             entityName: entry.friendlyName,
             entityIsOn: entry.isOn,
-            attributes: entry.attributes
+            attributes: entry.attributes,
+            stateSource: root
         })
     }
 
@@ -659,7 +660,8 @@ Item {
             entityId: entry.entityId,
             entityName: entry.friendlyName,
             entityHvacMode: entry.hvacMode,
-            attributes: entry.attributes
+            attributes: entry.attributes,
+            stateSource: root
         })
     }
 
