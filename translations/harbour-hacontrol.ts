@@ -1174,7 +1174,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1411"/>
+        <location filename="../qml/views/RoomsView.qml" line="1415"/>
         <source>notifies</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1770,7 +1770,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="444"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="454"/>
         <source>Completed (%1)</source>
         <translation type="unfinished"></translation>
     </message>

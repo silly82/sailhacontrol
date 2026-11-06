@@ -275,6 +275,15 @@ Item {
     //   (mapping: qml/lib/EntityIcons.js, shared with the detail pages)
     // Sensor-Zeilen tragen keine Attribute im Model (s. buildEntries()) --
     // daher die Einheit bzw. die entity_id statt device_class.
+    // The "attributes" role must only ever receive a plain object: the
+    // ListModel fixes a role's type on first use, and anything else (an
+    // array, null) once produced "Can't assign to existing role 'attributes'
+    // of different type [List -> VariantMap]" -- after which live attribute
+    // updates for that row are silently dropped.
+    function plainAttributes(a) {
+        return (a && typeof a === "object" && !Array.isArray(a)) ? a : ({})
+    }
+
     function entityIconName(domain, kind, entityId, unit) {
         return EntityIcons.iconFor(domain, entityId, unit)
     }
@@ -287,26 +296,26 @@ Item {
     function entityIconColor(kind, domain, value, isOn, attrs, entityId) {
         switch (kind) {
         case "toggle":
-            return isOn ? Theme.highlightColor : Theme.primaryColor
+            return isOn ? Theme.highlightColor : Theme.secondaryColor
         case "climate":
-            return attrs && (attrs.hvac_action === "heating" || attrs.hvac_action === "cooling") ? Theme.highlightColor : Theme.primaryColor
+            return attrs && (attrs.hvac_action === "heating" || attrs.hvac_action === "cooling") ? Theme.highlightColor : Theme.secondaryColor
         case "mediaplayer":
-            return value === "playing" ? Theme.highlightColor : Theme.primaryColor
+            return value === "playing" ? Theme.highlightColor : Theme.secondaryColor
         case "scene":
-            return entityId === triggeredEntityId || (domain === "script" && value === "on") ? Theme.highlightColor : Theme.primaryColor
+            return entityId === triggeredEntityId || (domain === "script" && value === "on") ? Theme.highlightColor : Theme.secondaryColor
         case "lock":
             return value === "jammed" ? Theme.errorColor
-                : ((value === "unlocked" || value === "open" || value === "unlocking" || value === "opening") ? Theme.highlightColor : Theme.primaryColor)
+                : ((value === "unlocked" || value === "open" || value === "unlocking" || value === "opening") ? Theme.highlightColor : Theme.secondaryColor)
         case "camera":
-            return (value === "recording" || value === "streaming") ? Theme.highlightColor : Theme.primaryColor
+            return (value === "recording" || value === "streaming") ? Theme.highlightColor : Theme.secondaryColor
         case "alarm":
             return value === "triggered" ? Theme.errorColor
-                : ((value === "disarmed" || value === "unavailable") ? Theme.primaryColor : Theme.highlightColor)
+                : ((value === "disarmed" || value === "unavailable") ? Theme.secondaryColor : Theme.highlightColor)
         case "vacuum":
             return value === "error" ? Theme.errorColor
-                : ((value === "cleaning" || value === "returning") ? Theme.highlightColor : Theme.primaryColor)
+                : ((value === "cleaning" || value === "returning") ? Theme.highlightColor : Theme.secondaryColor)
         default:
-            return Theme.primaryColor
+            return Theme.secondaryColor
         }
     }
 
@@ -590,7 +599,7 @@ Item {
                 // alarm_control_panel: supported_features/code_format für
                 // AlarmPage.qml, vacuum: battery_level/fan_speed_list.
                 attributes: (domain === "light" || domain === "climate" || domain === "media_player" || domain === "cover" || domain === "lock" || domain === "camera"
-                             || domain === "alarm_control_panel" || domain === "vacuum") ? s.attributes : ({})
+                             || domain === "alarm_control_panel" || domain === "vacuum") ? plainAttributes(s.attributes) : ({})
             })
         }
 
@@ -931,10 +940,10 @@ Item {
                 // nachzieht, statt erst beim nächsten Pull-to-refresh.
                 if (row.domain === "cover") {
                     entriesModel.setProperty(i, "value", newState.state)
-                    entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                    entriesModel.setProperty(i, "attributes", plainAttributes(newState.attributes))
                 }
                 if (row.domain === "light") {
-                    entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                    entriesModel.setProperty(i, "attributes", plainAttributes(newState.attributes))
                     // O(1) nachführen statt eines vollen Rescans über
                     // entriesModel bei jedem einzelnen Live-Update -- ein
                     // Rescan pro Event kostete auf einem Gerät mit ~700+
@@ -952,24 +961,24 @@ Item {
                 var newTemp = newState.attributes && newState.attributes.temperature
                 entriesModel.setProperty(i, "value", newTemp !== undefined && newTemp !== null ? String(newTemp) : "")
                 entriesModel.setProperty(i, "hvacMode", newState.state || "")
-                entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                entriesModel.setProperty(i, "attributes", plainAttributes(newState.attributes))
             } else if (row.kind === "mediaplayer") {
                 entriesModel.setProperty(i, "value", newState.state)
-                entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                entriesModel.setProperty(i, "attributes", plainAttributes(newState.attributes))
             } else if (row.kind === "scene") {
                 // Für script ("on" == läuft gerade) -- bei scene/button nur
                 // der Zeitpunkt, schadet aber nicht.
                 entriesModel.setProperty(i, "value", newState.state)
             } else if (row.kind === "lock") {
                 entriesModel.setProperty(i, "value", newState.state)
-                entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                entriesModel.setProperty(i, "attributes", plainAttributes(newState.attributes))
             } else if (row.kind === "camera") {
                 // attributes tragen den rotierenden access_token.
                 entriesModel.setProperty(i, "value", newState.state)
-                entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                entriesModel.setProperty(i, "attributes", plainAttributes(newState.attributes))
             } else if (row.kind === "alarm" || row.kind === "vacuum") {
                 entriesModel.setProperty(i, "value", newState.state)
-                entriesModel.setProperty(i, "attributes", newState.attributes || {})
+                entriesModel.setProperty(i, "attributes", plainAttributes(newState.attributes))
             }
         }
     }

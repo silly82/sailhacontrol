@@ -148,6 +148,28 @@ Page {
             bottomMargin: Theme.paddingSmall
         }
         readonly property real position: page.width > 0 ? swipeContainer.contentX / page.width : 0
+        // Shown while swiping and for a few seconds after start or a page
+        // change, then faded out -- it would otherwise sit permanently on
+        // top of the bottom list row. While hidden it takes no taps.
+        property bool shown: true
+        opacity: shown || swipeContainer.moving || snapAnimation.running ? 1 : 0
+        enabled: opacity > 0
+        visible: opacity > 0
+        Behavior on opacity { FadeAnimator { duration: 400 } }
+        Timer {
+            id: indicatorHideTimer
+            interval: 4000
+            running: true
+            onTriggered: pageIndicator.shown = false
+        }
+        Connections {
+            target: page
+            onCurrentPageChanged: { pageIndicator.shown = true; indicatorHideTimer.restart() }
+        }
+        Connections {
+            target: swipeContainer
+            onMovementEnded: { pageIndicator.shown = true; indicatorHideTimer.restart() }
+        }
 
         Repeater {
             model: 3

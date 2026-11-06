@@ -1175,7 +1175,7 @@
         <translation>Öffnen</translation>
     </message>
     <message>
-        <location filename="../qml/views/RoomsView.qml" line="1411"/>
+        <location filename="../qml/views/RoomsView.qml" line="1415"/>
         <source>notifies</source>
         <translation>benachrichtigt</translation>
     </message>
@@ -1772,7 +1772,7 @@
         <translation>Eintrag hinzufügen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/TodoListPage.qml" line="444"/>
+        <location filename="../qml/pages/TodoListPage.qml" line="454"/>
         <source>Completed (%1)</source>
         <translation>Erledigt (%1)</translation>
     </message>
