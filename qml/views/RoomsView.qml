@@ -265,6 +265,90 @@ Item {
         }
     }
 
+    // Kleines Symbol vor jeder Entity-Zeile, damit sich die Liste nach Art
+    // überfliegen lässt. Nur monochrome Theme-Icons (icon-m-*), damit die
+    // "?<Farbe>"-Einfärbung des Theme-Image-Providers greift. Es gibt kein
+    // Glühbirnen-/Thermometer-/Staubsauger-Icon im Theme -- wo nichts
+    // Passendes existiert, steht ein neutrales Icon statt eines
+    // irreführenden:
+    //   light                       icon-m-flashlight  (Lichtquelle)
+    //   switch                      icon-m-charging    (Strom/Steckdose)
+    //   input_boolean               icon-m-setting     (Helfer/Einstellung)
+    //   fan                         icon-m-sync        (Drehbewegung)
+    //   cover                       icon-m-home        (Fenster/Tor am Haus)
+    //   climate                     icon-m-levels      (Regler/Sollwert)
+    //   media_player                icon-m-speaker
+    //   scene                       icon-m-ambience    (Stimmung)
+    //   script                      icon-m-play        (Ablauf starten)
+    //   button, input_button        icon-m-dot         (Taster)
+    //   lock                        icon-m-device-lock
+    //   camera                      icon-m-camera
+    //   alarm_control_panel         icon-m-alarm
+    //   vacuum                      icon-m-other       (neutral)
+    //   sensor (Akku)               icon-m-battery     (entity_id enthält "battery")
+    //   sensor (W/kW/Wh/kWh)        icon-m-charging
+    //   sensor (sonst)              icon-m-about       (reiner Messwert)
+    // Sensor-Zeilen tragen keine Attribute im Model (s. buildEntries()) --
+    // daher die Einheit bzw. die entity_id statt device_class.
+    function entityIconName(domain, kind, entityId, unit) {
+        switch (domain) {
+        case "light": return "icon-m-flashlight"
+        case "switch": return "icon-m-charging"
+        case "input_boolean": return "icon-m-setting"
+        case "fan": return "icon-m-sync"
+        case "cover": return "icon-m-home"
+        case "climate": return "icon-m-levels"
+        case "media_player": return "icon-m-speaker"
+        case "scene": return "icon-m-ambience"
+        case "script": return "icon-m-play"
+        case "button":
+        case "input_button": return "icon-m-dot"
+        case "lock": return "icon-m-device-lock"
+        case "camera": return "icon-m-camera"
+        case "alarm_control_panel": return "icon-m-alarm"
+        case "sensor":
+            if (entityId.indexOf("battery") >= 0) {
+                return "icon-m-battery"
+            }
+            if (unit === "W" || unit === "kW" || unit === "Wh" || unit === "kWh") {
+                return "icon-m-charging"
+            }
+            return "icon-m-about"
+        default: return "icon-m-other"
+        }
+    }
+
+    // Farbe des Zeilen-Symbols: primaryColor im Ruhezustand,
+    // highlightColor für "aktiv" (an/offen, spielt, läuft, aufgeschlossen
+    // -- bei Schlössern bewusst als Hinweis), errorColor für Störungen
+    // (Alarm ausgelöst, Schloss blockiert, Saugroboter-Fehler). Gleiche
+    // Zustände wie die Farben der Wert-Labels rechts.
+    function entityIconColor(kind, domain, value, isOn, attrs, entityId) {
+        switch (kind) {
+        case "toggle":
+            return isOn ? Theme.highlightColor : Theme.primaryColor
+        case "climate":
+            return attrs && (attrs.hvac_action === "heating" || attrs.hvac_action === "cooling") ? Theme.highlightColor : Theme.primaryColor
+        case "mediaplayer":
+            return value === "playing" ? Theme.highlightColor : Theme.primaryColor
+        case "scene":
+            return entityId === triggeredEntityId || (domain === "script" && value === "on") ? Theme.highlightColor : Theme.primaryColor
+        case "lock":
+            return value === "jammed" ? Theme.errorColor
+                : ((value === "unlocked" || value === "open" || value === "unlocking" || value === "opening") ? Theme.highlightColor : Theme.primaryColor)
+        case "camera":
+            return (value === "recording" || value === "streaming") ? Theme.highlightColor : Theme.primaryColor
+        case "alarm":
+            return value === "triggered" ? Theme.errorColor
+                : ((value === "disarmed" || value === "unavailable") ? Theme.primaryColor : Theme.highlightColor)
+        case "vacuum":
+            return value === "error" ? Theme.errorColor
+                : ((value === "cleaning" || value === "returning") ? Theme.highlightColor : Theme.primaryColor)
+        default:
+            return Theme.primaryColor
+        }
+    }
+
     // Rollos mit Positionsangabe (supported_features SET_POSITION = 4 oder
     // ein gemeldetes current_position) bekommen eine Detailseite mit
     // Positions-Slider; alle anderen bleiben reiner Auf/Zu-Toggle.
@@ -1187,9 +1271,15 @@ Item {
             readonly property bool rowVisible: searchActive
                 ? (!isFavGroup && (isHeader ? searchRoomCounts[model.room] > 0 : searchMatches[model.entityId] === true))
                 : (isHeader || isFavGroup || expandedRooms[model.room] === true)
-            contentHeight: rowVisible ? (isHeader ? Theme.itemSizeExtraSmall : Theme.itemSizeMedium) : 0
+            contentHeight: rowVisible ? (isHeader ? Theme.itemSizeSmall : Theme.itemSizeMedium) : 0
             visible: rowVisible
             clip: true
+            // Favoriten-Header und Header während der Suche lassen sich
+            // nicht zuklappen -- kein Druck-Feedback für einen Tap, der
+            // nichts tut.
+            enabled: !isHeader || (!isFavGroup && !searchActive)
+            // Linke Kante der Namen in Entity-Zeilen: hinter dem Symbol.
+            readonly property real labelX: Theme.horizontalPageMargin + Theme.iconSizeSmallPlus + Theme.paddingMedium
 
             // Bei Szenen ergibt "bei Änderung benachrichtigen" keinen Sinn
             // -- ihr state ist nur der Zeitpunkt der letzten Aktivierung,
@@ -1215,6 +1305,8 @@ Item {
             // (ListItem unterstützt onClicked + menu: gleichzeitig).
             onClicked: {
                 if (isHeader) {
+                    // enabled schliesst Favoriten/Suche schon aus.
+                    toggleRoom(model.room)
                     return
                 }
                 if (model.kind === "toggle" && model.domain === "light") {
@@ -1287,38 +1379,45 @@ Item {
                 }
             }
 
-            // -- Room header row --
-            Row {
-                visible: delegateItem.isHeader
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.paddingSmall
-
-                Label {
-                    text: delegateItem.isFavGroup ? "★" : ((searchActive || expandedRooms[model.room] === true) ? "▾" : "▸")
-                    color: Theme.highlightColor
-                    font.pixelSize: Theme.fontSizeMedium
-                }
-                Label {
-                    text: model.room + " (" + (searchActive ? (searchRoomCounts[model.room] || 0) : model.count) + ")"
-                    color: Theme.highlightColor
-                    font.pixelSize: Theme.fontSizeMedium
+            // -- Room header row -- per Loader, damit die ~700 Entity-
+            // Delegates keine Header-Items mitschleppen. Während der Suche
+            // zählt der Header die Treffer und zeigt "aufgeklappt".
+            Loader {
+                anchors.fill: parent
+                active: delegateItem.isHeader
+                sourceComponent: Component {
+                    RoomSectionHeader {
+                        title: model.room
+                        count: searchActive ? (searchRoomCounts[model.room] || 0) : model.count
+                        favorite: delegateItem.isFavGroup
+                        expanded: searchActive || expandedRooms[model.room] === true
+                        collapsible: !delegateItem.isFavGroup && !searchActive
+                        highlighted: delegateItem.highlighted
+                    }
                 }
             }
-            MouseArea {
-                anchors.fill: parent
-                // Favoriten sind immer offen; während der Suche ist das
-                // Aufklappen durch die Treffer bestimmt.
-                enabled: delegateItem.isHeader && !delegateItem.isFavGroup && !searchActive
-                onClicked: toggleRoom(model.room)
+
+            // -- Entity row: leading kind/domain icon (s. entityIconName()) --
+            Image {
+                visible: !delegateItem.isHeader
+                x: Theme.horizontalPageMargin
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.iconSizeSmallPlus
+                height: Theme.iconSizeSmallPlus
+                sourceSize.width: Theme.iconSizeSmallPlus
+                sourceSize.height: Theme.iconSizeSmallPlus
+                asynchronous: true
+                source: delegateItem.isHeader ? ""
+                    : "image://theme/" + entityIconName(model.domain, model.kind, model.entityId, model.unit) + "?"
+                      + (delegateItem.highlighted ? Theme.highlightColor
+                         : entityIconColor(model.kind, model.domain, model.value, model.isOn, model.attributes, model.entityId))
             }
 
             // -- Entity row: toggle (light/switch) --
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "toggle"
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin - notifyLabel.width - toggleSwitch.width - colorSwatchDiameter - Theme.paddingSmall
+                x: delegateItem.labelX
+                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - notifyLabel.width - toggleSwitch.width - colorSwatchDiameter - Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
             }
@@ -1362,8 +1461,8 @@ Item {
             // -- Entity row: read-only sensor (Temperatur/Feuchte/Luftdruck) --
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "sensor"
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin - sensorValueLabel.width - Theme.paddingSmall
+                x: delegateItem.labelX
+                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - sensorValueLabel.width - Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
             }
@@ -1381,8 +1480,8 @@ Item {
             // Zieltemperatur-Regler + Modus, wie bei Lichtern.
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "climate"
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin - climateValueLabel.width - Theme.paddingSmall
+                x: delegateItem.labelX
+                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - climateValueLabel.width - Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
             }
@@ -1400,8 +1499,8 @@ Item {
             // Play/Pause und Lautstärke, wie bei Lichtern/Thermostaten.
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "mediaplayer"
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin - mediaValueLabel.width - Theme.paddingSmall
+                x: delegateItem.labelX
+                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - mediaValueLabel.width - Theme.paddingSmall
                     - (mediaPlayPauseButton.visible ? mediaPlayPauseButton.width + Theme.paddingSmall : 0)
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
@@ -1433,8 +1532,8 @@ Item {
             // -- Entity row: scene -- kein on/off, Tap aktiviert direkt.
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "scene"
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin - sceneHintLabel.width - Theme.paddingSmall
+                x: delegateItem.labelX
+                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - sceneHintLabel.width - Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
             }
@@ -1453,8 +1552,8 @@ Item {
             // auf, Long-Press-Menü für Lock/Unlock/Open.
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "lock"
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin - lockValueLabel.width - Theme.paddingSmall
+                x: delegateItem.labelX
+                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - lockValueLabel.width - Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
             }
@@ -1472,8 +1571,8 @@ Item {
             // -- Entity row: camera -- Tap öffnet CameraPage.qml.
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "camera"
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin - cameraValueLabel.width - Theme.paddingSmall
+                x: delegateItem.labelX
+                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - cameraValueLabel.width - Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
             }
@@ -1490,8 +1589,8 @@ Item {
             // -- Entity row: alarm_control_panel -- Tap öffnet AlarmPage.qml.
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "alarm"
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin - alarmValueLabel.width - Theme.paddingSmall
+                x: delegateItem.labelX
+                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - alarmValueLabel.width - Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
             }
@@ -1509,8 +1608,8 @@ Item {
             // -- Entity row: vacuum -- Tap öffnet VacuumPage.qml.
             ScrollingLabel {
                 visible: !delegateItem.isHeader && model.kind === "vacuum"
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin - vacuumValueLabel.width - Theme.paddingSmall
+                x: delegateItem.labelX
+                width: parent.width - delegateItem.labelX - Theme.horizontalPageMargin - vacuumValueLabel.width - Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
                 text: model.friendlyName || ""
             }
