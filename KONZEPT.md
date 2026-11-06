@@ -1195,3 +1195,34 @@ Six features, built in parallel on separate branches and merged afterwards.
   debounced), on a WebSocket error and on the 15 s request timeout, and every
   60 s while on the external URL to switch back. The mode (Auto / internal
   only / external only) is not secret and lives in dconf.
+
+### 27b. Same release: cameras, to-do lists, multiple instances
+
+- **Cameras** (`CameraPage.qml`): QML `Image` can't send an Authorization
+  header, so stills come from `/api/camera_proxy/<id>?token=<access_token>`
+  using the entity's rotating `access_token` attribute, followed live via
+  `liveStateReceived`; on a load error the state is fetched once more
+  (`HaApi.getState`) and retried. Two `Image`s double-buffer the refresh so it
+  doesn't flicker; the timer only runs while the page is active and the app is
+  in the foreground. Qt logs the full URL when an image load fails, so
+  `main()` installs a message handler that redacts `token=` values before
+  anything reaches the journal.
+- **To-do lists** (`TodoListsPage.qml`, `TodoListPage.qml`): items via
+  `todo.get_items` with `?return_response` (`HaApi.callServiceWithResponse`),
+  changes via `todo.update_item` / `add_item` / `remove_item` /
+  `remove_completed_items`. Checking is optimistic with rollback. A live state
+  change of the list entity (open count) triggers a debounced silent reload
+  that leaves the model alone when nothing changed.
+- **Profiles** (`src/credentials.*`): profile 0 keeps the existing secret names
+  and dconf keys, so upgrades need nothing re-entered; further profiles use
+  `-p<id>` secret suffixes and `/apps/harbour-hacontrol/profiles/<id>/` for
+  per-instance dconf keys (`Credentials.settingsPrefix`). Ids are never reused.
+  The profile list lives in dconf as JSON and is written by QML, so the C++
+  side needs no extra library. Switching clears URL/token first so the change
+  signals always fire, then loads the new profile's secrets and probes; views
+  drop late answers from the previous instance by comparing the profile id
+  captured at request time. The background poll only covers the active
+  instance.
+- Verified on the emulator against the real instance: upgrade from v0.56 data
+  keeps the configuration (it becomes profile 0 "Home"), cameras, to-do lists,
+  sensor history and the new Settings page all work with real data.

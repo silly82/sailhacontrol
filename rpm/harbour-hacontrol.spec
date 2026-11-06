@@ -87,6 +87,10 @@ desktop-file-install --delete-original       \
 - The cover action can be set to any scene, script, light or switch.
 - Optional external URL for access away from home, with automatic
   switching between the home and the external URL.
+- Camera entities with a refreshing still image.
+- Home Assistant to-do and shopping lists (check, add, rename, delete).
+- Multiple Home Assistant instances, each with its own favorites,
+  notifications, cover action and device registration.
 
 * Wed Nov 04 2026 silly82 <siliwalker@gmail.com> - 0.55-1
 - All texts in the app are now English in the source, with a complete
