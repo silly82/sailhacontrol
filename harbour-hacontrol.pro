@@ -52,6 +52,7 @@ DISTFILES += qml/harbour-hacontrol.qml \
     qml/pages/CameraPage.qml \
     qml/pages/TodoListsPage.qml \
     qml/pages/TodoListPage.qml \
+    qml/pages/AssistPage.qml \
     qml/views/RoomsView.qml \
     qml/views/SensorsView.qml \
     qml/views/UpdatesView.qml \

@@ -1015,6 +1015,10 @@ Item {
                     onClicked: pageStack.push(Qt.resolvedUrl("../pages/TodoListsPage.qml"), { stateSource: root })
                 }
                 MenuItem {
+                    text: qsTr("Assist")
+                    onClicked: pageStack.push(Qt.resolvedUrl("../pages/AssistPage.qml"))
+                }
+                MenuItem {
                     text: qsTr("Refresh")
                     onClicked: root.refreshRequested()
                 }

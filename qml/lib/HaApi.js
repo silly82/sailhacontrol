@@ -181,3 +181,22 @@ function getAreaMap(baseUrl, token, onSuccess, onError) {
         "{{ ns.items | tojson }}"
     request("POST", baseUrl, token, "/api/template", { template: template }, onSuccess, onError)
 }
+
+// POST /api/conversation/process -- one turn of an Assist text conversation
+// with Home Assistant's default conversation agent. language (e.g. "de") and
+// conversationId (from the previous answer, keeps context such as "and in the
+// kitchen?") are optional and only sent when non-empty. Returns
+// onSuccess({response: {speech: {plain: {speech}}, response_type,
+// data: {success: [...], failed: [...]}}, conversation_id}).
+// A not-understood command is NOT an HTTP error: HA answers 200 with
+// response_type "error" and an explanatory speech text.
+function conversationProcess(baseUrl, token, text, language, conversationId, onSuccess, onError) {
+    var body = { text: text }
+    if (language) {
+        body.language = language
+    }
+    if (conversationId) {
+        body.conversation_id = conversationId
+    }
+    request("POST", baseUrl, token, "/api/conversation/process", body, onSuccess, onError)
+}
