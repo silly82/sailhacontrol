@@ -1323,3 +1323,44 @@ emulator in a dark (extrasail) and a light (glacial, `darkonlight`) ambience.
   on the Mali device before release. The same build also confirmed on the
   device that v0.55 credentials survive the upgrade (profile 0, nothing
   re-entered) and that sailjaild writes the `ExecDBus` activation file.
+
+## 29. Update 2026-11-06 (part 3): the startup freeze, properly; faster rooms, v0.58
+
+**Correction to section 28**: the FadeAnimator was not the cause. The freeze
+is intermittent -- repeated launches on the phone (a script starting the app
+over SSH via `invoker`, sampling the main thread's ticks and `wchan`) showed
+the released v0.57 hanging in two of five starts, with the threaded and with
+the basic render loop alike, so the earlier "fixed by removing the animator"
+result was luck. `gdb -p` on a hung instance (gdb is installed on the device)
+gave the real picture:
+
+- main thread: `QBasicMutex::lockInternal()` inside libQt5Network, entered
+  from a signal emission;
+- "Qt HTTP thread": `QSemaphore::acquire()` (a blocking queued call into the
+  main thread) under `QSslSocket::preSharedKeyAuthenticationRequired()`,
+  called from libssl during a handshake.
+
+The user's base URL is https. Qt 5.6 predates TLS 1.3; with the device's
+OpenSSL 1.1.1 every TLS 1.3 handshake runs through Qt's PSK client callback.
+The HTTP thread's handshake waits on the main thread, the main thread's own
+handshake (the `wss://` WebSocket) waits on a lock the HTTP thread holds.
+`main()` now sets a default `QSslConfiguration` with `TlsV1_2` and no PSK
+cipher suites, so the callback is never invoked. 16 launches in a row
+afterwards: no hang, no "not responding". This probably also explains the
+occasional "not responding" seen around v0.54, which back then was put down
+to load alone.
+
+On the way, `QNetworkConfigurationManager` (added in v0.56 for automatic
+URL switching) was removed: its first backtrace also showed the main thread
+in a libQt5Network mutex, and it's not needed -- the URL choice is re-checked
+when the app comes to the foreground (`Credentials.networkMayHaveChanged()`
+from `Qt.application.state`), on WebSocket errors, request timeouts and every
+60 s while on the external URL.
+
+**Room toggles**: collapsed rows have height 0, so the ListView instantiates
+a delegate for each of them (~520 on the real instance) and rebuilds hundreds
+of them whenever a room opens or closes. Measured on the phone: ~1.6 s of
+main-thread time per toggle. Row content now lives in a `Loader` that is only
+active while the row is shown; hidden rows are empty `ListItem`s. ~0.43 s per
+toggle afterwards. Keeping only visible rows in the model would be the next
+step if that is still too slow.

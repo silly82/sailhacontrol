@@ -1,7 +1,7 @@
 Name:       harbour-hacontrol
 
 Summary:    Home-Assistant-Steuerung für SailfishOS
-Version:    0.57
+Version:    0.58
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailhacontrol
@@ -80,6 +80,17 @@ desktop-file-install --delete-original       \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Nov 06 2026 silly82 <siliwalker@gmail.com> - 0.58-1
+- Fixed: the app froze at startup ("not responding") in roughly two of
+  five launches with an https:// Home Assistant URL. Qt 5.6 deadlocked
+  between two TLS 1.3 handshakes (PSK callback); the app now uses TLS 1.2
+  without PSK cipher suites. Verified with 16 launches on a Jolla Phone.
+- Removed the network-change detection via QNetworkConfigurationManager,
+  which could also block the main thread; the URL choice is re-checked
+  when the app comes to the foreground instead.
+- Opening and closing a room is about four times faster: hidden rows no
+  longer build their content.
+
 * Fri Nov 06 2026 silly82 <siliwalker@gmail.com> - 0.57-1
 - Settings is now an overview with sub-pages: Connection, Device &
   sensors, Cover & weather. Shorter hint texts in the usual secondary

@@ -4,7 +4,7 @@ A native [Sailfish Silica](https://sailfishos.org/) app to control a local [Home
 
 See [`KONZEPT.md`](KONZEPT.md) for the full design concept and dated development log. ([`KONZEPT_DE.md`](KONZEPT_DE.md) holds the original German text up to section 24; it is no longer updated.)
 
-## Status: v0.57, ready for use
+## Status: v0.58, ready for use
 
 - Entity list (lights/switches/fans/covers) with toggle, grouped by Home Assistant Area/Room, collapsible per room. Lights with a known color/color-temperature show a small color swatch next to the switch.
 - Tap a light's name to open brightness / color / color-temperature controls — only the controls that light actually supports are shown. The toggle switch itself is unchanged.
@@ -64,6 +64,8 @@ The app is in English, with a complete German translation. It follows the phone'
 
 ## Known limitations
 
+- HTTPS connections use TLS 1.2: the app's Qt 5.6 deadlocks on TLS 1.3 handshakes (see KONZEPT.md section 29). Every reverse proxy, Nabu Casa and Tailscale serve still support TLS 1.2.
+
 - URL and token are stored via **Sailfish Secrets** (encrypted, tied to the device lock), not in plaintext in dconf. That needs C++ (`src/credentials.h/.cpp`): the QML `Sailfish.Secrets` module cannot express the two requests involved — `StoredSecretRequest.identifier` is of a type the plugin never registers, and `StoreSecretRequest.secretStorageType` is an enum without `Q_ENUM`, so both fail from QML (verified on-device). Which storage/encryption plugin to use is asked from the daemon at startup rather than hardcoded, because the image may not register the encrypted-storage plugin.
 - The `armv7hl` build is untested (see table above).
 - Background notifications rely on `Nemo.KeepAlive`'s `BackgroundJob`, which only keeps the app process alive while it's already resident (foreground or recently backgrounded) — a fully terminated app is not woken up by it.
@@ -84,7 +86,7 @@ Eine native [Sailfish-Silica](https://sailfishos.org/)-App zur Steuerung einer l
 
 Das vollständige Konzept und ein datiertes Entwicklungsprotokoll finden sich in [`KONZEPT.md`](KONZEPT.md) (Englisch). Die ursprüngliche deutsche Fassung bis Abschnitt 24 steht in [`KONZEPT_DE.md`](KONZEPT_DE.md) und wird nicht mehr fortgeschrieben.
 
-## Status: v0.57, einsatzbereit
+## Status: v0.58, einsatzbereit
 
 - Entity-Liste (Lights/Switches/Fans/Covers) mit Toggle, gruppiert nach Home-Assistant-Area/Room, pro Raum ein-/ausklappbar. Lichter mit bekannter Farbe/Farbtemperatur zeigen einen kleinen Farb-Punkt neben dem Switch.
 - Tap auf den Namen eines Lichts öffnet Helligkeit-/Farb-/Farbtemperatur-Regler — nur was das jeweilige Licht tatsächlich unterstützt wird angezeigt. Der Toggle-Switch selbst bleibt unverändert.
@@ -143,6 +145,8 @@ Unterwegs: unter Einstellungen → **Verbindung** eine **Externe URL** eintragen
 Die App ist auf Englisch und vollständig ins Deutsche übersetzt. Sie richtet sich nach der Sprache des Telefons. Weitere Sprachen sind sehr willkommen: eine Vorlagedatei kopieren, übersetzen (z. B. mit Qt Linguist) und einschicken. Am Build muss nichts geändert werden. Details in [TRANSLATING.md](TRANSLATING.md) (Englisch).
 
 ## Bekannte Einschränkungen
+
+- HTTPS-Verbindungen nutzen TLS 1.2: Das Qt 5.6 der App verklemmt sich bei TLS-1.3-Verbindungsaufbauten (siehe KONZEPT.md Abschnitt 29). Reverse-Proxys, Nabu Casa und Tailscale serve unterstützen TLS 1.2 weiterhin.
 
 - URL und Token werden über **Sailfish Secrets** verschlüsselt und an die Gerätesperre gebunden gespeichert, nicht mehr im Klartext in dconf. Dafür braucht es C++ (`src/credentials.h/.cpp`): das QML-Modul `Sailfish.Secrets` kann die beiden nötigen Requests nicht abbilden — `StoredSecretRequest.identifier` ist von einem Typ, den das Plugin nie registriert, und `StoreSecretRequest.secretStorageType` ist ein Enum ohne `Q_ENUM`; aus QML scheitern beide (auf dem Gerät verifiziert). Welches Storage-/Encryption-Plugin zu verwenden ist, wird beim Start beim Daemon erfragt statt fest verdrahtet, weil das Image das Encrypted-Storage-Plugin nicht unbedingt registriert.
 - Der `armv7hl`-Build ist ungetestet (siehe Tabelle oben).
