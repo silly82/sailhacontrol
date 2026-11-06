@@ -311,26 +311,50 @@ ApplicationWindow {
         ensureMobileAppRegistered()
     }
 
-    // D-Bus-Endpunkt für den "Umschalten"-Button auf der Benachrichtigung
-    // (s. notifyStateChange() unten) -- rein in QML über Nemo.DBus'
-    // DBusAdaptor, kein C++ nötig. service/path/iface ergeben sich aus dem
-    // in .desktop/[X-Sailjail] konfigurierten OrganizationName+ApplicationName
-    // (org.example.hacontrol), das Sailjail dem Prozess ohnehin schon als
-    // eigenen D-Bus-Namen zuteilt. Gleiche Restriktion wie der Background-
-    // Poll: funktioniert nur, während dieser App-Prozess resident ist -- bei
-    // vollständig beendeter App läuft der Aufruf ins Leere (kein D-Bus-
-    // Activation-.service-File vorhanden).
+    // D-Bus endpoint for notification buttons: the "Toggle" button of the
+    // watched-entity notifications (notifyStateChange() below) and the
+    // buttons of Home Assistant push notifications (PushNotifications.qml).
+    // Pure QML via Nemo.DBus' DBusAdaptor. service/path/iface follow the
+    // OrganizationName+ApplicationName from .desktop/[X-Sailjail]
+    // (org.example.hacontrol), the D-Bus name Sailjail lets the process own.
+    // The same .desktop section's ExecDBus makes sailjaild generate a D-Bus
+    // activation file for that name, so a button tapped while the app is not
+    // running starts it (via invoker --single-instance), and dbus-daemon hands
+    // the queued call over once this adaptor has registered. While the app
+    // runs, the call simply arrives here -- there is never a second process.
+    // Calls can come in before Credentials has loaded, hence whenLoaded().
     DBusAdaptor {
         service: "org.example.hacontrol"
         path: "/org/example/hacontrol"
         iface: "org.example.hacontrol"
 
         function toggleEntity(entityId) {
-            var domain = entityId.split(".")[0]
-            HaApi.callService(Credentials.baseUrl, Credentials.token, domain, "toggle", { entity_id: entityId },
-                function () {},
-                function (error) {})
+            pushNotifier.whenLoaded(function () {
+                var domain = entityId.split(".")[0]
+                HaApi.callService(Credentials.baseUrl, Credentials.token, domain, "toggle", { entity_id: entityId },
+                    function () {},
+                    function (error) {})
+            })
         }
+
+        // Push notification button with an action key -> mobile_app event.
+        function notificationAction(profileId, action, tag, nonce) {
+            pushNotifier.handleAction(profileId, action, tag, nonce)
+        }
+
+        // Push notification button with an http(s) uri.
+        function openNotificationUri(uri, nonce) {
+            pushNotifier.handleUri(uri, nonce)
+        }
+
+        // Tap on a push notification itself.
+        function openNotification(profileId, tag, nonce) {
+            appWindow.activate()
+        }
+    }
+
+    PushNotifications {
+        id: pushNotifier
     }
 
     function notifyStateChange(entityId, friendlyName, isOn) {

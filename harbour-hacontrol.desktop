@@ -20,3 +20,10 @@ ApplicationName=hacontrol
 # Ausbaustufe 1 -- Secrets added for encrypted credential storage (see
 # KONZEPT.md's Sailfish-Secrets migration).
 Permissions=Internet;Secrets;
+# Notification buttons call org.example.hacontrol (OrganizationName +
+# ApplicationName) over D-Bus. With ExecDBus, sailjaild writes the D-Bus
+# activation file for that name itself (/run/user/<uid>/dbus-1/services/,
+# Exec=/usr/bin/invoker --type=silica-qt5 --single-instance ...), so a button
+# also works when the app isn't running. Harbour only accepts the bare binary
+# name (plus at most one plain argument) here, and no own .service file.
+ExecDBus=harbour-hacontrol
