@@ -34,12 +34,14 @@ SOURCES += src/harbour-hacontrol.cpp \
     src/credentials.cpp
 
 HEADERS += \
-    src/credentials.h
+    src/credentials.h \
+    src/deviceinfo.h
 
 DISTFILES += qml/harbour-hacontrol.qml \
     qml/cover/CoverPage.qml \
     qml/components/ScrollingLabel.qml \
     qml/components/DeviceStatusProbe.qml \
+    qml/components/LocationProbe.qml \
     qml/lib/HaApi.js \
     qml/pages/FirstPage.qml \
     qml/pages/SettingsPage.qml \

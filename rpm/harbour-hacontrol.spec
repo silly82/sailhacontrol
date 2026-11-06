@@ -12,6 +12,9 @@ Requires:   libkeepalive
 Requires:   qt5-qtdeclarative-import-websockets
 Requires:   qt5-qtwebsockets
 Requires:   nemo-qml-plugin-dbus-qt5
+# QtPositioning QML import (opt-in location reporting); Harbour's allowed
+# form since 5.1 (qt5-qtdeclarative-import-positioning is deprecated).
+Requires:   qml(QtPositioning)
 # libsailfishsecrets (the C++ API used by src/credentials.{h,cpp}) is *not*
 # listed here on purpose: Harbour's validator rejects the plain package name
 # ("Dependency not allowed"), while the automatic soname dependency rpmbuild

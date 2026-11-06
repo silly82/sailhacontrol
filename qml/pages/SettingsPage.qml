@@ -49,7 +49,8 @@ Page {
     readonly property var profileScopedSettings: [
         "connectionMode", "watchedEntities", "lastKnownStates", "webhookId",
         "favoriteEntities", "coverLightsOnCount", "coverLastLightId",
-        "coverLastLightName", "coverTargetId", "coverTargetName", "coverTargetDomain"
+        "coverLastLightName", "coverTargetId", "coverTargetName", "coverTargetDomain",
+        "reportLocation"
     ]
     function clearProfileSettings(id) {
         var prefix = Credentials.settingsPrefixFor(id)
@@ -166,6 +167,12 @@ Page {
         id: webhookIdSetting
         key: Credentials.settingsPrefix + "webhookId"
         defaultValue: ""
+    }
+    // Same key as in harbour-hacontrol.qml (opt-in location reporting).
+    ConfigurationValue {
+        id: reportLocationSetting
+        key: Credentials.settingsPrefix + "reportLocation"
+        defaultValue: false
     }
 
     SilicaFlickable {
@@ -352,6 +359,13 @@ Page {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: qsTr("Re-register device")
                 onClicked: webhookIdSetting.value = ""
+            }
+
+            TextSwitch {
+                text: qsTr("Report location to Home Assistant")
+                description: qsTr("Sends this phone's position to this instance as its device tracker -- only at app start, on refresh and every 10 minutes in the background, never continuously. Off by default; turning it off stops reporting but doesn't delete positions already stored in Home Assistant.")
+                checked: reportLocationSetting.value === true
+                onClicked: reportLocationSetting.value = checked
             }
 
             Button {
